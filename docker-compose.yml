@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fashion360
+      POSTGRES_PASSWORD: fashion360
+      POSTGRES_DB: fashion360
+    ports:
+      - "5432:5432"
+    volumes:
+      - fashion360_db_data:/var/lib/postgresql/data
+
+volumes:
+  fashion360_db_data:

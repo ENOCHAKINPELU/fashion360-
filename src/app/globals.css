@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f5;
+  --surface: #ffffff;
+  --foreground: #1c1917;
+  --muted: #78716c;
+  --muted-surface: #f2ede6;
+  --border: #e7e0d6;
+  --accent: #a8843f;
+  --accent-foreground: #ffffff;
+  --accent-soft: #f4ead2;
+  --success: #2f6f4e;
+  --success-soft: #e4f2e9;
+  --warning: #b8792f;
+  --warning-soft: #f8ecd9;
+  --danger: #b23b3b;
+  --danger-soft: #f9e6e6;
+  --info: #3b6ab2;
+  --info-soft: #e6eef9;
+  --radius: 1rem;
+  --shadow-color: 28 25 23;
+}
+
+:root[data-theme="dark"] {
+  --background: #14120f;
+  --surface: #1c1a16;
+  --foreground: #f2ede4;
+  --muted: #a89f91;
+  --muted-surface: #232019;
+  --border: #322d24;
+  --accent: #d4af6a;
+  --accent-foreground: #1c1a16;
+  --accent-soft: #3a3020;
+  --success: #6fbf94;
+  --success-soft: #1c2e23;
+  --warning: #e0ab5c;
+  --warning-soft: #33270f;
+  --danger: #e08080;
+  --danger-soft: #331b1b;
+  --info: #82aee6;
+  --info-soft: #17253a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #14120f;
+    --surface: #1c1a16;
+    --foreground: #f2ede4;
+    --muted: #a89f91;
+    --muted-surface: #232019;
+    --border: #322d24;
+    --accent: #d4af6a;
+    --accent-foreground: #1c1a16;
+    --accent-soft: #3a3020;
+    --success: #6fbf94;
+    --success-soft: #1c2e23;
+    --warning: #e0ab5c;
+    --warning-soft: #33270f;
+    --danger: #e08080;
+    --danger-soft: #331b1b;
+    --info: #82aee6;
+    --info-soft: #17253a;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-surface: var(--muted-surface);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-playfair);
+}
+
+* {
+  border-color: var(--border);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--foreground);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.fashion360-calendar {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--muted-surface);
+  --fc-today-bg-color: var(--accent-soft);
+  --fc-button-bg-color: var(--surface);
+  --fc-button-border-color: var(--border);
+  --fc-button-text-color: var(--foreground);
+  --fc-button-active-bg-color: var(--accent);
+  --fc-button-active-border-color: var(--accent);
+  --fc-button-active-text-color: var(--accent-foreground);
+  font-family: var(--font-sans);
+}
+.fashion360-calendar .fc-toolbar-title {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+}
+.fashion360-calendar .fc-button {
+  border-radius: 0.75rem !important;
+  text-transform: capitalize;
+  box-shadow: none !important;
+}
+.fashion360-calendar .fc-daygrid-day-number,
+.fashion360-calendar .fc-col-header-cell-cushion {
+  color: var(--foreground);
+}
+.fashion360-calendar .fc-event {
+  border-radius: 0.5rem;
+  padding: 1px 4px;
+  font-size: 0.75rem;
+}
