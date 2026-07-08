@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, ApiError } from "@/lib/rbac";
+import { resetPasswordSchema } from "@/lib/validations/auth";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
-
-const schema = z.object({ token: z.string().min(1), password: z.string().min(8) });
 
 export async function POST(req: NextRequest) {
   try {
-    const { token, password } = schema.parse(await req.json());
+    const ip = getClientIp(req);
+    const { allowed } = checkRateLimit(`reset:${ip}`, 10, 15 * 60 * 1000);
+    if (!allowed) throw new ApiError(429, "Too many attempts. Please try again later.");
+
+    const { token, password } = resetPasswordSchema.parse(await req.json());
 
     const record = await prisma.verificationToken.findUnique({ where: { token } });
     if (!record || record.expires < new Date() || !record.identifier.startsWith("reset:")) {

@@ -4,6 +4,7 @@ import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { UserRole } from "@prisma/client";
 
 declare module "next-auth" {
@@ -17,6 +18,7 @@ declare module "next-auth" {
   interface User {
     role?: UserRole;
     businessId?: string | null;
+    remember?: boolean;
   }
 }
 
@@ -27,11 +29,15 @@ type DefaultSessionUser = {
   image?: string | null;
 };
 
+const DAY = 24 * 60 * 60;
+const SHORT_SESSION = DAY; // not remembered: 1 day
+const LONG_SESSION = 30 * DAY; // remembered / OAuth: 30 days
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: LONG_SESSION },
   pages: {
-    signIn: "/sign-in",
+    signIn: "/login",
   },
   providers: [
     Google({
@@ -43,11 +49,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        remember: { label: "Remember me", type: "text" },
       },
       authorize: async (credentials) => {
         const email = credentials?.email as string | undefined;
         const password = credentials?.password as string | undefined;
         if (!email || !password) return null;
+
+        const { allowed } = checkRateLimit(`login:${email}`, 8, 15 * 60 * 1000);
+        if (!allowed) return null;
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user?.passwordHash) return null;
@@ -62,6 +72,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           image: user.image,
           role: user.role,
           businessId: user.businessId,
+          remember: credentials?.remember === "true",
         };
       },
     }),
@@ -71,6 +82,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.role = user.role;
         token.businessId = user.businessId ?? null;
+        const remember = user.remember ?? true; // OAuth sign-ins default to a persistent session
+        token.exp = Math.floor(Date.now() / 1000) + (remember ? LONG_SESSION : SHORT_SESSION);
       }
       return token;
     },

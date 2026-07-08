@@ -1,36 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { apiErrorResponse } from "@/lib/rbac";
+import { apiErrorResponse, ApiError } from "@/lib/rbac";
+import { forgotPasswordSchema } from "@/lib/validations/auth";
+import { sendEmail } from "@/lib/mailer";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import crypto from "crypto";
-import { z } from "zod";
-import { getNotificationProvider } from "@/lib/providers/notification";
-
-const schema = z.object({ email: z.string().email() });
 
 export async function POST(req: NextRequest) {
   try {
-    const { email } = schema.parse(await req.json());
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: { customerProfile: true },
-    });
+    const ip = getClientIp(req);
+    const { email } = forgotPasswordSchema.parse(await req.json());
 
-    const businessId = user?.businessId ?? user?.customerProfile?.businessId;
+    const { allowed } = checkRateLimit(`forgot:${ip}:${email}`, 5, 15 * 60 * 1000);
+    if (!allowed) throw new ApiError(429, "Too many attempts. Please try again later.");
+
+    const user = await prisma.user.findUnique({ where: { email } });
 
     // Always respond 200 regardless of whether the account exists, to avoid
     // leaking which emails are registered.
-    if (user && businessId) {
+    if (user) {
       const token = crypto.randomBytes(32).toString("hex");
       await prisma.verificationToken.create({
         data: { identifier: `reset:${email}`, token, expires: new Date(Date.now() + 1000 * 60 * 30) },
       });
 
-      await getNotificationProvider().send({
-        businessId,
-        userId: user.id,
-        channel: "EMAIL",
-        title: "Reset your Fashion360 password",
-        body: `Reset your password using this link: /reset-password?token=${token}`,
+      await sendEmail({
+        to: email,
+        subject: "Reset your Fashion360 password",
+        body: `Reset your password: ${process.env.AUTH_URL ?? ""}/reset-password?token=${token}`,
       });
     }
 

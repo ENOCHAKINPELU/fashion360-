@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+  return twMerge(clsx(inputs))
 }
 
 export function formatCurrency(amount: number | string, currency = "NGN") {
@@ -22,6 +22,26 @@ export function formatDate(date: Date | string, opts?: Intl.DateTimeFormatOption
   }).format(d);
 }
 
+export function formatRelativeTime(date: Date | string) {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const seconds = Math.round((d.getTime() - Date.now()) / 1000);
+  const divisions: [Intl.RelativeTimeFormatUnit, number][] = [
+    ["year", 60 * 60 * 24 * 365],
+    ["month", 60 * 60 * 24 * 30],
+    ["day", 60 * 60 * 24],
+    ["hour", 60 * 60],
+    ["minute", 60],
+    ["second", 1],
+  ];
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  for (const [unit, secondsInUnit] of divisions) {
+    if (Math.abs(seconds) >= secondsInUnit || unit === "second") {
+      return rtf.format(Math.round(seconds / secondsInUnit), unit);
+    }
+  }
+  return rtf.format(0, "second");
+}
+
 export function initials(name: string) {
   return name
     .split(" ")
@@ -31,8 +51,6 @@ export function initials(name: string) {
     .join("");
 }
 
-export function generateNumber(prefix: string) {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `${prefix}-${timestamp}-${random}`;
+export function generateSlugSuffix() {
+  return Math.random().toString(36).slice(2, 6).toUpperCase();
 }

@@ -1,170 +1,98 @@
-import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { StatCard } from "@/components/ui/stat-card";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Button } from "@/components/ui/button";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import { STAGE_LABELS } from "@/lib/validations/order";
-import {
-  Users,
-  ShoppingBag,
-  CheckCircle2,
-  CalendarClock,
-  Wallet,
-  TrendingUp,
-  Plus,
-  Bell,
-} from "lucide-react";
-
-const ACTIVE_STAGES = [
-  "CONSULTATION",
-  "MEASUREMENT",
-  "DESIGN_APPROVAL",
-  "PRODUCTION",
-  "FITTING",
-  "ALTERATION",
-];
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, ShoppingBag, Wallet, CalendarClock } from "lucide-react";
+import { StatCard } from "@/features/dashboard/components/stat-card";
+import { SampleBadge } from "@/features/dashboard/components/sample-badge";
+import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
+import { QuickActions } from "@/features/dashboard/components/quick-actions";
+import { UpcomingTasks } from "@/features/dashboard/components/upcoming-tasks";
+import { RecentCustomers } from "@/features/dashboard/components/recent-customers";
+import { LatestOrders } from "@/features/dashboard/components/latest-orders";
+import { RecentActivity } from "@/features/dashboard/components/recent-activity";
 
 export default async function DashboardPage() {
   const session = await auth();
   const businessId = session!.user.businessId!;
-
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-
-  const [
-    totalCustomers,
-    activeOrders,
-    completedOrders,
-    upcomingAppointments,
-    pendingInvoices,
-    monthlyPayments,
-    recentOrders,
-    notifications,
-  ] = await Promise.all([
-    prisma.customer.count({ where: { businessId } }),
-    prisma.order.count({ where: { businessId, stage: { in: ACTIVE_STAGES as never } } }),
-    prisma.order.count({ where: { businessId, stage: "COMPLETED" } }),
-    prisma.appointment.count({
-      where: { businessId, startTime: { gte: now }, status: { in: ["SCHEDULED", "CONFIRMED"] } },
-    }),
-    prisma.invoice.aggregate({
-      where: { businessId, status: { in: ["SENT", "OVERDUE"] } },
-      _sum: { amount: true, amountPaid: true },
-    }),
-    prisma.payment.aggregate({
-      where: { businessId, status: "PAID", paidAt: { gte: monthStart } },
-      _sum: { amount: true },
-    }),
-    prisma.order.findMany({
-      where: { businessId },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { customer: { select: { name: true } } },
-    }),
-    prisma.notification.findMany({
-      where: { businessId },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-  ]);
-
-  const pendingAmount =
-    Number(pendingInvoices._sum.amount ?? 0) - Number(pendingInvoices._sum.amountPaid ?? 0);
+  const business = await prisma.business.findUnique({ where: { id: businessId } });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display text-2xl text-foreground">Dashboard</h1>
-          <p className="text-sm text-muted">Here&apos;s what&apos;s happening in your business today.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link href="/dashboard/customers?new=1">
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4" /> New customer
-            </Button>
-          </Link>
-          <Link href="/dashboard/orders?new=1">
-            <Button size="sm">
-              <Plus className="h-4 w-4" /> New order
-            </Button>
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Welcome back{business ? `, ${business.name}` : ""}
+        </h1>
+        <p className="text-sm text-muted-foreground">Here&apos;s an overview of your business today.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <StatCard label="Total Customers" value={String(totalCustomers)} icon={Users} />
-        <StatCard label="Active Orders" value={String(activeOrders)} icon={ShoppingBag} />
-        <StatCard label="Completed Orders" value={String(completedOrders)} icon={CheckCircle2} />
-        <StatCard label="Upcoming Appointments" value={String(upcomingAppointments)} icon={CalendarClock} />
-        <StatCard label="Pending Payments" value={formatCurrency(pendingAmount)} icon={Wallet} />
-        <StatCard
-          label="Monthly Revenue"
-          value={formatCurrency(Number(monthlyPayments._sum.amount ?? 0))}
-          icon={TrendingUp}
-        />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Total Customers" value="128" icon={Users} trend={{ value: "+12% this month", direction: "up" }} />
+        <StatCard label="Active Orders" value="24" icon={ShoppingBag} trend={{ value: "+4 this week", direction: "up" }} />
+        <StatCard label="Revenue" value="₦860,000" icon={Wallet} trend={{ value: "+18% this month", direction: "up" }} />
+        <StatCard label="Appointments" value="9" icon={CalendarClock} trend={{ value: "2 today", direction: "up" }} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Recent Orders</CardTitle>
-            <Link href="/dashboard/orders" className="text-sm text-accent">
-              View all
-            </Link>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Card className="border-none shadow-sm xl:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Revenue</CardTitle>
+            <SampleBadge />
           </CardHeader>
           <CardContent>
-            {recentOrders.length === 0 ? (
-              <EmptyState
-                icon={ShoppingBag}
-                title="No orders yet"
-                description="Orders you create for customers will show up here."
-              />
-            ) : (
-              <div className="divide-y divide-border">
-                {recentOrders.map((o) => (
-                  <Link
-                    key={o.id}
-                    href={`/dashboard/orders/${o.id}`}
-                    className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{o.orderNumber}</p>
-                      <p className="text-xs text-muted">{o.customer.name}</p>
-                    </div>
-                    <Badge tone="accent">{STAGE_LABELS[o.stage]}</Badge>
-                  </Link>
-                ))}
-              </div>
-            )}
+            <RevenueChart />
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-sm">
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-            <Bell className="h-4 w-4 text-muted" />
+            <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            {notifications.length === 0 ? (
-              <EmptyState title="You're all caught up" />
-            ) : (
-              <div className="space-y-4">
-                {notifications.map((n) => (
-                  <div key={n.id}>
-                    <p className="text-sm font-medium text-foreground">{n.title}</p>
-                    <p className="text-xs text-muted">{formatDate(n.createdAt)}</p>
-                  </div>
-                ))}
-              </div>
-            )}
+            <RecentActivity businessId={businessId} userId={session!.user.id} />
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <Card className="border-none shadow-sm">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QuickActions />
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Upcoming Tasks</CardTitle>
+            <SampleBadge />
+          </CardHeader>
+          <CardContent>
+            <UpcomingTasks />
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Customers</CardTitle>
+            <SampleBadge />
+          </CardHeader>
+          <CardContent>
+            <RecentCustomers />
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-none shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Latest Orders</CardTitle>
+          <SampleBadge />
+        </CardHeader>
+        <CardContent>
+          <LatestOrders />
+        </CardContent>
+      </Card>
     </div>
   );
 }

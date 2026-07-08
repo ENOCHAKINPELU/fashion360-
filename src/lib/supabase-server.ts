@@ -1,10 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
-  throw new Error('Missing Supabase server environment variables');
+  throw new Error("Missing Supabase server environment variables");
 }
 
 export const supabaseServer = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -13,3 +13,5 @@ export const supabaseServer = createClient(supabaseUrl, supabaseServiceRoleKey, 
     autoRefreshToken: false,
   },
 });
+
+export const UPLOAD_BUCKET = "fashion360-uploads";

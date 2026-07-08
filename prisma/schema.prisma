@@ -1,4 +1,4 @@
-// Fashion360 Phase 1 Prisma schema
+// Fashion360 — Phase 1 (platform foundation) Prisma schema
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,6 +16,7 @@ enum UserRole {
   CUSTOMER
 }
 
+// Scaffolded now so a future Staff-management UI doesn't require a migration.
 enum StaffPermission {
   MANAGE_CUSTOMERS
   MANAGE_ORDERS
@@ -24,69 +25,18 @@ enum StaffPermission {
   MANAGE_SETTINGS
 }
 
-enum MeasurementSource {
-  MANUAL
-  AI_ESTIMATED
+enum BusinessType {
+  INDEPENDENT_DESIGNER
+  TAILORING_SHOP
+  FASHION_HOUSE
+  CLOTHING_BRAND
+  STUDIO
+  OTHER
 }
 
-enum OrderStage {
-  CONSULTATION
-  MEASUREMENT
-  DESIGN_APPROVAL
-  PRODUCTION
-  FITTING
-  ALTERATION
-  COMPLETED
-  READY_FOR_PICKUP
-  DELIVERED
-  CANCELLED
-}
-
-enum AppointmentType {
-  CONSULTATION
-  MEASUREMENT
-  FITTING
-  PICKUP
-  VIRTUAL_CONSULTATION
-}
-
-enum AppointmentStatus {
-  SCHEDULED
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-  NO_SHOW
-}
-
-enum PaymentStatus {
-  PENDING
-  PARTIAL
-  PAID
-  REFUNDED
-  FAILED
-}
-
-enum PaymentType {
-  DEPOSIT
-  BALANCE
-  FULL
-  REFUND
-}
-
-enum InvoiceStatus {
-  DRAFT
-  SENT
-  PAID
-  OVERDUE
-  VOID
-}
-
-enum QuotationStatus {
-  DRAFT
-  SENT
-  ACCEPTED
-  REJECTED
-  EXPIRED
+enum MeasurementUnit {
+  METRIC
+  IMPERIAL
 }
 
 enum SubscriptionPlan {
@@ -95,64 +45,75 @@ enum SubscriptionPlan {
   PRO
 }
 
-enum NotificationChannel {
-  EMAIL
-  SMS
-  WHATSAPP
-  PUSH
-}
-
 // ===================== PLATFORM / TENANCY =====================
 
 model Business {
-  id               String   @id @default(cuid())
-  name             String
-  slug             String   @unique
-  logoUrl          String?
-  workingHours     Json?
-  socialLinks      Json?
-  currency         String   @default("NGN")
-  measurementUnit  String   @default("metric")
-  brandColors      Json?
-  subscriptionPlan SubscriptionPlan @default(STARTER)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  logoUrl      String?
+  email        String?
+  phone        String?
+  country      String?
+  state        String?
+  city         String?
+  address      String?
+  businessType BusinessType @default(OTHER)
+
+  currency        String          @default("NGN")
+  timezone        String          @default("Africa/Lagos")
+  measurementUnit MeasurementUnit @default(METRIC)
+  brandColors     Json?
+  workingHours    Json?
+  socialLinks     Json?
+
+  subscriptionPlan      SubscriptionPlan @default(STARTER)
+  onboardingCompletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   users         User[]
-  customers     Customer[]
-  orders        Order[]
-  appointments  Appointment[]
-  designs       Design[]
-  quotations    Quotation[]
-  invoices      Invoice[]
-  payments      Payment[]
   notifications Notification[]
 
   @@index([slug])
 }
 
 model User {
-  id              String    @id @default(cuid())
-  email           String    @unique
-  emailVerified   DateTime?
-  passwordHash    String?
-  name            String?
-  image           String?
-  role            UserRole  @default(CUSTOMER)
-  staffPermissions StaffPermission[]
-  businessId      String?
-  business        Business? @relation(fields: [businessId], references: [id])
-  customerProfile Customer?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
 
-  accounts Account[]
-  sessions Session[]
+  // `name` is kept in sync with firstName/lastName and is what Auth.js/OAuth
+  // providers read and write by default.
+  name      String?
+  firstName String?
+  lastName  String?
+  phone     String?
+  position  String?
+  image     String?
+
+  role             UserRole          @default(CUSTOMER)
+  staffPermissions StaffPermission[]
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  notificationPreferences Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  notifications Notification[]
 
   @@index([businessId])
 }
 
-// Auth.js required models
+// ===================== AUTH.JS REQUIRED MODELS =====================
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -179,6 +140,9 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// Reused for both email-verification and password-reset tokens: the
+// `identifier` is the user's email for verification, or `reset:<email>` for
+// a password-reset request.
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -187,280 +151,21 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ===================== CUSTOMER =====================
-
-model Customer {
-  id               String   @id @default(cuid())
-  businessId       String
-  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  userId           String?  @unique
-  user             User?    @relation(fields: [userId], references: [id])
-
-  name             String
-  phone            String?
-  email            String?
-  address          String?
-  birthday         DateTime?
-  gender           String?
-  preferredColors  String[]
-  preferredFabrics String[]
-  stylePreferences String[]
-  specialNotes     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  measurements Measurement[]
-  orders       Order[]
-  appointments Appointment[]
-  quotations   Quotation[]
-  invoices     Invoice[]
-  payments     Payment[]
-  reviews      Review[]
-
-  @@index([businessId])
-  @@index([businessId, name])
-}
-
-model Measurement {
-  id         String   @id @default(cuid())
-  businessId String
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  label      String   @default("Measurement Profile")
-  source     MeasurementSource @default(MANUAL)
-
-  neck           Float?
-  shoulder       Float?
-  chestBust      Float?
-  waist          Float?
-  hip            Float?
-  sleeveLength   Float?
-  armLength      Float?
-  inseam         Float?
-  thigh          Float?
-  garmentLength  Float?
-
-  // AI estimation inputs, kept for audit/reproducibility
-  heightCm       Float?
-  weightKg       Float?
-  frontImageUrl  String?
-  sideImageUrl   String?
-  aiApprovedAt   DateTime?
-
-  notes      String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  orders Order[]
-
-  @@index([businessId, customerId])
-}
-
-// ===================== DESIGN GALLERY (Phase 2 scaffold) =====================
-
-model Design {
-  id          String   @id @default(cuid())
-  businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  title       String
-  category    String
-  imageUrl    String
-  description String?
-  createdAt   DateTime @default(now())
-
-  orders Order[]
-
-  @@index([businessId, category])
-}
-
-// ===================== ORDERS =====================
-
-model Order {
-  id            String     @id @default(cuid())
-  businessId    String
-  business      Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId    String
-  customer      Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  measurementId String?
-  measurement   Measurement? @relation(fields: [measurementId], references: [id])
-  designId      String?
-  design        Design?    @relation(fields: [designId], references: [id])
-
-  orderNumber   String     @unique
-  stage         OrderStage @default(CONSULTATION)
-  requiredStages OrderStage[]
-  inspirationImages String[]
-  notes         String?
-  deliveryDate  DateTime?
-
-  fabric        String?
-  color         String?
-  neckline      String?
-  sleeveStyle   String?
-  length        String?
-  buttons       String?
-  accessories   String?
-  embroidery    String?
-  customNotes   String?
-
-  price         Decimal?   @db.Decimal(12, 2)
-
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-
-  quotations    Quotation[]
-  invoices      Invoice[]
-  designApprovals DesignApproval[]
-  delivery      Delivery?
-
-  @@index([businessId, stage])
-  @@index([businessId, customerId])
-}
-
-model DesignApproval {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  status    String   // APPROVED | REJECTED | CHANGES_REQUESTED
-  comment   String?
-  createdAt DateTime @default(now())
-
-  @@index([orderId])
-}
-
-// ===================== APPOINTMENTS =====================
-
-model Appointment {
-  id         String            @id @default(cuid())
-  businessId String
-  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId String
-  customer   Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  type       AppointmentType
-  status     AppointmentStatus @default(SCHEDULED)
-  startTime  DateTime
-  endTime    DateTime
-  notes      String?
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([businessId, startTime])
-  @@index([businessId, customerId])
-}
-
-// ===================== QUOTATIONS / INVOICES / PAYMENTS =====================
-
-model Quotation {
-  id          String          @id @default(cuid())
-  businessId  String
-  business    Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId  String
-  customer    Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  orderId     String?
-  order       Order?          @relation(fields: [orderId], references: [id])
-
-  quoteNumber String          @unique
-  status      QuotationStatus @default(DRAFT)
-  description String
-  price       Decimal         @db.Decimal(12, 2)
-  deposit     Decimal         @db.Decimal(12, 2)
-  balance     Decimal         @db.Decimal(12, 2)
-  dueDate     DateTime?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  invoice     Invoice?
-
-  @@index([businessId, status])
-}
-
-model Invoice {
-  id            String        @id @default(cuid())
-  businessId    String
-  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  orderId       String?
-  order         Order?        @relation(fields: [orderId], references: [id])
-  quotationId   String?       @unique
-  quotation     Quotation?    @relation(fields: [quotationId], references: [id])
-
-  invoiceNumber String        @unique
-  status        InvoiceStatus @default(DRAFT)
-  amount        Decimal       @db.Decimal(12, 2)
-  amountPaid    Decimal       @default(0) @db.Decimal(12, 2)
-  dueDate       DateTime?
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  payments      Payment[]
-
-  @@index([businessId, status])
-}
-
-model Payment {
-  id         String        @id @default(cuid())
-  businessId String
-  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  customerId String
-  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  invoiceId  String?
-  invoice    Invoice?      @relation(fields: [invoiceId], references: [id])
-
-  type       PaymentType
-  status     PaymentStatus @default(PENDING)
-  amount     Decimal       @db.Decimal(12, 2)
-  provider   String        @default("mock") // e.g. "paystack", "flutterwave", "stripe", "mock"
-  providerRef String?
-  paidAt     DateTime?
-
-  createdAt  DateTime @default(now())
-
-  @@index([businessId, status])
-}
-
-// ===================== DELIVERY / REVIEWS (Phase 2 scaffold) =====================
-
-model Delivery {
-  id        String   @id @default(cuid())
-  orderId   String   @unique
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  method    String   // PICKUP | HOME_DELIVERY
-  address   String?
-  status    String   @default("PENDING")
-  confirmedAt DateTime?
-
-  createdAt DateTime @default(now())
-}
-
-model Review {
-  id         String   @id @default(cuid())
-  customerId String
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  rating     Int
-  comment    String?
-  photoUrls  String[]
-  createdAt  DateTime @default(now())
-}
-
-// ===================== NOTIFICATIONS =====================
+// ===================== IN-APP NOTIFICATIONS (bell + dashboard feed) =====================
 
 model Notification {
-  id         String              @id @default(cuid())
+  id         String   @id @default(cuid())
   businessId String
-  business   Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   userId     String?
-  channel    NotificationChannel @default(EMAIL)
-  title      String
-  body       String
-  readAt     DateTime?
-  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title  String
+  body   String
+  type   String    @default("info") // info | success | warning | danger — drives bell icon styling
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
 
   @@index([businessId, userId])
 }

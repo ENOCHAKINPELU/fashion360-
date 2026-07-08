@@ -32,13 +32,6 @@ export async function requireBusinessContext(allowed: UserRole[] = ["OWNER", "ST
   return { session, businessId: session.user.businessId };
 }
 
-export async function requireCustomerContext() {
-  const session = await auth();
-  if (!session?.user) throw new ApiError(401, "Not authenticated");
-  if (session.user.role !== "CUSTOMER") throw new ApiError(403, "Not authorized");
-  return { session };
-}
-
 export async function requireSuperAdmin() {
   const session = await auth();
   if (!session?.user) throw new ApiError(401, "Not authenticated");

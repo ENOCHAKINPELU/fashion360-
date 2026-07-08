@@ -1,23 +1,12 @@
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { QuotationsClient } from "./quotations-client";
+import { FileText } from "lucide-react";
+import { ModulePlaceholder } from "@/shared/components/module-placeholder";
 
-export default async function QuotationsPage() {
-  const session = await auth();
-  const businessId = session!.user.businessId!;
-
-  const [quotations, customers] = await Promise.all([
-    prisma.quotation.findMany({
-      where: { businessId },
-      orderBy: { createdAt: "desc" },
-      include: { customer: { select: { name: true } } },
-    }),
-    prisma.customer.findMany({
-      where: { businessId },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
-
-  return <QuotationsClient quotations={JSON.parse(JSON.stringify(quotations))} customers={customers} />;
+export default function QuotationsPage() {
+  return (
+    <ModulePlaceholder
+      icon={FileText}
+      title="Quotations"
+      description="Create and send price quotes with garment details, deposits, and due dates as a downloadable PDF."
+    />
+  );
 }
