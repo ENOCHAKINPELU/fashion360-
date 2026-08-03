@@ -1,0 +1,15 @@
+# Local/dev artifacts
+.git
+.claude
+.vercel
+.next
+node_modules
+coverage
+*.log
+
+# Environment files
+.env
+.env.*
+
+# Large local assets not needed for build
+public/images/fashion360/**
