@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -56,6 +57,12 @@
 
   --radius: 0.85rem;
   --shadow-color: 13 11 31;
+
+  /* Scoped to the pre-launch campaign hero only (and its own decorative
+     accents) — never the app's real --background/--surface. Warmer than the
+     app's cool off-white, matching the campaign brief's "warm cream"
+     request without touching the core design system. */
+  --campaign-cream: #faf3e8;
 }
 
 @theme inline {
@@ -108,7 +115,10 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
+  --color-campaign-cream: var(--campaign-cream);
+
   --font-sans: var(--font-inter);
+  --font-display: var(--font-fraunces);
 
   --radius-sm: calc(var(--radius) * 0.55);
   --radius-md: calc(var(--radius) * 0.75);
@@ -117,6 +127,18 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
 }
+
+/*
+ * Fashion360 type scale — Fraunces (font-display) for editorial moments,
+ * Inter (font-sans, default) for everything else. Apply these combinations
+ * consistently rather than picking one-off sizes per section:
+ *
+ *   Hero display     text-5xl sm:text-6xl lg:text-7xl font-display leading-[1.05] tracking-tight
+ *   Section heading   text-3xl sm:text-4xl lg:text-5xl font-display leading-tight tracking-tight
+ *   Card/subsection   text-xl lg:text-2xl font-display  (or font-sans font-semibold for UI-dense contexts)
+ *   Eyebrow label     text-xs font-semibold tracking-[0.2em] uppercase text-primary
+ *   Body              text-base lg:text-lg text-muted-foreground leading-relaxed  (font-sans)
+ */
 
 @layer base {
   * {
@@ -136,6 +158,28 @@
   color: var(--primary);
 }
 
+/* Smooth in-page anchor scrolling (nav links, footer) — disabled under
+   reduced motion so an instant jump replaces the animated scroll. */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Toggled on <body> by shared/components/motion/cursor.tsx, desktop only.
+   Text inputs keep a normal text cursor so typing still feels correct. */
+.cursor-none-desktop {
+  cursor: none;
+}
+.cursor-none-desktop input,
+.cursor-none-desktop textarea,
+.cursor-none-desktop [contenteditable] {
+  cursor: text;
+}
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -143,4 +187,44 @@
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 999px;
+}
+
+/* FullCalendar theming to match the Fashion360 design system */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: var(--accent-soft);
+  --fc-now-indicator-color: var(--danger);
+  --fc-event-border-color: transparent;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+}
+.fc .fc-timegrid-slot-label,
+.fc .fc-col-header-cell-cushion,
+.fc .fc-list-day-text,
+.fc .fc-list-day-side-text {
+  color: var(--foreground);
+}
+.fc .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  font-weight: 500;
+}
+.fc .fc-event {
+  border-radius: 0.5rem;
+  padding: 1px 6px;
+  border: none;
+  font-weight: 500;
+}
+.fc .fc-list-event:hover td,
+.fc .fc-daygrid-day.fc-day-today {
+  background: var(--accent-soft);
+}
+.fc .fc-scrollgrid,
+.fc .fc-list {
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.fc-bg-event {
+  opacity: 0.12;
 }

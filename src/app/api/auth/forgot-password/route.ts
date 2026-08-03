@@ -5,6 +5,7 @@ import { forgotPasswordSchema } from "@/lib/validations/auth";
 import { sendEmail } from "@/lib/mailer";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { logAuditEvent } from "@/lib/audit-log";
 import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
@@ -29,6 +30,14 @@ export async function POST(req: NextRequest) {
         to: email,
         subject: "Reset your Fashion360 password",
         body: `Reset your password: ${process.env.AUTH_URL ?? ""}/reset-password?token=${token}`,
+      });
+
+      await logAuditEvent(prisma, {
+        action: "PASSWORD_RESET_REQUESTED",
+        userId: user.id,
+        entityType: "User",
+        entityId: user.id,
+        ipAddress: ip,
       });
     }
 

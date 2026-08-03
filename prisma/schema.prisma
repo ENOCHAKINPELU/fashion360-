@@ -45,6 +45,915 @@ enum SubscriptionPlan {
   PRO
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum CustomerStatus {
+  LEAD
+  PROSPECT
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum PreferredCommunication {
+  EMAIL
+  SMS
+  WHATSAPP
+  PHONE_CALL
+}
+
+enum CustomerActivityType {
+  CUSTOMER_CREATED
+  PROFILE_UPDATED
+  STATUS_CHANGED
+  TAG_UPDATED
+  NOTE_ADDED
+  PREFERENCE_UPDATED
+  FILE_UPLOADED
+  APPOINTMENT_BOOKED
+  MEASUREMENT_ADDED
+  ORDER_CREATED
+  QUOTATION_GENERATED
+  INVOICE_GENERATED
+  PAYMENT_RECEIVED
+  REVIEW_SUBMITTED
+}
+
+enum AppointmentStatus {
+  PENDING_CONFIRMATION
+  SCHEDULED
+  CONFIRMED
+  CHECKED_IN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+  RESCHEDULED
+  // Phase 4 additions. "Who cancelled" (Part 9's Cancelled by Customer /
+  // Cancelled by Business) is deliberately NOT split into two statuses —
+  // AppointmentHistory already records the actor of the CANCELLED event, so
+  // the UI derives "by customer" vs "by business" from history instead of
+  // doubling the status enum and every `notIn: [CANCELLED, NO_SHOW]` filter
+  // across lib/availability.ts, the reminders processor, etc.
+  DECLINED
+  RESCHEDULE_REQUESTED
+  EXPIRED
+}
+
+enum ReminderChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+  PUSH
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum AppointmentNoteCategory {
+  CONSULTATION
+  MEASUREMENT_PREP
+  FABRIC_REQUEST
+  CUSTOMER_REQUIREMENT
+  DESIGNER_NOTE
+  PRIVATE
+}
+
+enum AppointmentHistoryAction {
+  CREATED
+  REMINDER_SENT
+  CONFIRMED
+  CHECKED_IN
+  STARTED
+  COMPLETED
+  CANCELLED
+  RESCHEDULED
+  NOTE_ADDED
+  FOLLOW_UP_SCHEDULED
+  STATUS_CHANGED
+  DECLINED
+  RESCHEDULE_REQUESTED
+  RESCHEDULE_DECLINED
+  EXPIRED
+  NO_SHOW
+}
+
+// Distinguishes a customer's self-service booking from a business-managed
+// AppointmentType — lets the customer booking UI reliably offer "In-Person
+// Consultation / Virtual Consultation / Measurement Session" without
+// string-matching on a business-editable `name` field.
+enum AppointmentTypeCategory {
+  IN_PERSON
+  VIRTUAL
+  MEASUREMENT
+  FITTING
+  OTHER
+}
+
+enum MeasurementFieldCategory {
+  UPPER_BODY
+  LOWER_BODY
+  DRESS
+  ADDITIONAL
+  CUSTOM
+}
+
+enum MeasurementSource {
+  MANUAL
+  AI_ESTIMATED
+}
+
+enum MeasurementRecordStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+}
+
+enum FitPreference {
+  TIGHT
+  REGULAR
+  LOOSE
+}
+
+enum MeasurementNoteCategory {
+  POSTURE
+  BODY_SHAPE
+  ADJUSTMENT
+  FABRIC_CONSIDERATION
+  FIT_PREFERENCE
+  DESIGNER_NOTE
+  PRIVATE
+}
+
+enum MeasurementHistoryAction {
+  CREATED
+  UPDATED
+  APPROVED
+  ARCHIVED
+  RESTORED
+  NOTE_ADDED
+  PROFILE_CREATED
+  PROFILE_RENAMED
+  PROFILE_ARCHIVED
+  PROFILE_DELETED
+  PROFILE_DUPLICATED
+  SET_DEFAULT
+}
+
+enum MeasurementSessionMethod {
+  MANUAL
+  PHOTO_ESTIMATION
+}
+
+enum MeasurementSessionStatus {
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum DesignStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  PRIVATE
+}
+
+enum DesignDifficulty {
+  SIMPLE
+  MODERATE
+  ADVANCED
+  EXPERT
+}
+
+enum InspirationSource {
+  UPLOAD
+  PINTEREST
+  INSTAGRAM
+  SKETCH
+  MOOD_BOARD
+  OTHER
+}
+
+enum FabricAvailability {
+  IN_STOCK
+  LIMITED
+  OUT_OF_STOCK
+  SEASONAL
+}
+
+enum DesignNoteCategory {
+  CONSTRUCTION
+  FABRIC_ADVICE
+  MEASUREMENT
+  SPECIAL_INSTRUCTION
+  PRIVATE
+}
+
+enum OrderType {
+  BESPOKE
+  CUSTOM
+  READY_TO_WEAR
+  ALTERATION
+  REMAKE
+}
+
+enum OrderPriority {
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum OrderStatus {
+  DRAFT
+  PENDING_CONFIRMATION
+  CONFIRMED
+  AWAITING_PAYMENT
+  READY_FOR_PRODUCTION
+  IN_PRODUCTION
+  FITTING
+  ALTERATION
+  FINAL_INSPECTION
+  COMPLETED
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  ON_HOLD
+  QUALITY_CHECK
+  QUALITY_CHECK_FAILED
+  IN_TRANSIT
+  DISPUTED
+  REFUND_PROCESSING
+  REFUNDED
+}
+
+enum OrderPaymentStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  REFUNDED
+}
+
+enum DeliveryMethod {
+  PICKUP
+  DELIVERY
+}
+
+enum ProductionStageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+// The full set of milestones the visual Order Progress Timeline can show.
+// Not every stage applies to every order — OrderTimelineEntry.isApplicable
+// controls what actually renders for a given order/order type.
+enum OrderTimelineStage {
+  ORDER_CREATED
+  CONSULTATION
+  MEASUREMENTS_CONFIRMED
+  DESIGN_SELECTED
+  DESIGN_CUSTOMIZED
+  DESIGN_APPROVED
+  QUOTATION_CREATED
+  DEPOSIT_PAID
+  PRODUCTION_STARTED
+  CUTTING
+  SEWING
+  FINISHING
+  FITTING_SCHEDULED
+  FITTING_COMPLETED
+  ALTERATION_REQUIRED
+  FINAL_INSPECTION
+  QUALITY_CHECK
+  COMPLETED
+  READY_FOR_PICKUP
+  DELIVERY_CREATED
+  COURIER_ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CUSTOMER_CONFIRMED
+  PAYMENT_RELEASED
+  CANCELLED
+}
+
+enum OrderNoteCategory {
+  CUSTOMER
+  DESIGNER
+  PRODUCTION
+  FITTING
+  ALTERATION
+  PRIVATE
+}
+
+enum OrderFileCategory {
+  DESIGN_IMAGE
+  INSPIRATION
+  SKETCH
+  MEASUREMENT_SHEET
+  FABRIC_IMAGE
+  REFERENCE_DOCUMENT
+  FINAL_PHOTO
+}
+
+enum FittingStatus {
+  SCHEDULED
+  COMPLETED
+  ADJUSTMENT_REQUIRED
+  APPROVED
+}
+
+enum AlterationStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum OrderActivityType {
+  ORDER_CREATED
+  ORDER_UPDATED
+  DESIGN_UPDATED
+  MEASUREMENT_CHANGED
+  DESIGN_APPROVED
+  STATUS_CHANGED
+  PRODUCTION_STAGE_UPDATED
+  FITTING_SCHEDULED
+  FITTING_COMPLETED
+  ALTERATION_ADDED
+  ALTERATION_UPDATED
+  PAYMENT_REQUESTED
+  PAYMENT_RECEIVED
+  NOTE_ADDED
+  FILE_UPLOADED
+  ORDER_COMPLETED
+  PICKUP_SCHEDULED
+  DELIVERY_COMPLETED
+  ORDER_CANCELLED
+  ORDER_ARCHIVED
+  ORDER_RESTORED
+  ORDER_DUPLICATED
+  ORDER_REORDERED
+  PRODUCTION_UPDATE_POSTED
+  QUALITY_CHECK_PASSED
+  QUALITY_CHECK_FAILED
+  DELIVERY_CREATED
+  DELIVERY_STATUS_CHANGED
+  CUSTOMER_CONFIRMED_RECEIPT
+  DISPUTE_CREATED
+  DISPUTE_RESOLVED
+  PAYOUT_ELIGIBLE
+  PAYOUT_PROCESSED
+  REVIEW_SUBMITTED
+  REVIEW_EDITED
+}
+
+enum DesignPreviewStatus {
+  DRAFT
+  PREVIEW_READY
+  SENT_FOR_REVIEW
+  UNDER_CUSTOMER_REVIEW
+  REVISION_REQUESTED
+  UPDATED
+  APPROVED
+  REJECTED
+  ARCHIVED
+  LOCKED
+  // Phase 5 additions — used only by the new pre-order, Service-Request-
+  // anchored "Design Project" flow (DesignPreview.orderId is null). The
+  // pre-existing Order-anchored flow keeps using the values above
+  // unchanged; both vocabularies coexist on the same enum rather than
+  // forcing a risky rename across the whole legacy Design Studio.
+  DESIGN_IN_PROGRESS
+  DESIGN_SUBMITTED
+  CUSTOMER_REVIEW
+  CHANGES_REQUESTED
+  REVISION_IN_PROGRESS
+  REVISION_SUBMITTED
+  CUSTOMER_APPROVED
+  DESIGN_LOCKED
+  CANCELLED
+}
+
+// Whether the current version has a true interactive 3D model attached, or
+// only a 2D image — the UI must label the viewer honestly based on this,
+// never present a rotated flat image as if it were a real 3D garment.
+enum DesignPreviewType {
+  TWO_D
+  THREE_D
+}
+
+enum DesignVersionStatus {
+  DRAFT
+  ACTIVE
+  SUPERSEDED
+  APPROVED
+  REJECTED
+}
+
+enum DesignModelFormat {
+  GLB
+  GLTF
+  OBJ
+  FBX
+}
+
+enum DesignTextureRole {
+  PRIMARY
+  SECONDARY
+  TRIM
+  LINING
+  ACCENT
+}
+
+enum DesignRevisionRequestStatus {
+  OPEN
+  IN_PROGRESS
+  ADDRESSED
+  DECLINED
+}
+
+// There is no customer login in this phase (customers act through secure
+// share tokens), so comments/annotations/activity need to distinguish a
+// staff User author from the one customer on the order without a User row.
+enum DesignCommentAuthorType {
+  STAFF
+  CUSTOMER
+}
+
+enum DesignApprovalDecision {
+  APPROVED
+  REJECTED
+}
+
+enum DesignShareChannel {
+  LINK
+  EMAIL
+  WHATSAPP
+}
+
+enum DesignViewerType {
+  CUSTOMER
+  STAFF
+}
+
+// Part 6: how an uploaded reference file is categorized.
+enum DesignReferenceType {
+  SKETCH
+  FRONT_VIEW
+  BACK_VIEW
+  SIDE_VIEW
+  FABRIC_REFERENCE
+  COLOR_REFERENCE
+  DETAIL_REFERENCE
+  INSPIRATION
+  TECHNICAL_REFERENCE
+  OTHER
+}
+
+// Part 11's structured feedback categories, alongside a free-text OTHER.
+enum DesignChangeCategory {
+  COLOR
+  FABRIC
+  SLEEVE
+  NECKLINE
+  LENGTH
+  FIT
+  PATTERN
+  EMBROIDERY
+  OTHER
+}
+
+enum DesignActivityType {
+  CREATED
+  VERSION_CREATED
+  SENT_FOR_REVIEW
+  CUSTOMER_VIEWED
+  REVISION_REQUESTED
+  DESIGNER_UPDATED
+  COMMENT_ADDED
+  ANNOTATION_ADDED
+  APPROVED
+  REJECTED
+  LOCKED
+  ARCHIVED
+  SHARE_CREATED
+  SHARE_REVOKED
+  REVISION_SUBMITTED
+  POST_APPROVAL_CHANGE_REQUESTED
+}
+
+// ===================== QUOTATIONS, INVOICES & PAYMENTS (Phase 8) =====================
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+  CONVERTED
+  // Not in the Phase 8 spec's status list (section 7), but section 2 asks
+  // for an "Archive Quotation" action — added here the same way Phase 7
+  // added ARCHIVED to DesignPreviewStatus for the same reason.
+  ARCHIVED
+}
+
+// Mirrors DesignVersionStatus's invariant: only one version per quotation is
+// ever ACTIVE (under review) or ACCEPTED (final, locked) at a time.
+enum QuotationVersionStatus {
+  DRAFT
+  ACTIVE
+  SUPERSEDED
+  ACCEPTED
+  DECLINED
+}
+
+enum QuotationApprovalDecision {
+  ACCEPTED
+  DECLINED
+}
+
+// Shared between QuotationItem and InvoiceItem — the same service/product
+// categories apply to both (section 4 of the Phase 8 spec).
+enum FinancialLineItemType {
+  GARMENT
+  DESIGN_SERVICE
+  CONSULTATION
+  FABRIC
+  CUSTOMIZATION
+  EMBROIDERY
+  ALTERATION
+  FITTING
+  DELIVERY
+  ACCESSORIES
+  OTHER
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  VIEWED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOID
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+  // Not in the Phase 8 spec's status list (section 14), but section 12 asks
+  // for an "Archive Invoice" action — same reasoning as QuotationStatus.ARCHIVED.
+  ARCHIVED
+}
+
+enum PaymentMilestoneStatus {
+  PENDING
+  DUE
+  PAID
+  OVERDUE
+}
+
+enum PaymentMethod {
+  ONLINE
+  BANK_TRANSFER
+  CASH
+  POS
+  CARD
+  OTHER
+}
+
+// MANUAL marks an offline payment recorded by staff (no real gateway involved).
+// MOCK is a dev/demo provider so the flow can be exercised without real
+// gateway credentials — never used once a business connects a real provider.
+enum PaymentProviderType {
+  PAYSTACK
+  FLUTTERWAVE
+  STRIPE
+  MOCK
+  MANUAL
+}
+
+// Extended (protected-payment audit): PENDING/SUCCESSFUL/FAILED/REVERSED
+// already existed and are unchanged; the rest is additive so no existing
+// row's status value is invalidated. Deliberately no "SECURED" value —
+// research against Paystack's and Flutterwave's current docs confirmed
+// neither supports holding/delaying settlement, so a status implying
+// custody would be a false claim (see PLATFORM_INTEGRITY.md-equivalent
+// reasoning documented in lib/payment-architecture.ts).
+enum PaymentStatus {
+  PENDING
+  INITIALIZED
+  PROCESSING
+  SUCCESSFUL
+  FAILED
+  CANCELLED
+  AMOUNT_MISMATCH
+  REFUND_PENDING
+  PARTIALLY_REFUNDED
+  FULLY_REFUNDED
+  DISPUTED
+  REVERSED
+}
+
+enum GatewayConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum RefundType {
+  FULL
+  PARTIAL
+}
+
+enum RefundStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+}
+
+// TRANSFER/PAYOUT/CHARGEBACK/DISPUTE_CREATED are additive for forward
+// compatibility — a business's own connected gateway CAN emit chargeback
+// webhooks today (that's a real, documented Paystack/Flutterwave event),
+// so these are logged if received even though nothing yet automatically
+// acts on TRANSFER/PAYOUT (no platform-level transfer integration exists
+// — see lib/payment-architecture.ts).
+enum WebhookEventType {
+  PAYMENT_SUCCESSFUL
+  PAYMENT_FAILED
+  PAYMENT_PENDING
+  PAYMENT_REVERSED
+  REFUND_SUCCESSFUL
+  REFUND_FAILED
+  TRANSFER_SUCCESSFUL
+  TRANSFER_FAILED
+  CHARGEBACK
+  DISPUTE_CREATED
+}
+
+enum WebhookProcessingStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  IGNORED
+}
+
+// MANUAL means the business enters tracking info themselves (or staff calls
+// the courier directly) — no real courier API involved. MOCK is a dev/demo
+// provider mirroring PaymentProviderType.MOCK, so the fulfillment flow can be
+// exercised end-to-end without live courier credentials. Neither Fashion360
+// nor this codebase has real courier API access configured yet, so — per
+// the Phase 7 spec's own "integrate only one suitable provider if credentials
+// are available" instruction — no named real courier is wired; the
+// abstraction layer (LogisticsProvider interface) is what makes adding one
+// later a new adapter, not a schema change.
+enum LogisticsProviderType {
+  MOCK
+  MANUAL
+}
+
+enum DeliveryStatus {
+  CREATED
+  COURIER_ASSIGNED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  CANCELLED
+  RETURNED
+}
+
+enum DeliveryEventType {
+  CREATED
+  COURIER_ASSIGNED
+  PICKUP_SCHEDULED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  CANCELLED
+  RETURNED
+  STATUS_UPDATE
+}
+
+enum QualityControlResult {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum DisputeIssueType {
+  WRONG_ITEM
+  DAMAGED
+  POOR_QUALITY
+  NOT_AS_DESCRIBED
+  SIZE_MISMATCH
+  LATE_DELIVERY
+  MISSING_ITEMS
+  OTHER
+}
+
+enum DisputeResolutionType {
+  RELEASE_FULL_PAYMENT
+  PARTIAL_REFUND
+  FULL_REFUND
+  REWORK_REQUIRED
+  RETURN_REQUIRED
+  CANCEL_ORDER
+}
+
+// PENDING/REVERSED added (protected-payment audit) — additive only.
+// NOT_ELIGIBLE maps to the spec's PAYOUT_NOT_READY, PAID maps to
+// PAYOUT_SUCCESSFUL (kept as-is rather than renamed, to avoid a breaking
+// migration across already-shipped Phase 7 code).
+enum PayoutStatus {
+  NOT_ELIGIBLE
+  PENDING
+  ELIGIBLE
+  PROCESSING
+  PAID
+  FAILED
+  REVERSED
+}
+
+// The unified financial ledger + audit trail (sections 27 and 37 of the
+// Phase 8 spec share almost identical row shapes, so one model serves both
+// rather than keeping two near-duplicate tables in sync).
+enum FinancialTransactionType {
+  QUOTATION_CREATED
+  QUOTATION_SENT
+  QUOTATION_VIEWED
+  QUOTATION_ACCEPTED
+  QUOTATION_DECLINED
+  QUOTATION_REVISION_REQUESTED
+  QUOTATION_CONVERTED
+  QUOTATION_CANCELLED
+  QUOTATION_ARCHIVED
+  ORDER_AGREEMENT_GENERATED
+  INVOICE_CREATED
+  INVOICE_SENT
+  INVOICE_VIEWED
+  INVOICE_VOIDED
+  INVOICE_ARCHIVED
+  PAYMENT_RECEIVED
+  PAYMENT_FAILED
+  PAYMENT_AMOUNT_MISMATCH
+  REFUND_CREATED
+  REFUND_PROCESSED
+  GATEWAY_CONNECTED
+  GATEWAY_DISCONNECTED
+  DISPUTE_CREATED
+  DISPUTE_RESOLVED
+  PAYOUT_ELIGIBLE
+  PAYOUT_PROCESSING
+  PAYOUT_COMPLETED
+  PAYOUT_FAILED
+}
+
+// There is no customer login (customers act through secure share tokens, same
+// as Phase 7), and webhook-driven events have no human actor at all.
+enum FinancialActorType {
+  STAFF
+  CUSTOMER
+  SYSTEM
+}
+
+// ===================== CUSTOMER PLATFORM IDENTITY (Phase 1 — Fashion360 Ecosystem) =====================
+
+enum FashionPassportStatus {
+  INCOMPLETE
+  COMPLETE
+}
+
+// Mirrors DesignRevisionRequestStatus's shape but for a business<->customer
+// relationship rather than a design: a business can invite/request a
+// relationship, the customer accepts, and either side can later end it.
+// DECLINED (a PENDING request the customer said no to) is kept distinct
+// from INACTIVE (a once-ACTIVE relationship either side later ended) so the
+// history reads correctly on both sides.
+enum BusinessCustomerRelationshipStatus {
+  PENDING
+  ACTIVE
+  DECLINED
+  INACTIVE
+  BLOCKED
+}
+
+enum RelationshipInitiator {
+  BUSINESS
+  CUSTOMER
+}
+
+enum ProfileVisibility {
+  PRIVATE
+  BUSINESS_ONLY
+  PUBLIC
+}
+
+enum ConsentType {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+}
+
+// Identity/access/security-relevant events only — distinct from the
+// per-domain activity feeds already in place (OrderActivity, DesignActivity,
+// FinancialTransaction, ...), which log business-process events, not
+// account/session/permission events.
+enum AuditLogAction {
+  USER_REGISTERED
+  CUSTOMER_REGISTERED
+  BUSINESS_CREATED
+  USER_LOGIN
+  USER_LOGOUT
+  PASSWORD_CHANGED
+  PASSWORD_RESET_REQUESTED
+  EMAIL_VERIFIED
+  ROLE_CHANGED
+  BUSINESS_USER_ADDED
+  BUSINESS_USER_REMOVED
+  CUSTOMER_ACCESS_GRANTED
+  CUSTOMER_ACCESS_REVOKED
+  BUSINESS_RELATIONSHIP_REQUESTED
+  BUSINESS_RELATIONSHIP_ACCEPTED
+  BUSINESS_RELATIONSHIP_DECLINED
+  MEASUREMENT_ACCESS_GRANTED
+  MEASUREMENT_ACCESS_REVOKED
+  BUSINESS_PROFILE_UPDATED
+  DISPUTE_REVIEWED
+  DISPUTE_RESOLVED_BY_ADMIN
+  REFUND_APPROVED_BY_ADMIN
+  REFUND_REJECTED_BY_ADMIN
+  PAYOUT_RETRIED_BY_ADMIN
+  PAYOUT_APPROVED_BY_ADMIN
+  CANCELLATION_POLICY_UPDATED
+  PAYOUT_RECIPIENT_VERIFIED
+}
+
+// ===================== BUSINESS PROFILE & PORTFOLIO (Phase 2) =====================
+
+enum BusinessProfileVisibility {
+  PUBLIC
+  PRIVATE
+  UNLISTED
+}
+
+enum BusinessVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+  SUSPENDED
+}
+
+// ===================== CUSTOMER MEASUREMENT VAULT (Phase 2) =====================
+
+// Distinct from Measurement/MeasurementProfile (Phase 4), which are
+// business-owned CRM records a business staff member creates for a
+// specific customer relationship. This is the customer's own copy, created
+// by themselves, that stays with them across every business (Part 14: "The
+// Measurement Vault belongs to the customer").
+enum MeasurementAccessScope {
+  SHARED_WITH_BUSINESS
+  SHARED_WITH_ORDER
+  SHARED_WITH_APPROVED_BUSINESSES
+}
+
+// ===================== CUSTOMER FASHION HISTORY (Phase 2) =====================
+
+enum FashionHistoryEventType {
+  BUSINESS_CONNECTED
+  ORDER_PLACED
+  DESIGN_APPROVED
+  GARMENT_DELIVERED
+  REVIEW_LEFT
+  OTHER
+}
+
 // ===================== PLATFORM / TENANCY =====================
 
 model Business {
@@ -75,6 +984,73 @@ model Business {
 
   users         User[]
   notifications Notification[]
+  customers     Customer[]
+  customerTags  CustomerTag[]
+
+  appointmentTypes AppointmentType[]
+  appointments     Appointment[]
+  blockedDates     BlockedDate[]
+  availability     BusinessAvailability?
+
+  measurementTypes     MeasurementType[]
+  measurementTemplates MeasurementTemplate[]
+  measurementProfiles  MeasurementProfile[]
+  measurements         Measurement[]
+  measurementSessions  MeasurementSession[]
+
+  designCategories     DesignCategory[]
+  designTags           DesignTag[]
+  designCollections    DesignCollection[]
+  designs              Design[]
+  fabricLibraryItems   FabricLibraryItem[]
+  colorLibraryItems    ColorLibraryItem[]
+  customerInspirations CustomerInspiration[]
+  designViews          DesignView[]
+
+  orders                   Order[]
+  productionStageTemplates ProductionStageTemplate[]
+  designPreviews           DesignPreview[]
+
+  financialSettings         BusinessFinancialSettings?
+  quotations                Quotation[]
+  invoices                  Invoice[]
+  payments                  Payment[]
+  refunds                   Refund[]
+  receipts                  Receipt[]
+  paymentGatewayConnections PaymentGatewayConnection[]
+  paymentWebhookEvents      PaymentWebhookEvent[]
+  financialTransactions     FinancialTransaction[]
+
+  customerRelationships BusinessCustomerRelationship[]
+  auditLogEvents        AuditLog[]                     @relation("AuditLogBusiness")
+
+  profile                   BusinessProfile?
+  specialties               BusinessSpecialty[]
+  portfolioItems            BusinessPortfolioItem[]
+  verification              BusinessVerification?
+  measurementGrants         MeasurementAccessGrant[]
+  measurementAccessRequests MeasurementAccessRequest[]
+  designHistoryEntries      CustomerDesignHistory[]
+  wardrobeItems             CustomerWardrobeItem[]
+  fashionHistoryEntries     CustomerFashionHistory[]
+
+  services                     BusinessService[]
+  serviceRequests              ServiceRequest[]
+  favoritedBy                  BusinessFavorite[]
+  discoverySettings            BusinessDiscoverySettings?
+  orderAgreements              OrderAgreement[]
+  productionUpdates            ProductionUpdate[]
+  logisticsProviderConnections LogisticsProviderConnection[]
+  deliveries                   Delivery[]
+  deliveryWebhookEvents        DeliveryWebhookEvent[]
+  disputes                     Dispute[]
+  payouts                      Payout[]
+  reviews                      Review[]
+  rating                       BusinessRating?
+  ranking                      BusinessRanking?
+  trustBadgeAssignments        TrustBadgeAssignment[]
+  preferredByCustomers         CustomerPreferredDesigner[]
+  payoutRecipient              PayoutRecipient?
 
   @@index([slug])
 }
@@ -108,6 +1084,93 @@ model User {
   accounts      Account[]
   sessions      Session[]
   notifications Notification[]
+
+  authoredCustomerNotes   CustomerNote[]     @relation("CustomerNoteAuthor")
+  uploadedCustomerFiles   CustomerFile[]     @relation("CustomerFileUploader")
+  customerActivityActions CustomerActivity[] @relation("CustomerActivityActor")
+
+  assignedAppointments      Appointment[]        @relation("AppointmentAssignedStaff")
+  authoredAppointmentNotes  AppointmentNote[]    @relation("AppointmentNoteAuthor")
+  appointmentHistoryActions AppointmentHistory[] @relation("AppointmentHistoryActor")
+
+  createdMeasurements        Measurement[]        @relation("MeasurementCreatedBy")
+  aiApprovedMeasurements     Measurement[]        @relation("MeasurementAiApprovedBy")
+  authoredMeasurementNotes   MeasurementNote[]    @relation("MeasurementNoteAuthor")
+  uploadedMeasurementFiles   MeasurementFile[]    @relation("MeasurementFileUploader")
+  measurementHistoryActions  MeasurementHistory[] @relation("MeasurementHistoryActor")
+  startedMeasurementSessions MeasurementSession[] @relation("MeasurementSessionStarter")
+
+  createdDesigns      Design[]     @relation("DesignCreatedBy")
+  authoredDesignNotes DesignNote[] @relation("DesignNoteAuthor")
+  designViews         DesignView[] @relation("DesignViewViewer")
+
+  createdOrders          Order[]              @relation("OrderCreatedBy")
+  assignedOrders         Order[]              @relation("OrderAssignedDesigner")
+  orderCancellations     OrderCancellation[]  @relation("OrderCancelledBy")
+  orderTimelineActions   OrderTimelineEntry[] @relation("OrderTimelineActor")
+  authoredOrderNotes     OrderNote[]          @relation("OrderNoteAuthor")
+  uploadedOrderFiles     OrderFile[]          @relation("OrderFileUploader")
+  createdFittingSessions FittingSession[]     @relation("FittingSessionCreatedBy")
+  createdAlterations     Alteration[]         @relation("AlterationCreatedBy")
+  orderActivityActions   OrderActivity[]      @relation("OrderActivityActor")
+
+  createdDesignPreviews          DesignPreview[]        @relation("DesignPreviewCreatedBy")
+  assignedDesignPreviews         DesignPreview[]        @relation("DesignPreviewAssignedDesigner")
+  uploadedDesignReferences       DesignReference[]      @relation("DesignReferenceUploadedBy")
+  createdDesignVersions          DesignVersion[]        @relation("DesignVersionCreatedBy")
+  uploadedDesignModels           DesignModel[]          @relation("DesignModelUploadedBy")
+  authoredDesignComments         DesignComment[]        @relation("DesignCommentAuthor")
+  authoredDesignAnnotations      DesignAnnotation[]     @relation("DesignAnnotationAuthor")
+  createdDesignShares            DesignShare[]          @relation("DesignShareCreatedBy")
+  designActivityActions          DesignActivity[]       @relation("DesignActivityActor")
+  confirmedDesignApprovalRecords DesignApprovalRecord[] @relation("DesignApprovalRecordDesigner")
+
+  createdQuotations           Quotation[]                @relation("QuotationCreatedBy")
+  createdQuotationVersions    QuotationVersion[]         @relation("QuotationVersionCreatedBy")
+  authoredQuotationComments   QuotationComment[]         @relation("QuotationCommentAuthor")
+  createdInvoices             Invoice[]                  @relation("InvoiceCreatedBy")
+  recordedPayments            Payment[]                  @relation("PaymentRecordedBy")
+  processedRefunds            Refund[]                   @relation("RefundProcessedBy")
+  connectedPaymentGateways    PaymentGatewayConnection[] @relation("PaymentGatewayConnectedBy")
+  financialTransactionActions FinancialTransaction[]     @relation("FinancialTransactionActor")
+  acceptedOrderAgreements     OrderAgreement[]           @relation("OrderAgreementBusinessAcceptedBy")
+
+  // Platform-level customer identity (Phase 1) — present only when role is
+  // CUSTOMER. Deliberately separate from the business-owned Customer CRM
+  // model below: this is the person's own Fashion360 account, independent
+  // of any single business relationship.
+  customerProfile CustomerProfile?
+  consents        UserConsent[]
+  auditLogEvents  AuditLog[]       @relation("AuditLogUser")
+
+  uploadedPortfolioItems   BusinessPortfolioItem[]  @relation("PortfolioItemUploadedBy")
+  reviewedVerifications    BusinessVerification[]   @relation("BusinessVerificationReviewedBy")
+  grantedMeasurementAccess MeasurementAccessGrant[] @relation("MeasurementAccessGrantedBy")
+
+  authoredServiceRequestResponses ServiceRequestResponse[] @relation("ServiceRequestResponseAuthor")
+
+  createdMeasurementVersions      MeasurementVersion[]           @relation("MeasurementVersionCreatedBy")
+  requestedMeasurementAccess      MeasurementAccessRequest[]     @relation("MeasurementAccessRequestedBy")
+  measurementAccessLogViews       MeasurementAccessLog[]         @relation("MeasurementAccessLogViewedBy")
+  requestedMeasurementCorrections MeasurementCorrectionRequest[] @relation("MeasurementCorrectionRequestedBy")
+  respondedMeasurementCorrections MeasurementCorrectionRequest[] @relation("MeasurementCorrectionRespondedBy")
+
+  completedProductionStages         OrderProductionStage[]        @relation("ProductionStageCompletedBy")
+  createdProductionUpdates          ProductionUpdate[]            @relation("ProductionUpdateCreatedBy")
+  confirmedQualityControlChecklists QualityControlChecklist[]     @relation("QualityControlConfirmedBy")
+  connectedLogisticsProviders       LogisticsProviderConnection[] @relation("LogisticsProviderConnectedBy")
+  createdDeliveries                 Delivery[]                    @relation("DeliveryCreatedBy")
+  resolvedDisputes                  DisputeResolution[]           @relation("DisputeResolutionResolvedBy")
+  processedPayouts                  Payout[]                      @relation("PayoutProcessedBy")
+  updatedPlatformSettings           PlatformSettings[]            @relation("PlatformSettingsUpdatedBy")
+
+  designerReviews                Review[]                @relation("ReviewDesigner")
+  authoredReviewResponses        ReviewResponse[]        @relation("ReviewResponseAuthor")
+  reviewModerationActions        ReviewModeration[]      @relation("ReviewModerationActor")
+  resolvedReviewReports          ReviewReport[]          @relation("ReviewReportResolvedBy")
+  resolvedReviewDeletionRequests ReviewDeletionRequest[] @relation("ReviewDeletionRequestResolvedBy")
+  updatedRankingFactors          RankingFactor[]         @relation("RankingFactorUpdatedBy")
+  updatedPersonalizationWeights  PersonalizationWeight[] @relation("PersonalizationWeightUpdatedBy")
 
   @@index([businessId])
 }
@@ -160,6 +1223,15 @@ model Notification {
   userId     String?
   user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Phase 3 addition: a notification can instead target the platform
+  // customer on the other side of a business interaction (e.g. "XYZ Fashion
+  // responded to your request") rather than a business-staff User. Every
+  // row still carries businessId since every Phase 3 notification is about
+  // a specific business relationship — existing business-staff rows are
+  // unaffected since this is purely additive and nullable.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
   title  String
   body   String
   type   String    @default("info") // info | success | warning | danger — drives bell icon styling
@@ -168,4 +1240,4296 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([businessId, userId])
+  @@index([customerProfileId])
+}
+
+// ===================== CRM: CUSTOMERS (Phase 2) =====================
+
+model Customer {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Human-friendly ID shown in the UI (e.g. CUS-0001), unique per business.
+  customerCode String
+
+  profilePhotoUrl String?
+  firstName       String
+  lastName        String
+  email           String?
+  phone           String?
+  whatsapp        String?
+  gender          Gender?
+  dateOfBirth     DateTime?
+  occupation      String?
+
+  country String?
+  state   String?
+  city    String?
+  address String?
+
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  referralSource         String?
+  preferredCommunication PreferredCommunication?
+  specialNotes           String?
+
+  status     CustomerStatus @default(LEAD)
+  isVip      Boolean        @default(false)
+  isArchived Boolean        @default(false)
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags         CustomerTag[]
+  notes        CustomerNote[]
+  preferences  CustomerPreference?
+  files        CustomerFile[]
+  activities   CustomerActivity[]
+  appointments Appointment[]
+
+  measurementProfiles MeasurementProfile[]
+  measurements        Measurement[]
+  measurementSessions MeasurementSession[]
+
+  designFavorites      DesignFavorite[]
+  designCustomizations DesignCustomization[]
+  inspirations         CustomerInspiration[]
+
+  orders                Order[]
+  designPreviews        DesignPreview[]
+  designApprovalRecords DesignApprovalRecord[]
+
+  quotations Quotation[]
+  invoices   Invoice[]
+  payments   Payment[]
+
+  // Set once this CRM row is matched/claimed by a real platform account
+  // (Phase 1) — see BusinessCustomerRelationship.linkedCustomer. Null means
+  // this customer has no Fashion360 account of their own yet; every Phase
+  // 2-8 feature keeps working against this row either way.
+  businessRelationship BusinessCustomerRelationship?
+  orderAgreements      OrderAgreement[]
+  disputes             Dispute[]
+
+  @@unique([businessId, customerCode])
+  @@index([businessId, status])
+  @@index([businessId, isVip])
+  @@index([businessId, isArchived])
+  @@index([businessId, lastName, firstName])
+}
+
+model CustomerTag {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  color    String? // hex, used for badge styling
+  isSystem Boolean @default(false) // seeded predefined tag vs a custom one the owner created
+
+  createdAt DateTime @default(now())
+
+  customers Customer[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+model CustomerNote {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("CustomerNoteAuthor", fields: [authorId], references: [id])
+
+  body String
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, createdAt])
+}
+
+// One structured preferences row per customer, distinct from the freeform
+// CustomerNote history above.
+model CustomerPreference {
+  id         String   @id @default(cuid())
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  fabricPreferences   String[]
+  colorPreferences    String[]
+  stylePreferences    String[]
+  bodyShapeNotes      String?
+  specialInstructions String?
+
+  updatedAt DateTime @updatedAt
+}
+
+model CustomerFile {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  url       String
+  name      String
+  fileType  String?
+  sizeBytes Int?
+
+  uploadedById String?
+  uploadedBy   User?   @relation("CustomerFileUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+}
+
+model CustomerActivity {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  businessId String // denormalized for a future cross-customer activity feed
+
+  type        CustomerActivityType
+  title       String
+  description String?
+
+  actorId String?
+  actor   User?   @relation("CustomerActivityActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([customerId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+// ===================== APPOINTMENTS (Phase 3) =====================
+
+model AppointmentType {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name                   String
+  color                  String                  @default("#6C3CF0") // hex, drives calendar color-coding
+  defaultDurationMinutes Int                     @default(60)
+  isSystem               Boolean                 @default(false) // seeded default type vs a custom one the owner created
+  category               AppointmentTypeCategory @default(OTHER)
+
+  createdAt DateTime @default(now())
+
+  appointments Appointment[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+model Appointment {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Phase 4: set when a platform customer books this themselves (via
+  // /account, not staff on their behalf) — nullable so every existing
+  // staff-created appointment (no platform login involved) is untouched.
+  // Resolving to `customerId` above still goes through the same
+  // BusinessCustomerRelationship.linkedCustomerId bridge Phase 2/3 already
+  // established, so the business's existing calendar/dashboard needs no
+  // changes to see these appointments.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  serviceRequestId String?
+  serviceRequest   ServiceRequest? @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
+
+  typeId String
+  type   AppointmentType @relation(fields: [typeId], references: [id])
+
+  title  String?
+  status AppointmentStatus @default(SCHEDULED)
+
+  startTime DateTime
+  endTime   DateTime
+
+  location        String?
+  assignedStaffId String?
+  assignedStaff   User?   @relation("AppointmentAssignedStaff", fields: [assignedStaffId], references: [id])
+
+  notes               String?
+  reminderPreferences Json? // { channels: ReminderChannel[], offsetsMinutes: number[] }
+
+  // Discrete occurrences of a recurring series share this id; each row is a
+  // real, independently editable/cancelable appointment.
+  recurrenceGroupId String?
+
+  cancelReason    String?
+  rescheduleCount Int     @default(0)
+
+  // Part 10: a *request* to reschedule, awaiting the other party's approval
+  // — distinct from the business's existing unilateral reschedule endpoint,
+  // which staff use to move their own calendar directly. Approving copies
+  // these into startTime/endTime and clears them; declining just clears them.
+  proposedStartTime DateTime?
+  proposedEndTime   DateTime?
+  proposedByRole    ServiceRequestActor?
+  proposedReason    String?
+
+  checkedInAt DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointmentNotes    AppointmentNote[]
+  reminders           AppointmentReminder[]
+  history             AppointmentHistory[]
+  measurementVersions MeasurementVersion[]
+  designPreviews      DesignPreview[]
+
+  @@index([businessId, startTime])
+  @@index([businessId, status])
+  @@index([customerId])
+  @@index([customerProfileId])
+  @@index([serviceRequestId])
+  @@index([assignedStaffId])
+  @@index([recurrenceGroupId])
+}
+
+model AppointmentNote {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  category AppointmentNoteCategory @default(CONSULTATION)
+  body     String
+
+  authorId String?
+  author   User?   @relation("AppointmentNoteAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([appointmentId, createdAt])
+}
+
+model AppointmentReminder {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  channel       ReminderChannel
+  minutesBefore Int
+  scheduledFor  DateTime
+  status        ReminderStatus  @default(PENDING)
+  sentAt        DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([status, scheduledFor])
+  @@index([appointmentId])
+}
+
+model AppointmentHistory {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  businessId    String
+
+  action      AppointmentHistoryAction
+  description String?
+
+  actorId String?
+  actor   User?   @relation("AppointmentHistoryActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([appointmentId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+model BusinessAvailability {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  breakStart String? // "13:00", within the business's working hours
+  breakEnd   String? // "14:00"
+
+  slotIntervalMinutes  Int  @default(30)
+  bufferMinutes        Int  @default(0)
+  maxDailyAppointments Int?
+
+  vacationMode    Boolean   @default(false)
+  vacationStart   DateTime?
+  vacationEnd     DateTime?
+  vacationMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Single-day blocks or public holidays (endDate null) and multi-day ranges
+// (endDate set) that override normal working hours.
+model BlockedDate {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  date    DateTime
+  endDate DateTime?
+  reason  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, date])
+}
+
+// ===================== MEASUREMENTS (Phase 4) =====================
+
+// The catalog of fields a business can record (Neck, Waist, ...). Seeded
+// with system defaults across categories; businesses can add custom ones.
+model MeasurementType {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  key       String // stable slug, e.g. "neck" — used as the key in Measurement.values
+  label     String
+  category  MeasurementFieldCategory
+  unit      MeasurementUnit          @default(METRIC)
+  sortOrder Int                      @default(0)
+  isSystem  Boolean                  @default(false)
+
+  createdAt DateTime @default(now())
+
+  templateFields MeasurementTemplateField[]
+
+  @@unique([businessId, key])
+  @@index([businessId, category])
+}
+
+// Named sets of required/optional fields (Men, Women, Agbada, Wedding Gown...).
+model MeasurementTemplate {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  category String? // free-form grouping tag: "Men" | "Women" | "Children" | "Traditional" | ...
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fields       MeasurementTemplateField[]
+  measurements Measurement[]
+  sessions     MeasurementSession[]
+
+  @@unique([businessId, name])
+}
+
+model MeasurementTemplateField {
+  id         String              @id @default(cuid())
+  templateId String
+  template   MeasurementTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  measurementTypeId String
+  measurementType   MeasurementType @relation(fields: [measurementTypeId], references: [id], onDelete: Cascade)
+
+  required  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  @@unique([templateId, measurementTypeId])
+}
+
+// A named collection of measurement snapshots for one customer, e.g.
+// "Wedding Measurements" or "2025 Traditional Wear".
+model MeasurementProfile {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  name       String
+  isDefault  Boolean   @default(false)
+  isArchived Boolean   @default(false)
+  archivedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  measurements Measurement[]
+  sessions     MeasurementSession[]
+  history      MeasurementHistory[]
+  files        MeasurementFile[]
+  orders       Order[]
+
+  @@index([businessId, customerId])
+  @@index([businessId, isDefault])
+}
+
+// A saved measurement snapshot within a profile — the actual values.
+model Measurement {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  profileId String
+  profile   MeasurementProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  templateId String?
+  template   MeasurementTemplate? @relation(fields: [templateId], references: [id])
+
+  source MeasurementSource       @default(MANUAL)
+  status MeasurementRecordStatus @default(APPROVED)
+  unit   MeasurementUnit         @default(METRIC)
+  values Json // { [measurementTypeKey]: number }
+
+  // AI-estimation inputs, kept for audit/reproducibility even after approval.
+  heightCm      Float?
+  weightKg      Float?
+  gender        Gender?
+  frontImageUrl String?
+  sideImageUrl  String?
+
+  fitPreference FitPreference?
+
+  aiApprovedAt   DateTime?
+  aiApprovedById String?
+  aiApprovedBy   User?     @relation("MeasurementAiApprovedBy", fields: [aiApprovedById], references: [id])
+
+  createdById String?
+  createdBy   User?   @relation("MeasurementCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notes   MeasurementNote[]
+  files   MeasurementFile[]
+  history MeasurementHistory[]
+
+  @@index([businessId, profileId])
+  @@index([businessId, customerId])
+  @@index([businessId, status])
+}
+
+model MeasurementNote {
+  id            String      @id @default(cuid())
+  measurementId String
+  measurement   Measurement @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+
+  category MeasurementNoteCategory @default(DESIGNER_NOTE)
+  body     String
+
+  authorId String?
+  author   User?   @relation("MeasurementNoteAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([measurementId, createdAt])
+}
+
+// Attachments — reference images, sketches, previous sheets, documents.
+// May hang off a specific Measurement snapshot or the whole Profile.
+model MeasurementFile {
+  id         String @id @default(cuid())
+  businessId String
+  customerId String
+
+  measurementId String?
+  measurement   Measurement?        @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  profileId     String?
+  profile       MeasurementProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  category  String // reference_image | sketch | previous_sheet | document
+  url       String
+  name      String
+  fileType  String?
+  sizeBytes Int?
+
+  uploadedById String?
+  uploadedBy   User?   @relation("MeasurementFileUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([measurementId])
+  @@index([profileId])
+}
+
+// Audit trail for every measurement/profile change.
+model MeasurementHistory {
+  id         String @id @default(cuid())
+  businessId String
+
+  measurementId String?
+  measurement   Measurement?        @relation(fields: [measurementId], references: [id], onDelete: Cascade)
+  profileId     String?
+  profile       MeasurementProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  action         MeasurementHistoryAction
+  previousValues Json?
+  currentValues  Json?
+  changes        Json? // [{ field, from, to }]
+  reason         String?
+  notes          String?
+
+  actorId String?
+  actor   User?   @relation("MeasurementHistoryActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([measurementId, createdAt])
+  @@index([profileId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+// Tracks the activity of taking measurements — start/pause/resume/complete —
+// distinct from the resulting Measurement snapshot it may produce.
+model MeasurementSession {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  profileId  String?
+  profile    MeasurementProfile?  @relation(fields: [profileId], references: [id])
+  templateId String?
+  template   MeasurementTemplate? @relation(fields: [templateId], references: [id])
+
+  method MeasurementSessionMethod
+  status MeasurementSessionStatus @default(IN_PROGRESS)
+
+  draftValues Json?
+
+  resultMeasurementId String? @unique
+
+  startedById String?
+  startedBy   User?   @relation("MeasurementSessionStarter", fields: [startedById], references: [id])
+
+  startedAt   DateTime  @default(now())
+  pausedAt    DateTime?
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([businessId, status])
+  @@index([businessId, customerId])
+}
+
+// ===================== DESIGN GALLERY & DESIGN STUDIO (Phase 5) =====================
+
+// The catalog of design categories a business browses/filters by (Men, Women,
+// Bridal, ...). Seeded with system defaults; businesses can add custom ones.
+model DesignCategory {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  icon     String?
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  designs Design[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+model DesignTag {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  color    String?
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  designs Design[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+// Named groupings of designs, e.g. "2026 Collection", "Wedding Collection".
+model DesignCollection {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  coverImageUrl String?
+  status        DesignStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  designs Design[]
+
+  @@unique([businessId, name])
+  @@index([businessId, status])
+}
+
+// A single catalogued design/garment a business can showcase, customize, and
+// eventually turn into an order (Phase 6).
+model Design {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Human-friendly ID shown in the UI (e.g. DES-0001), unique per business.
+  designCode String
+
+  name        String
+  description String?
+
+  categoryId   String?
+  category     DesignCategory?   @relation(fields: [categoryId], references: [id])
+  collectionId String?
+  collection   DesignCollection? @relation(fields: [collectionId], references: [id])
+
+  mainImageUrl String?
+
+  occasion                String?
+  estimatedCompletionDays Int?
+  basePrice               Float?
+  difficulty              DesignDifficulty?
+
+  fabricRecommendations String[]
+  colorRecommendations  String[]
+
+  status     DesignStatus @default(DRAFT)
+  isFeatured Boolean      @default(false)
+
+  viewCount Int @default(0)
+
+  createdById String?
+  createdBy   User?   @relation("DesignCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags           DesignTag[]
+  images         DesignImage[]
+  notes          DesignNote[]
+  favorites      DesignFavorite[]
+  customizations DesignCustomization[]
+  views          DesignView[]
+  inspirations   CustomerInspiration[]
+  orderItems     OrderItem[]
+  designPreviews DesignPreview[]
+
+  @@unique([businessId, designCode])
+  @@index([businessId, status])
+  @@index([businessId, categoryId])
+  @@index([businessId, collectionId])
+  @@index([businessId, isFeatured])
+}
+
+// Gallery images (and future-ready video) attached to a Design, distinct from
+// the single Design.mainImageUrl hero shot.
+model DesignImage {
+  id       String @id @default(cuid())
+  designId String
+  design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  url       String
+  mediaType String @default("image") // image | video
+  sortOrder Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([designId])
+}
+
+model DesignNote {
+  id       String @id @default(cuid())
+  designId String
+  design   Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  category DesignNoteCategory @default(CONSTRUCTION)
+  body     String
+
+  authorId String?
+  author   User?   @relation("DesignNoteAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([designId, createdAt])
+}
+
+// A customer's favorited design — recorded by staff on the customer's behalf
+// during a consultation (there is no customer-facing login in this phase).
+// customerId (legacy per-business CRM row) is how business staff favorite a
+// design on a walk-in/consultation customer's behalf. customerProfileId
+// (Phase 10) is the marketplace-wide self-service path — a customer can
+// save a design from a business they've never established a CRM
+// relationship with yet, mirroring BusinessFavorite/PortfolioFavorite's
+// existing customerProfileId-direct pattern rather than requiring one.
+// Both are optional and independently unique so neither path collides.
+model DesignFavorite {
+  id         String @id @default(cuid())
+  businessId String
+  designId   String
+  design     Design @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([designId, customerId])
+  @@unique([designId, customerProfileId])
+  @@index([businessId, customerId])
+  @@index([designId])
+  @@index([customerProfileId])
+}
+
+// The Design Studio panel state: one live, autosaved customization per
+// customer per design, ready to seed an order in Phase 6.
+model DesignCustomization {
+  id         String   @id @default(cuid())
+  businessId String
+  designId   String
+  design     Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  fabricId String?
+  fabric   FabricLibraryItem? @relation(fields: [fabricId], references: [id])
+
+  primaryColor   String?
+  secondaryColor String?
+  sleeveStyle    String?
+  neckline       String?
+  collarStyle    String?
+  buttonStyle    String?
+  embroidery     String?
+  length         String?
+  pocketStyle    String?
+  cuffStyle      String?
+  lining         String?
+  accessories    String[]
+  extraNotes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([designId, customerId])
+  @@index([businessId, customerId])
+}
+
+model FabricLibraryItem {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name            String
+  imageUrl        String?
+  colorVariants   String[]
+  texture         String?
+  description     String?
+  recommendedUses String[]
+  availability    FabricAvailability @default(IN_STOCK)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customizations              DesignCustomization[]
+  orderCustomizations         OrderCustomization[]
+  designVersionCustomizations DesignVersionCustomization[]
+  designTextures              DesignTexture[]
+
+  @@unique([businessId, name])
+  @@index([businessId, availability])
+}
+
+model ColorLibraryItem {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name      String
+  hexValue  String
+  pairsWith String[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+// Reference images/mood boards a customer brings in (Pinterest, Instagram,
+// sketches), optionally linked to a catalogued Design for comparison.
+model CustomerInspiration {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  relatedDesignId String?
+  relatedDesign   Design? @relation(fields: [relatedDesignId], references: [id])
+
+  source        InspirationSource @default(UPLOAD)
+  designerNotes String?
+
+  createdAt DateTime @default(now())
+
+  images CustomerInspirationImage[]
+
+  @@index([businessId, customerId])
+}
+
+model CustomerInspirationImage {
+  id            String              @id @default(cuid())
+  inspirationId String
+  inspiration   CustomerInspiration @relation(fields: [inspirationId], references: [id], onDelete: Cascade)
+
+  url       String
+  sortOrder Int    @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([inspirationId])
+}
+
+// Lightweight view log powering "Recently Viewed" and "Popular Designs".
+model DesignView {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  designId   String
+  design     Design   @relation(fields: [designId], references: [id], onDelete: Cascade)
+
+  customerId String?
+  viewedById String?
+  viewedBy   User?   @relation("DesignViewViewer", fields: [viewedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([designId, createdAt])
+}
+
+// ===================== ORDER MANAGEMENT & PRODUCTION WORKFLOW (Phase 6) =====================
+
+// Business-configurable production stage definitions (Measurement, Cutting,
+// Sewing, Finishing, Fitting, Alteration, Final Inspection, ...). Seeded with
+// system defaults; each Order gets its own OrderProductionStage instances
+// copied from whichever templates apply to its OrderType.
+model ProductionStageTemplate {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name                String
+  sortOrder           Int         @default(0)
+  isSystem            Boolean     @default(false)
+  appliesToOrderTypes OrderType[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderStages OrderProductionStage[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+// A single custom order — one per garment/commission. Carries the
+// aggregate order-level pricing and delivery/schedule details; the design,
+// customization, and per-item pricing breakdown live on OrderItem.
+model Order {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Human-friendly ID shown in the UI (e.g. ORD-0001), unique per business.
+  orderCode String
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Bridge fields for orders created via the authenticated customer-login
+  // flow (DesignPreview approved -> Quotation accepted -> Order), coexisting
+  // with the required legacy customerId exactly like DesignPreview's own
+  // bridge fields. Legacy staff-wizard orders leave all of these null.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+  serviceRequestId  String?
+  serviceRequest    ServiceRequest?  @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
+  designPreviewId   String?
+  designPreview     DesignPreview?   @relation("OrderFromDesignPreview", fields: [designPreviewId], references: [id], onDelete: SetNull)
+
+  // Exactly which measurement profile was used for this order, plus an
+  // immutable snapshot of its values at order time (profiles can change later).
+  measurementProfileId String?
+  measurementProfile   MeasurementProfile? @relation(fields: [measurementProfileId], references: [id])
+  measurementSnapshot  Json?
+
+  // Same field as above, but for the Passport Measurement Vault (Phase 4+)
+  // rather than the legacy business-CRM MeasurementProfile — named
+  // distinctly since a legacy order and a bridged order could theoretically
+  // both be non-null in migrated data, though in practice only one ever is.
+  passportMeasurementProfileId String?
+  passportMeasurementProfile   PassportMeasurementProfile? @relation(fields: [passportMeasurementProfileId], references: [id], onDelete: SetNull)
+  measurementVersionId         String?
+  measurementVersion           MeasurementVersion?         @relation(fields: [measurementVersionId], references: [id], onDelete: SetNull)
+
+  orderType     OrderType          @default(BESPOKE)
+  priority      OrderPriority      @default(NORMAL)
+  status        OrderStatus        @default(DRAFT)
+  paymentStatus OrderPaymentStatus @default(PENDING)
+
+  orderDate              DateTime  @default(now())
+  expectedCompletionDate DateTime?
+  eventDate              DateTime?
+  occasion               String?
+
+  // Part 9/36: set only when the deadline has actually been missed and the
+  // business has recorded why — never inferred purely from "now > deadline",
+  // so the flag stays true only until the business actively addresses it.
+  isDelayed   Boolean   @default(false)
+  delayReason String?
+  delayedAt   DateTime?
+
+  deliveryMethod  DeliveryMethod @default(PICKUP)
+  deliveryAddress String?
+
+  customerNotes String?
+  designerNotes String?
+  privateNotes  String?
+
+  // Order-wide pricing aggregate (per-item base/fabric/customization costs
+  // are summed from OrderItem into fabricCost/customizationCost here).
+  fabricCost             Float @default(0)
+  customizationCost      Float @default(0)
+  additionalServicesCost Float @default(0)
+  deliveryFee            Float @default(0)
+  discount               Float @default(0)
+  tax                    Float @default(0)
+  subtotal               Float @default(0)
+  totalValue             Float @default(0)
+  depositRequired        Float @default(0)
+  amountPaid             Float @default(0)
+  balanceDue             Float @default(0)
+
+  // Denormalized label of the current timeline stage, for fast list/board rendering.
+  currentStage String?
+
+  assignedDesignerId String?
+  assignedDesigner   User?   @relation("OrderAssignedDesigner", fields: [assignedDesignerId], references: [id])
+
+  isArchived Boolean   @default(false)
+  archivedAt DateTime?
+
+  // Reorder / duplication provenance — both are self-relations to the
+  // originating order; neither mutates or is mutated by the original.
+  reorderedFromId  String?
+  reorderedFrom    Order?  @relation("OrderReorder", fields: [reorderedFromId], references: [id])
+  reorders         Order[] @relation("OrderReorder")
+  duplicatedFromId String?
+  duplicatedFrom   Order?  @relation("OrderDuplicate", fields: [duplicatedFromId], references: [id])
+  duplicates       Order[] @relation("OrderDuplicate")
+
+  createdById String?
+  createdBy   User?   @relation("OrderCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items            OrderItem[]
+  timeline         OrderTimelineEntry[]
+  productionStages OrderProductionStage[]
+  notes            OrderNote[]
+  files            OrderFile[]
+  fittingSessions  FittingSession[]
+  alterations      Alteration[]
+  activities       OrderActivity[]
+  cancellation     OrderCancellation?
+  designPreviews   DesignPreview[]        @relation("DesignPreviewOrder")
+
+  quotations               Quotation[]
+  invoices                 Invoice[]
+  payments                 Payment[]
+  agreement                OrderAgreement?
+  productionUpdates        ProductionUpdate[]
+  qualityControlChecklists QualityControlChecklist[]
+  delivery                 Delivery?
+  disputes                 Dispute[]
+  payout                   Payout?
+  review                   Review?
+  reviewReminder           ReviewReminder?
+
+  @@unique([businessId, orderCode])
+  @@index([businessId, status])
+  @@index([businessId, customerId])
+  @@index([businessId, priority])
+  @@index([businessId, paymentStatus])
+  @@index([businessId, isArchived])
+  @@index([businessId, expectedCompletionDate])
+  @@index([businessId, orderDate])
+  @@index([customerProfileId, status])
+  @@index([designPreviewId])
+}
+
+// A priced garment/line within an order — a snapshot of the Design (or a
+// fully custom request) plus its customization, ready to support
+// multi-garment orders without changing the wizard's single-item flow.
+model OrderItem {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  designId                String?
+  design                  Design? @relation(fields: [designId], references: [id])
+  designNameSnapshot      String?
+  designImageSnapshot     String?
+  designCategorySnapshot  String?
+  isCustomDesign          Boolean @default(false)
+  customDesignDescription String?
+
+  quantity               Int   @default(1)
+  basePrice              Float @default(0)
+  fabricCost             Float @default(0)
+  customizationCost      Float @default(0)
+  additionalServicesCost Float @default(0)
+  subtotal               Float @default(0)
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customization OrderCustomization?
+  designPreview DesignPreview?
+
+  @@index([orderId])
+  @@index([businessId, designId])
+}
+
+// The chosen fabric/color/style details for one OrderItem — immutable once
+// the order is placed (unlike the live DesignCustomization Studio panel).
+model OrderCustomization {
+  id          String    @id @default(cuid())
+  orderItemId String    @unique
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
+  fabricId           String?
+  fabric             FabricLibraryItem? @relation(fields: [fabricId], references: [id])
+  fabricNameSnapshot String?
+
+  primaryColor       String?
+  secondaryColor     String?
+  pattern            String?
+  sleeveStyle        String?
+  neckline           String?
+  collarStyle        String?
+  length             String?
+  buttonStyle        String?
+  embroidery         String?
+  pocketStyle        String?
+  cuffStyle          String?
+  lining             String?
+  accessories        String[]
+  customInstructions String?
+  referenceImages    String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One row per milestone in the visual Order Progress Timeline (section 8).
+// isApplicable lets a business skip stages that don't apply to a given
+// order type without losing the option to reactivate them later.
+model OrderTimelineEntry {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  stage        OrderTimelineStage
+  status       ProductionStageStatus @default(NOT_STARTED)
+  isApplicable Boolean               @default(true)
+  occurredAt   DateTime?
+  note         String?
+  sortOrder    Int                   @default(0)
+
+  actorId String?
+  actor   User?   @relation("OrderTimelineActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, stage])
+  @@index([orderId, sortOrder])
+  @@index([businessId, stage])
+}
+
+// Per-order instance of a configured production stage (section 11): tracks
+// start/completion, status, and notes independent of the milestone timeline.
+model OrderProductionStage {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  templateId String?
+  template   ProductionStageTemplate? @relation(fields: [templateId], references: [id])
+  name       String
+
+  status         ProductionStageStatus @default(NOT_STARTED)
+  sortOrder      Int                   @default(0)
+  startDate      DateTime?
+  completionDate DateTime?
+  notes          String?
+  photos         String[]
+
+  completedById String?
+  completedBy   User?   @relation("ProductionStageCompletedBy", fields: [completedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  files OrderFile[]
+
+  @@index([orderId, sortOrder])
+  @@index([businessId, status])
+}
+
+// Part 8: a customer-facing update, distinct from OrderProductionStage.notes
+// (which is internal-only and never shown to the customer). Every row here
+// is, by definition, meant for the customer to see.
+model ProductionUpdate {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  title  String
+  body   String
+  photos String[]
+
+  createdById String?
+  createdBy   User?   @relation("ProductionUpdateCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// Part 10/11: one checklist per QC attempt — attemptNumber increments so a
+// failed check followed by a correction produces a fresh checklist rather
+// than mutating the failed one, keeping the full QC history intact.
+model QualityControlChecklist {
+  id            String @id @default(cuid())
+  orderId       String
+  order         Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId    String
+  attemptNumber Int    @default(1)
+
+  result QualityControlResult @default(PENDING)
+
+  confirmed Boolean  @default(false)
+  notes     String?
+  photos    String[]
+
+  confirmedById String?
+  confirmedBy   User?     @relation("QualityControlConfirmedBy", fields: [confirmedById], references: [id])
+  completedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  items   QualityControlItem[]
+  failure QualityControlFailure?
+
+  @@unique([orderId, attemptNumber])
+  @@index([orderId])
+  @@index([businessId, result])
+}
+
+model QualityControlItem {
+  id          String                  @id @default(cuid())
+  checklistId String
+  checklist   QualityControlChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+
+  label     String
+  passed    Boolean @default(false)
+  notes     String?
+  sortOrder Int     @default(0)
+
+  @@index([checklistId])
+}
+
+model QualityControlFailure {
+  id          String                  @id @default(cuid())
+  checklistId String                  @unique
+  checklist   QualityControlChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  businessId  String
+
+  issue                  String
+  correctionRequired     String
+  expectedCorrectionDate DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+// Part 13/14: mirrors PaymentGatewayConnection's exact shape — the business's
+// own courier-account credentials, resolved into a LogisticsProvider adapter
+// (src/lib/logistics-providers) the rest of the app never talks to directly.
+model LogisticsProviderConnection {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  provider LogisticsProviderType
+
+  publicKey              String?
+  secretKeyEncrypted     String?
+  webhookSecretEncrypted String?
+
+  status   GatewayConnectionStatus @default(DISCONNECTED)
+  isActive Boolean                 @default(false)
+
+  lastTestedAt   DateTime?
+  lastTestResult String?
+
+  connectedById  String?
+  connectedBy    User?     @relation("LogisticsProviderConnectedBy", fields: [connectedById], references: [id])
+  connectedAt    DateTime?
+  disconnectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, provider])
+  @@index([businessId, isActive])
+}
+
+// Part 12/14: the current-state delivery record (one per order) — mirrors
+// how Payment holds current state while FinancialTransaction holds history;
+// DeliveryEvent below is that history. Customer delivery confirmation (Part
+// 18/19) is folded into fields here rather than a separate model, since it's
+// always exactly one delivery's own terminal state, not a repeatable record.
+model Delivery {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  provider           LogisticsProviderType
+  providerDeliveryId String?
+  trackingNumber     String?
+  trackingUrl        String?
+
+  status DeliveryStatus @default(CREATED)
+
+  pickupAddress        String
+  deliveryAddress      String
+  customerContactName  String?
+  customerContactPhone String?
+  packageDescription   String?
+  packageWeightKg      Float?
+  packageDimensions    String?
+
+  deliveryCost          Float?
+  currency              String    @default("NGN")
+  estimatedDeliveryDate DateTime?
+
+  courierName  String?
+  courierPhone String?
+
+  pickedUpAt    DateTime?
+  deliveredAt   DateTime?
+  failureReason String?
+
+  // Part 19: the dispute-window clock — set the moment delivery is
+  // confirmed, never recomputed afterward, so a later change to the
+  // platform-wide window setting can't silently move an in-flight order's
+  // deadline.
+  confirmationDeadline DateTime?
+  customerConfirmedAt  DateTime?
+  reportedProblemAt    DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("DeliveryCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events DeliveryEvent[]
+
+  @@index([businessId, status])
+  @@index([trackingNumber])
+}
+
+// Append-only delivery history — mirrors OrderActivity/FinancialTransaction's
+// "one row per event, never mutated" pattern.
+model DeliveryEvent {
+  id         String   @id @default(cuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id], onDelete: Cascade)
+  businessId String
+
+  type        DeliveryEventType
+  status      DeliveryStatus
+  description String?
+  location    String?
+
+  actorType FinancialActorType @default(SYSTEM)
+  actorId   String?
+
+  occurredAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([deliveryId, occurredAt])
+}
+
+// Log of every inbound logistics webhook call — mirrors PaymentWebhookEvent
+// exactly, including using providerEventId as the idempotency key.
+model DeliveryWebhookEvent {
+  id         String    @id @default(cuid())
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  provider        LogisticsProviderType
+  providerEventId String
+  eventType       DeliveryEventType?
+
+  deliveryId     String?
+  trackingNumber String?
+  signatureValid Boolean @default(false)
+  rawPayload     Json
+
+  status       WebhookProcessingStatus @default(RECEIVED)
+  errorMessage String?
+
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, providerEventId])
+  @@index([businessId, createdAt])
+  @@index([trackingNumber])
+}
+
+// Part 19/22: a customer-raised problem after delivery. Evidence is captured
+// at creation time (photos/videos/description); DisputeResponse is the
+// open-ended back-and-forth after that (mirrors QuotationComment);
+// DisputeResolution is the one final decision (mirrors DesignApprovalRecord's
+// "one authoritative outcome" shape).
+model Dispute {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  issueType   DisputeIssueType
+  description String
+  status      DisputeStatus    @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  evidence   DisputeEvidence[]
+  responses  DisputeResponse[]
+  resolution DisputeResolution?
+
+  @@index([businessId, status])
+  @@index([orderId])
+  @@index([customerProfileId])
+}
+
+model DisputeEvidence {
+  id         String  @id @default(cuid())
+  disputeId  String
+  dispute    Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  businessId String
+
+  submittedByType FinancialActorType @default(CUSTOMER)
+  submittedById   String?
+
+  photos      String[]
+  videos      String[]
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([disputeId])
+}
+
+model DisputeResponse {
+  id         String  @id @default(cuid())
+  disputeId  String
+  dispute    Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  businessId String
+
+  authorType FinancialActorType
+  authorId   String?
+  body       String
+
+  createdAt DateTime @default(now())
+
+  @@index([disputeId, createdAt])
+}
+
+model DisputeResolution {
+  id         String  @id @default(cuid())
+  disputeId  String  @unique
+  dispute    Dispute @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  businessId String
+
+  resolutionType DisputeResolutionType
+  notes          String
+
+  refundId String?
+  refund   Refund? @relation(fields: [refundId], references: [id])
+
+  resolvedById String?
+  resolvedBy   User?    @relation("DisputeResolutionResolvedBy", fields: [resolvedById], references: [id])
+  resolvedAt   DateTime @default(now())
+
+  @@index([disputeId])
+}
+
+enum PayoutKycStatus {
+  NOT_SUBMITTED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// Protected-payment audit: the designer/business's payout destination — the
+// minimum fields needed to eventually move real money to them, and nothing
+// more (no card data, no provider API credentials). accountName is the
+// bank's own name-on-account, resolved via the business's connected
+// gateway's account-resolution call where the provider supports one
+// (Paystack does; see lib/payout-recipients.ts) so a typo'd account number
+// is caught before it's relied on. providerRecipientCode stays null under
+// today's architecture (no platform-level merchant account exists to
+// register a real Transfer Recipient against) — see
+// lib/payment-architecture.ts for why, and what would populate it.
+model PayoutRecipient {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  legalName     String
+  businessName  String?
+  bankName      String
+  bankCode      String
+  accountNumber String
+  accountName   String?
+
+  provider              PaymentProviderType?
+  providerRecipientCode String?
+
+  kycStatus    PayoutKycStatus @default(NOT_SUBMITTED)
+  verifiedAt   DateTime?
+  verifiedNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Part 25/26: computed once eligibility conditions are met (Part 34), never
+// before. NOT_ELIGIBLE rows are never created — a Payout only starts
+// existing once there's something to track, same reasoning DesignPreview's
+// approval flow uses for not persisting a "not yet approved" record.
+model Payout {
+  id         String   @id @default(cuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  paymentId String?
+  payment   Payment? @relation(fields: [paymentId], references: [id])
+
+  orderAmount     Float
+  platformFee     Float @default(0)
+  deliveryFee     Float @default(0)
+  otherDeductions Float @default(0)
+  refundedAmount  Float @default(0)
+  netAmount       Float
+
+  status PayoutStatus @default(ELIGIBLE)
+
+  eligibleAt    DateTime  @default(now())
+  processingAt  DateTime?
+  paidAt        DateTime?
+  failedAt      DateTime?
+  failureReason String?
+
+  providerReference String?
+  method            PaymentMethod?
+
+  processedById String?
+  processedBy   User?   @relation("PayoutProcessedBy", fields: [processedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  statusHistory PayoutStatusHistory[]
+
+  @@index([businessId, status])
+}
+
+model PayoutStatusHistory {
+  id         String @id @default(cuid())
+  payoutId   String
+  payout     Payout @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  businessId String
+
+  previousStatus PayoutStatus?
+  newStatus      PayoutStatus
+  note           String?
+  actorId        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([payoutId, createdAt])
+}
+
+// Platform-wide (not per-business) — Fashion360's own commission and
+// dispute-window configuration, editable only by a super admin (Part 26:
+// "only authorized administrators can change platform fees"). Singleton:
+// exactly one row, fetched/created lazily like BusinessFinancialSettings.
+model PlatformSettings {
+  id String @id @default(cuid())
+
+  platformFeePercentage Float @default(10)
+  disputeWindowDays     Int   @default(3)
+
+  // Configurable, stage-based cancellation policy (protected-payment audit)
+  // — never hard-coded into the frontend. "Before payment" isn't listed
+  // because it's always a trivial 100% (nothing was charged yet). "After
+  // delivery" isn't listed because Part 36 of this policy routes that case
+  // through the dispute/refund process instead of plain cancellation.
+  cancellationRefundBeforeProductionPercent Float @default(100)
+  cancellationRefundDuringProductionPercent Float @default(50)
+  cancellationRefundAfterProductionPercent  Float @default(0)
+
+  updatedById String?
+  updatedBy   User?    @relation("PlatformSettingsUpdatedBy", fields: [updatedById], references: [id])
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+// ===================== TRUST & REPUTATION (Phase 8) =====================
+
+enum ReviewStatus {
+  PENDING_MODERATION
+  PUBLISHED
+  REJECTED
+  FLAGGED
+  HIDDEN
+  REMOVED
+}
+
+enum ReviewRatingCategory {
+  DESIGN_QUALITY
+  COMMUNICATION
+  PROFESSIONALISM
+  DELIVERY_TIMELINESS
+  VALUE_FOR_MONEY
+  CUSTOMER_EXPERIENCE
+}
+
+enum ReviewReportReason {
+  SPAM
+  FAKE_REVIEW
+  HARASSMENT
+  INAPPROPRIATE_CONTENT
+  PERSONAL_INFORMATION
+  FRAUD
+  OTHER
+}
+
+enum ReviewReportStatus {
+  PENDING
+  DISMISSED
+  ACTIONED
+}
+
+enum ReviewModerationAction {
+  APPROVE
+  REJECT
+  HIDE
+  RESTORE
+  SUSPEND_PRIVILEGES
+}
+
+enum ReviewDeletionRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TrustBadgeType {
+  TOP_RATED
+  HIGHLY_REVIEWED
+  RELIABLE_DELIVERY
+  FAST_RESPONDER
+  VERIFIED_BUSINESS
+  ESTABLISHED_DESIGNER
+  RISING_DESIGNER
+  NEW_ON_FASHION360
+}
+
+// Part 3/4: one review per completed order, enforced at the DB level via
+// orderId's uniqueness — the strongest possible guarantee against duplicate
+// reviews, mirroring Delivery.orderId's own @unique from Phase 7. A review
+// can only ever be created against an Order this platform itself marked
+// COMPLETED (see lib/review-eligibility.ts), so isVerifiedPurchase is always
+// true by construction — kept as an explicit field for clear, honest display
+// rather than something a business or admin could ever toggle.
+//
+// Part 15/34 (ReviewTrustScore) and Part 3 (CustomerReviewEligibility) are
+// deliberately NOT separate models here:
+//  - Trust-score fields (trustWeight/trustWeightComputedAt) live directly on
+//    Review, the same "current-state fields on the row itself" pattern
+//    Phase 7 used for Delivery/Payout, and it avoids a join on every ranking
+//    read (this table is read far more than it's written).
+//  - Eligibility is computed live from Order.status + the absence of a
+//    Review row (see getReviewEligibility) rather than stored — storing it
+//    would just be a second, driftable copy of state Order already owns,
+//    the same reasoning documented on computeCustomerJourney in Phase 7.
+model Review {
+  id      String @id @default(cuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  businessId        String
+  business          Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  designerId String?
+  designer   User?   @relation("ReviewDesigner", fields: [designerId], references: [id], onDelete: SetNull)
+
+  serviceId String?
+  service   BusinessService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  designPreviewId String?
+  designPreview   DesignPreview? @relation(fields: [designPreviewId], references: [id], onDelete: SetNull)
+
+  overallRating Int
+  bodyText      String
+
+  status             ReviewStatus @default(PENDING_MODERATION)
+  isVerifiedPurchase Boolean      @default(true)
+  orderValueSnapshot Float
+  completedAt        DateTime
+
+  // Part 15/34: a configurable, recomputed weight — how much this review
+  // counts toward BusinessRating/BusinessRanking — never editable by the
+  // business or the customer.
+  trustWeight           Float     @default(1)
+  trustWeightComputedAt DateTime?
+
+  editedAt  DateTime?
+  editCount Int       @default(0)
+
+  flaggedAt   DateTime?
+  flagReasons String[]
+  moderatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ratings           ReviewRating[]
+  photos            ReviewPhoto[]
+  response          ReviewResponse?
+  reports           ReviewReport[]
+  moderationActions ReviewModeration[]
+  editHistory       ReviewEditHistory[]
+  deletionRequest   ReviewDeletionRequest?
+
+  @@index([businessId, status])
+  @@index([customerProfileId])
+  @@index([designerId])
+}
+
+model ReviewRating {
+  id       String               @id @default(cuid())
+  reviewId String
+  review   Review               @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  category ReviewRatingCategory
+  rating   Int
+
+  @@unique([reviewId, category])
+}
+
+// Part 7: isPublic distinguishes photos the customer chose to show on the
+// designer's public profile from private evidence attached only for the
+// business/admin's own record-keeping (e.g. alongside a critical review).
+model ReviewPhoto {
+  id        String  @id @default(cuid())
+  reviewId  String
+  review    Review  @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  url       String
+  isPublic  Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+// Part 11: one public response per review — businessId is a denormalized
+// scoping column (not a full relation), same pattern as DeliveryEvent.
+model ReviewResponse {
+  id       String @id @default(cuid())
+  reviewId String @unique
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  businessId String
+  body       String
+
+  respondedById String?
+  respondedBy   User?   @relation("ReviewResponseAuthor", fields: [respondedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Part 14: filed by either a customer or the reviewed business — reporterType
+// reuses FinancialActorType (CUSTOMER/STAFF) rather than a new enum.
+model ReviewReport {
+  id       String @id @default(cuid())
+  reviewId String
+  review   Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  businessId   String
+  reporterType FinancialActorType
+  reporterId   String?
+  reason       ReviewReportReason
+  details      String?
+
+  status         ReviewReportStatus @default(PENDING)
+  resolvedAt     DateTime?
+  resolvedById   String?
+  resolvedBy     User?              @relation("ReviewReportResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolutionNote String?
+
+  createdAt DateTime @default(now())
+}
+
+// Part 32: every admin moderation action, with a mandatory reason — an
+// append-only log, never edited or deleted.
+model ReviewModeration {
+  id       String                 @id @default(cuid())
+  reviewId String
+  review   Review                 @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  action   ReviewModerationAction
+  reason   String
+
+  actorId String?
+  actor   User?   @relation("ReviewModerationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+}
+
+// Part 12: every prior version, preserved — never overwritten in place.
+model ReviewEditHistory {
+  id                      String   @id @default(cuid())
+  reviewId                String
+  review                  Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  previousOverallRating   Int
+  previousBodyText        String
+  previousRatingsSnapshot Json?
+  editedAt                DateTime @default(now())
+}
+
+// Part 13: a request, not an immediate delete — the review stays intact
+// (still counted in ranking) until an admin actions the request.
+model ReviewDeletionRequest {
+  id       String                      @id @default(cuid())
+  reviewId String                      @unique
+  review   Review                      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  status   ReviewDeletionRequestStatus @default(PENDING)
+
+  requestedAt    DateTime  @default(now())
+  reviewedAt     DateTime?
+  reviewedById   String?
+  reviewedBy     User?     @relation("ReviewDeletionRequestResolvedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+  resolutionNote String?
+}
+
+// Part 16: a maintained cache, recomputed synchronously (never eventually-
+// consistent) every time a review is published/edited/removed — the same
+// "current-state row" shape as Payout, so search/discovery/profile reads
+// never need to aggregate every Review at read time.
+model BusinessRating {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  averageRating       Float @default(0)
+  totalReviews        Int   @default(0)
+  verifiedReviewCount Int   @default(0)
+  recentReviewCount   Int   @default(0)
+  categoryAverages    Json?
+
+  updatedAt DateTime @updatedAt
+}
+
+// Part 17/18: the configurable weighted ranking score. factorsSnapshot is
+// the internal breakdown (never exposed to customers directly — Part 20
+// says show trust badges/signals, not the algorithm).
+model BusinessRanking {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  score           Float    @default(0)
+  factorsSnapshot Json?
+  computedAt      DateTime @default(now())
+}
+
+// Part 17: admin-configurable ranking weights — never hard-coded into the
+// frontend or the formula itself. Lazily seeded with defaults on first read,
+// same pattern as PlatformSettings.
+model RankingFactor {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  weight      Float
+  description String?
+
+  updatedById String?
+  updatedBy   User?    @relation("RankingFactorUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+}
+
+// Part 31: the badge catalog — seeded once, never business-editable.
+model TrustBadge {
+  id          String         @id @default(cuid())
+  type        TrustBadgeType @unique
+  label       String
+  description String
+  isActive    Boolean        @default(true)
+
+  assignments TrustBadgeAssignment[]
+}
+
+// Part 31: automatically awarded/revoked by recomputeTrustBadges — a
+// business's current badge set is just "what's assigned right now"; the
+// assignment is deleted (not soft-flagged) the moment a badge is no longer
+// earned, so this table always reflects present truth, not history.
+model TrustBadgeAssignment {
+  id           String     @id @default(cuid())
+  businessId   String
+  business     Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  trustBadgeId String
+  trustBadge   TrustBadge @relation(fields: [trustBadgeId], references: [id], onDelete: Cascade)
+
+  awardedAt DateTime @default(now())
+
+  @@unique([businessId, trustBadgeId])
+}
+
+// Part 26: tracks reminder sends per order so they never repeat/spam —
+// businessId/customerProfileId are denormalized scoping columns, same
+// pattern as DeliveryEvent.businessId.
+model ReviewReminder {
+  id      String @id @default(cuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  businessId        String
+  customerProfileId String
+
+  reminder24hSentAt DateTime?
+  reminder7dSentAt  DateTime?
+  dismissedAt       DateTime?
+}
+
+// ===================== PERSONALIZATION ENGINE (Phase 10) =====================
+
+enum CustomerBehaviorType {
+  DESIGN_VIEWED
+  DESIGN_SAVED
+  DESIGN_UNSAVED
+  DESIGNER_VIEWED
+  DESIGNER_SAVED
+  DESIGNER_UNSAVED
+  PORTFOLIO_VIEWED
+  SERVICE_VIEWED
+  SERVICE_REQUESTED
+  ORDER_COMPLETED
+  DESIGN_REORDERED
+  SIMILAR_DESIGN_REQUESTED
+  DESIGN_HIDDEN
+  RECOMMENDATION_REJECTED
+  REVIEW_SUBMITTED
+  WARDROBE_ADDED
+  SEARCH_PERFORMED
+}
+
+enum RecommendationType {
+  DESIGN
+  DESIGNER
+  SERVICE
+}
+
+enum RecommendationEventType {
+  IMPRESSION
+  CLICK
+  SAVE
+  REQUEST
+  DISMISS
+  HIDE
+  SHOW_MORE_LIKE_THIS
+}
+
+enum FashionGoalStatus {
+  ACTIVE
+  ACHIEVED
+  DISMISSED
+}
+
+enum TrendEntityType {
+  DESIGN
+  DESIGNER
+  SERVICE
+}
+
+// Part 3: "Preferred Designers" — CustomerProfile already carries every
+// other Part 3 preference field (favoriteColors/stylePreferences/etc, built
+// in Phase 2) so this is deliberately NOT a new "CustomerPreferenceProfile"
+// model (Part 28's literal name) — that would just be a second, driftable
+// copy of the same customer identity. Designers are a many-to-many the
+// scalar-array fields can't hold, hence this one small join table.
+model CustomerPreferredDesigner {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String
+  business          Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerProfileId, businessId])
+}
+
+// Part 4/28: the full behavioral signal log — consolidates the spec's
+// separate "PreferenceSignal" model into this one (a signal IS an activity;
+// splitting them would just require joining them back together on every
+// read). Named CustomerBehaviorSignal (not "CustomerActivity") because that
+// name is already taken by the Phase 1 business-side CRM audit log
+// (Customer.activities — NOTE_ADDED/TAG_UPDATED/etc, a completely different
+// concern). `weight` is resolved from configurable defaults at write time
+// (see lib/personalization-weights.ts) so scoring never has to re-derive
+// it, and an admin changing future weights doesn't rewrite history.
+// Doubles as customer-scoped design/designer view tracking — the existing
+// DesignView model (Phase 3) stays business-side ("who viewed my
+// catalog"); this is the customer's own cross-business activity trail.
+model CustomerBehaviorSignal {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String?
+
+  type       CustomerBehaviorType
+  targetType String?
+  targetId   String?
+  weight     Float                @default(1)
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([customerProfileId, createdAt])
+  @@index([customerProfileId, type])
+  @@index([targetType, targetId])
+}
+
+// Part 5/6/7/8: one row per (customer, type, target) — regenerating a
+// recommendation upserts this row rather than creating a duplicate, so
+// "don't repeatedly recommend rejected items" (Part 16) is a lookup against
+// this table's own event history, not a second exclusion list.
+model Recommendation {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  type       RecommendationType
+  targetId   String
+  businessId String?
+
+  score      Float
+  reasonCode String
+  reasonText String
+
+  generatedAt DateTime  @default(now())
+  expiresAt   DateTime?
+
+  events RecommendationEvent[]
+
+  @@unique([customerProfileId, type, targetId])
+  @@index([customerProfileId, type, score])
+}
+
+// Part 16/27: consolidates the spec's separate RecommendationFeedback /
+// RecommendationImpression / RecommendationClick / RecommendationConversion
+// models into a single append-only event log distinguished by eventType —
+// the same "one event table, typed rows" pattern Phase 6/7 used for
+// OrderActivity/DeliveryEvent, and it's exactly what both the feedback loop
+// (Part 16) and the analytics rollups (Part 27) read from.
+model RecommendationEvent {
+  id                String         @id @default(cuid())
+  recommendationId  String
+  recommendation    Recommendation @relation(fields: [recommendationId], references: [id], onDelete: Cascade)
+  customerProfileId String
+
+  eventType RecommendationEventType
+
+  createdAt DateTime @default(now())
+
+  @@index([recommendationId, eventType])
+  @@index([customerProfileId, eventType, createdAt])
+}
+
+// Part 10: a small seeded catalog of preset goals (mirrors the TrustBadge
+// catalog pattern) — CustomerFashionGoal is the customer's own instance,
+// which may reference a catalog entry, free-text, or both.
+model FashionGoal {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  label       String
+  description String?
+  isActive    Boolean @default(true)
+
+  customerGoals CustomerFashionGoal[]
+}
+
+model CustomerFashionGoal {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  fashionGoalId String?
+  fashionGoal   FashionGoal? @relation(fields: [fashionGoalId], references: [id], onDelete: SetNull)
+  customText    String?
+  occasion      String?
+
+  status FashionGoalStatus @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerProfileId, status])
+}
+
+// Part 23: a maintained cache (recomputed lazily, same "no cron" pattern as
+// every other Phase 6/7 background-style computation), not a live
+// aggregate — trending reads happen far more often than the underlying
+// activity changes.
+model TrendScore {
+  id         String          @id @default(cuid())
+  entityType TrendEntityType
+  entityId   String
+  businessId String?
+
+  score      Float    @default(0)
+  windowDays Int      @default(7)
+  computedAt DateTime @default(now())
+
+  @@unique([entityType, entityId])
+  @@index([entityType, score])
+}
+
+// Part 25: the customer's own personalization controls.
+model PersonalizationSettings {
+  id                String          @id @default(cuid())
+  customerProfileId String          @unique
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  personalizationEnabled      Boolean @default(true)
+  locationDiscoveryEnabled    Boolean @default(true)
+  notifyNewDesignsFromSaved   Boolean @default(true)
+  notifyStyleMatches          Boolean @default(true)
+  notifySavedDesignerServices Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+// Part 4: "do not treat every action equally... use configurable weights" —
+// same lazily-seeded, admin-editable pattern as Phase 8's RankingFactor,
+// never hard-coded into the scoring function itself.
+model PersonalizationWeight {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  weight      Float
+  description String?
+
+  updatedById String?
+  updatedBy   User?    @relation("PersonalizationWeightUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt   DateTime @updatedAt
+}
+
+model OrderNote {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  category OrderNoteCategory @default(DESIGNER)
+  body     String
+
+  authorId String?
+  author   User?   @relation("OrderNoteAuthor", fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+model OrderFile {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  productionStageId String?
+  productionStage   OrderProductionStage? @relation(fields: [productionStageId], references: [id], onDelete: SetNull)
+
+  category  OrderFileCategory
+  url       String
+  name      String
+  fileType  String?
+  sizeBytes Int?
+
+  uploadedById String?
+  uploadedBy   User?   @relation("OrderFileUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productionStageId])
+}
+
+model FittingSession {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  fittingDate DateTime
+  status      FittingStatus @default(SCHEDULED)
+
+  fitIssues           String?
+  requiredAdjustments String?
+  designerComments    String?
+  customerComments    String?
+  photos              String[]
+
+  createdById String?
+  createdBy   User?   @relation("FittingSessionCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  alterations Alteration[]
+
+  @@index([orderId, fittingDate])
+  @@index([businessId, status])
+}
+
+// A required change identified at a fitting. Multiple alteration cycles per
+// order are supported via cycleNumber; history is simply every row so far.
+model Alteration {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  fittingSessionId String?
+  fittingSession   FittingSession? @relation(fields: [fittingSessionId], references: [id], onDelete: SetNull)
+
+  issue                  String
+  requiredChange         String
+  description            String?
+  status                 AlterationStatus @default(PENDING)
+  expectedCompletionDate DateTime?
+  completedAt            DateTime?
+  notes                  String?
+  cycleNumber            Int              @default(1)
+
+  createdById String?
+  createdBy   User?   @relation("AlterationCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orderId, cycleNumber])
+  @@index([businessId, status])
+}
+
+model OrderActivity {
+  id         String @id @default(cuid())
+  orderId    String
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  type          OrderActivityType
+  title         String
+  description   String?
+  previousValue String?
+  newValue      String?
+
+  actorId String?
+  actor   User?   @relation("OrderActivityActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+// One row per cancelled order, prepared for the Phase 8 refund workflow.
+model OrderCancellation {
+  id         String @id @default(cuid())
+  orderId    String @unique
+  order      Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  businessId String
+
+  reason         String
+  cancelledById  String?
+  cancelledBy    User?    @relation("OrderCancelledBy", fields: [cancelledById], references: [id])
+  cancelledAt    DateTime @default(now())
+  refundEligible Boolean  @default(false)
+  refundStatus   String?
+
+  createdAt DateTime @default(now())
+}
+
+// ===================== 3D GARMENT VISUALIZATION & DESIGN APPROVAL (Phase 7) =====================
+
+// One design-review workflow per garment being visualized — always anchored
+// to the OrderItem it belongs to (1:1), since that's the specific priced
+// garment whose customization/design this preview is meant to represent.
+// "Current"/"approved" versions are looked up by DesignVersion.status rather
+// than stored as pointer fields here, so approving/superseding never
+// requires touching this row — only ever the DesignVersion rows themselves.
+// Phase 5: also serves as the "Design Project" container for the new,
+// pre-order Service-Request-anchored flow — orderId/orderItemId are null
+// for those rows, and customerId is still always populated (via the same
+// BusinessCustomerRelationship -> linked-CRM-Customer bridge Phase 4
+// established), so every existing query/component that reads
+// preview.customer keeps working unchanged. Building a wholly separate
+// DesignProject model would have meant either duplicating DesignVersion/
+// DesignAnnotation/DesignApproval/DesignActivity/DesignModel/DesignComment
+// (all previewId-scoped) or making them polymorphic — this coexistence,
+// same pattern as Phase 4's Appointment bridge, is the smaller, safer move.
+model DesignPreview {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  orderId     String?
+  order       Order?     @relation("DesignPreviewOrder", fields: [orderId], references: [id], onDelete: Cascade)
+  orderItemId String?    @unique
+  orderItem   OrderItem? @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer   @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  designId    String?
+  design      Design?    @relation(fields: [designId], references: [id])
+
+  // Phase 5 bridge fields — all null for the legacy Order-anchored flow.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+  serviceRequestId  String?
+  serviceRequest    ServiceRequest?  @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
+  appointmentId     String?
+  appointment       Appointment?     @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  measurementProfileId String?
+  measurementProfile   PassportMeasurementProfile? @relation(fields: [measurementProfileId], references: [id], onDelete: SetNull)
+  measurementVersionId String?
+  measurementVersion   MeasurementVersion?         @relation(fields: [measurementVersionId], references: [id], onDelete: SetNull)
+
+  assignedDesignerId String?
+  assignedDesigner   User?   @relation("DesignPreviewAssignedDesigner", fields: [assignedDesignerId], references: [id])
+
+  description String?
+  category    String?
+
+  // Human-friendly ID shown in the UI (e.g. DSN-0001), unique per business.
+  previewCode String
+
+  name String
+
+  status              DesignPreviewStatus @default(DRAFT)
+  previewType         DesignPreviewType   @default(TWO_D)
+  latestVersionNumber Int                 @default(0)
+  revisionCount       Int                 @default(0)
+
+  sentForReviewAt DateTime?
+  firstViewedAt   DateTime?
+  approvedAt      DateTime?
+  rejectedAt      DateTime?
+  cancelledAt     DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("DesignPreviewCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brief            DesignBrief?
+  references       DesignReference[]
+  versions         DesignVersion[]
+  revisionRequests DesignRevisionRequest[]
+  comments         DesignComment[]
+  approvals        DesignApproval[]
+  approvalRecord   DesignApprovalRecord?
+  shares           DesignShare[]
+  viewSessions     DesignViewSession[]
+  activities       DesignActivity[]
+  quotations       Quotation[]
+  ordersCreated    Order[]                 @relation("OrderFromDesignPreview")
+  orderAgreements  OrderAgreement[]
+  reviews          Review[]
+
+  @@unique([businessId, previewCode])
+  @@index([businessId, status])
+  @@index([businessId, customerId])
+  @@index([orderId])
+  @@index([customerProfileId, status])
+  @@index([serviceRequestId])
+}
+
+// Part 7: the customer's own brief — editable by them until the design is
+// submitted for review, at which point it becomes a read-only reference
+// for the designer (enforced in the API layer via DesignPreview.status,
+// not a separate lock flag, so it never drifts out of sync with the
+// project's actual state).
+model DesignBrief {
+  id        String        @id @default(cuid())
+  previewId String        @unique
+  preview   DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+
+  whatCustomerWants   String?
+  occasion            String?
+  preferredStyle      String?
+  preferredColors     String[]
+  preferredFabric     String?
+  inspiration         String?
+  referenceImageUrls  String[]
+  thingsToAvoid       String?
+  specialRequirements String?
+  additionalNotes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Part 6: categorized reference uploads for the designer — distinct from
+// DesignImage (gallery images on the reusable Design catalog item) and from
+// DesignVersion.previewImageUrl (the single hero shot per version).
+model DesignReference {
+  id        String        @id @default(cuid())
+  previewId String
+  preview   DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+
+  fileUrl     String
+  title       String
+  type        DesignReferenceType @default(OTHER)
+  description String?
+
+  uploadedById String?
+  uploadedBy   User?   @relation("DesignReferenceUploadedBy", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([previewId, type])
+}
+
+// A single immutable snapshot in a design's review history. Only one version
+// per preview should ever hold status ACTIVE (the one currently under
+// review) or APPROVED (the final, locked, production-linked version) at a
+// time — enforced in the API layer, mirroring how OrderProductionStage
+// invariants are app-level rather than DB constraints elsewhere in this schema.
+model DesignVersion {
+  id         String        @id @default(cuid())
+  previewId  String
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+
+  versionNumber Int
+  status        DesignVersionStatus @default(DRAFT)
+  previewType   DesignPreviewType   @default(TWO_D)
+
+  previewImageUrl String?
+  changesSummary  String?
+  notes           String?
+
+  // Phase 5 Design Project fields (Part 5) — kept separate from the legacy
+  // customization taxonomy above since they're free-text/customer-facing
+  // rather than a fixed garment attribute set. `internalNotes` is the one
+  // field that must NEVER be selected into a customer-facing response.
+  designName              String?
+  description             String?
+  fabric                  String?
+  color                   String?
+  styleNotes              String?
+  designInstructions      String?
+  estimatedProductionDays Int?
+  tags                    String[]
+  internalNotes           String?
+
+  createdById String?
+  createdBy   User?   @relation("DesignVersionCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customization    DesignVersionCustomization?
+  model            DesignModel?
+  textures         DesignTexture[]
+  annotations      DesignAnnotation[]
+  comments         DesignComment[]
+  approvals        DesignApproval[]
+  revisionRequests DesignRevisionRequest[]
+  approvalRecord   DesignApprovalRecord?
+  orderAgreements  OrderAgreement[]
+
+  @@unique([previewId, versionNumber])
+  @@index([businessId, status])
+  @@index([previewId])
+}
+
+// Structured customization fields for one DesignVersion — the Phase 7
+// counterpart of Phase 6's OrderCustomization, named distinctly since
+// DesignCustomization (Phase 5's live Design Studio panel) already exists.
+model DesignVersionCustomization {
+  id        String        @id @default(cuid())
+  versionId String        @unique
+  version   DesignVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  fabricId           String?
+  fabric             FabricLibraryItem? @relation(fields: [fabricId], references: [id])
+  fabricNameSnapshot String?
+
+  primaryColor        String?
+  secondaryColor      String?
+  pattern             String?
+  sleeveStyle         String?
+  neckline            String?
+  collarStyle         String?
+  cuffStyle           String?
+  length              String?
+  buttonStyle         String?
+  embroidery          String?
+  pocketStyle         String?
+  lining              String?
+  accessories         String[]
+  otherCustomizations String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// The real 3D asset for a version, when one exists (1:1). Deliberately just
+// metadata + a storage URL — the rendering engine (three.js / React Three
+// Fiber today, swappable later) lives entirely in the frontend viewer
+// component and never dictates this schema.
+model DesignModel {
+  id         String        @id @default(cuid())
+  versionId  String        @unique
+  version    DesignVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  businessId String
+
+  format        DesignModelFormat
+  url           String
+  thumbnailUrl  String?
+  fileSizeBytes Int?
+
+  uploadedById String?
+  uploadedBy   User?   @relation("DesignModelUploadedBy", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// Fabric/texture assets assigned to a version for visualization — distinct
+// from the reusable FabricLibraryItem catalog (Phase 5): this is "which
+// texture image is actually mapped onto this specific design version",
+// ready to drive real-time 3D texture mapping once a rendering engine
+// supports it.
+model DesignTexture {
+  id         String        @id @default(cuid())
+  versionId  String
+  version    DesignVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  businessId String
+
+  role         DesignTextureRole @default(PRIMARY)
+  name         String
+  imageUrl     String
+  colorHex     String?
+  materialType String?
+  description  String?
+
+  fabricLibraryItemId String?
+  fabricLibraryItem   FabricLibraryItem? @relation(fields: [fabricLibraryItemId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([versionId])
+}
+
+// A customer's request for changes against a specific version. Customers act
+// through a DesignShare token (no login in this phase), so there's no
+// authorId — the one customer on the order is implicit via the preview.
+model DesignRevisionRequest {
+  id         String         @id @default(cuid())
+  previewId  String
+  preview    DesignPreview  @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+  versionId  String?
+  version    DesignVersion? @relation(fields: [versionId], references: [id])
+
+  // Set for an authenticated customer on the new flow; null for the legacy
+  // DesignShare-token flow, where the one customer on the order is implicit.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  // Part 11's structured category, alongside the free-text body. Part 28:
+  // the same model doubles as a post-approval change request — isPostApproval
+  // just distinguishes the two for reporting/UI framing; the workflow
+  // (business reviews -> accepts -> new version -> back to customer review)
+  // is identical either way.
+  changeCategory DesignChangeCategory?
+  isPostApproval Boolean               @default(false)
+  reason         String?
+
+  body            String
+  referenceImages String[]
+  status          DesignRevisionRequestStatus @default(OPEN)
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([previewId, status])
+}
+
+// General comment thread on a preview (optionally scoped to one version),
+// as opposed to DesignAnnotation which pins a note to a specific point on
+// one version's preview image.
+model DesignComment {
+  id         String         @id @default(cuid())
+  previewId  String
+  preview    DesignPreview  @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+  versionId  String?
+  version    DesignVersion? @relation(fields: [versionId], references: [id])
+
+  authorType DesignCommentAuthorType
+  authorId   String?
+  author     User?                   @relation("DesignCommentAuthor", fields: [authorId], references: [id])
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  body       String
+  imageUrl   String?
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([previewId, createdAt])
+}
+
+model DesignAnnotation {
+  id         String        @id @default(cuid())
+  versionId  String
+  version    DesignVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  businessId String
+
+  authorType DesignCommentAuthorType
+  authorId   String?
+  author     User?                   @relation("DesignAnnotationAuthor", fields: [authorId], references: [id])
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  // Percentage-based position (0-100) on the version's preview image, so it
+  // stays correctly placed regardless of the viewer's rendered size.
+  x    Float
+  y    Float
+  body String
+
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([versionId])
+}
+
+// One approve/reject decision event. A preview can accumulate several over
+// its lifetime (e.g. rejected on v1, approved on v3) — the authoritative
+// "final" outcome is whichever DesignVersion carries status APPROVED.
+model DesignApproval {
+  id         String        @id @default(cuid())
+  previewId  String
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+  versionId  String
+  version    DesignVersion @relation(fields: [versionId], references: [id])
+
+  decision  DesignApprovalDecision
+  ipAddress String?
+  userAgent String?
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  decidedAt DateTime @default(now())
+
+  @@index([previewId, decidedAt])
+}
+
+// The certificate generated once and only once, the moment a version is
+// finally approved and locked. Immutable thereafter — approvals are never
+// edited, only ever superseded by starting a fresh DesignPreview if a
+// business truly needs to redo one (out of scope here).
+model DesignApprovalRecord {
+  id         String        @id @default(cuid())
+  previewId  String        @unique
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+
+  approvedVersionId String        @unique
+  approvedVersion   DesignVersion @relation(fields: [approvedVersionId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Part 14/31: "Approved By" for the new authenticated flow — the CRM
+  // Customer above stays required (populated via the Phase 4 bridge) so
+  // every existing query keeps working; this is additive precision for
+  // "the customer must explicitly confirm... approval must be recorded."
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  designerConfirmedById String?
+  designerConfirmedBy   User?   @relation("DesignApprovalRecordDesigner", fields: [designerConfirmedById], references: [id])
+
+  customizationSummary Json
+  measurementProfileId String?
+  pdfUrl               String?
+
+  approvedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
+// A secure, expiring, revocable link a customer uses to view and act on a
+// design preview without needing a login (there is no customer login yet —
+// Phase 9 Customer Portal will build on this same token mechanism).
+model DesignShare {
+  id         String        @id @default(cuid())
+  previewId  String
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+
+  token          String             @unique
+  channel        DesignShareChannel @default(LINK)
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  accessCount    Int                @default(0)
+  lastAccessedAt DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("DesignShareCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  viewSessions DesignViewSession[]
+
+  @@index([previewId])
+}
+
+// One row per time the preview is opened — powers "Customer Viewed Design"
+// notifications and the Average Approval Time dashboard metric.
+model DesignViewSession {
+  id         String        @id @default(cuid())
+  previewId  String
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+
+  viewerType DesignViewerType
+  viewerId   String?
+  shareId    String?
+  share      DesignShare?     @relation(fields: [shareId], references: [id])
+
+  ipAddress String?
+  userAgent String?
+
+  startedAt DateTime @default(now())
+
+  @@index([previewId, startedAt])
+}
+
+// Full audit trail for a design preview, mirroring OrderActivity's shape.
+model DesignActivity {
+  id         String        @id @default(cuid())
+  previewId  String
+  preview    DesignPreview @relation(fields: [previewId], references: [id], onDelete: Cascade)
+  businessId String
+
+  type          DesignActivityType
+  title         String
+  description   String?
+  previousValue String?
+  newValue      String?
+
+  actorType DesignCommentAuthorType @default(STAFF)
+  actorId   String?
+  actor     User?                   @relation("DesignActivityActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([previewId, createdAt])
+  @@index([businessId, createdAt])
+}
+
+// ===================== QUOTATIONS, INVOICES & PAYMENTS (Phase 8) =====================
+
+// One row per business, mirroring BusinessAvailability's 1:1-optional pattern.
+// Holds invoice/quotation numbering config and the default terms text that
+// pre-fills new quotations — never enforced at the DB layer, just defaults.
+model BusinessFinancialSettings {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  invoicePrefix         String  @default("INV")
+  invoiceStartingNumber Int     @default(1)
+  invoiceUseYearFormat  Boolean @default(true) // INV-2026-0001 vs INV-0001
+  quotationPrefix       String  @default("QUO")
+
+  defaultTaxRate           Float @default(0)
+  defaultDepositPercentage Float @default(50)
+  quotationValidityDays    Int   @default(14)
+  invoiceDueDays           Int   @default(7)
+
+  defaultPaymentTerms       String?
+  defaultCancellationPolicy String?
+  defaultRefundPolicy       String?
+  defaultAlterationPolicy   String?
+  defaultDeliveryPolicy     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A quotation workflow anchored to an Order. Mirrors Phase 7's DesignPreview
+// shape: this row is the durable identity/status container, while every
+// priced line item and term lives on the immutable QuotationVersion it
+// currently points to (via status, never a pointer field) so accepting or
+// revising a quotation never means editing what's already been sent out.
+model Quotation {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Nullable so a quotation can be created straight from an approved,
+  // locked pre-order DesignPreview — BEFORE any Order exists — mirroring
+  // exactly how DesignPreview.orderId was loosened for the same reason.
+  // Legacy quotations (created against an existing Order) are unaffected;
+  // orderId gets backfilled the moment the quotation is accepted and a
+  // fresh Order is created for it.
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  // Bridge fields for the authenticated customer-login world (Phase 5/6+),
+  // coexisting with the required legacy customerId exactly like
+  // DesignPreview's own bridge fields.
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+  serviceRequestId  String?
+  serviceRequest    ServiceRequest?  @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
+  designPreviewId   String?
+  designPreview     DesignPreview?   @relation(fields: [designPreviewId], references: [id], onDelete: SetNull)
+
+  measurementProfileId String?
+  measurementProfile   PassportMeasurementProfile? @relation(fields: [measurementProfileId], references: [id], onDelete: SetNull)
+  measurementVersionId String?
+  measurementVersion   MeasurementVersion?         @relation(fields: [measurementVersionId], references: [id], onDelete: SetNull)
+
+  // Human-friendly ID shown in the UI (e.g. QUO-0001), unique per business.
+  quotationNumber String
+
+  status              QuotationStatus @default(DRAFT)
+  latestVersionNumber Int             @default(0)
+
+  sentAt        DateTime?
+  firstViewedAt DateTime?
+  acceptedAt    DateTime?
+  declinedAt    DateTime?
+  expiresAt     DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("QuotationCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions         QuotationVersion[]
+  approvals        QuotationApproval[]
+  comments         QuotationComment[]
+  revisionRequests QuotationRevisionRequest[]
+  shares           QuotationShare[]
+  invoice          Invoice?
+  agreement        OrderAgreement?
+
+  @@unique([businessId, quotationNumber])
+  @@index([businessId, status])
+  @@index([businessId, customerId])
+  @@index([orderId])
+  @@index([customerProfileId, status])
+  @@index([designPreviewId])
+  @@index([serviceRequestId])
+}
+
+// A secure, expiring, revocable link a customer uses to view and act on a
+// quotation without needing a login — same mechanism as Phase 7's
+// DesignShare, reusing its channel enum since the semantics are identical.
+model QuotationShare {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  businessId  String
+
+  token          String             @unique
+  channel        DesignShareChannel @default(LINK)
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  accessCount    Int                @default(0)
+  lastAccessedAt DateTime?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([quotationId])
+}
+
+// One immutable snapshot in a quotation's negotiation history. Only one
+// version per quotation should ever be ACTIVE (currently sent for review) or
+// ACCEPTED (final, locked) at a time — enforced in the API layer, same
+// convention as DesignVersion.
+model QuotationVersion {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  businessId  String
+
+  versionNumber Int
+  status        QuotationVersionStatus @default(DRAFT)
+
+  subtotal          Float @default(0)
+  discount          Float @default(0)
+  tax               Float @default(0)
+  deliveryFee       Float @default(0)
+  additionalCharges Float @default(0)
+  total             Float @default(0)
+  depositPercentage Float @default(0)
+  depositRequired   Float @default(0)
+  balanceDue        Float @default(0)
+
+  paymentTerms              String?
+  balanceDueDate            DateTime?
+  productionStartConditions String?
+  cancellationPolicy        String?
+  refundPolicy              String?
+  alterationPolicy          String?
+  deliveryPolicy            String?
+  customTerms               String?
+
+  // Part 2/3 of the escrow-order spec — not covered by the fields above,
+  // which are all either pricing or freetext policy blurbs.
+  productionDays         Int?
+  estimatedDeliveryDate  DateTime?
+  productionDeadline     DateTime?
+  includedRevisions      Int?
+  additionalRevisionCost Float?
+  lateChangePolicy       String?
+
+  changesSummary String?
+  notes          String?
+
+  createdById String?
+  createdBy   User?   @relation("QuotationVersionCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items     QuotationItem[]
+  approvals QuotationApproval[]
+  agreement OrderAgreement?
+
+  @@unique([quotationId, versionNumber])
+  @@index([businessId, status])
+  @@index([quotationId])
+}
+
+model QuotationItem {
+  id         String           @id @default(cuid())
+  versionId  String
+  version    QuotationVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  businessId String
+
+  type        FinancialLineItemType @default(OTHER)
+  name        String
+  description String?
+  quantity    Float                 @default(1)
+  unitPrice   Float                 @default(0)
+  discount    Float                 @default(0)
+  tax         Float                 @default(0)
+  subtotal    Float                 @default(0)
+  sortOrder   Int                   @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([versionId])
+}
+
+// One accept/decline decision event. A quotation can accumulate several over
+// its lifetime (declined on v1, accepted on v2) — the authoritative outcome
+// is whichever QuotationVersion carries status ACCEPTED.
+model QuotationApproval {
+  id          String           @id @default(cuid())
+  quotationId String
+  quotation   Quotation        @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  businessId  String
+  versionId   String
+  version     QuotationVersion @relation(fields: [versionId], references: [id])
+
+  decision  QuotationApprovalDecision
+  ipAddress String?
+  userAgent String?
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  decidedAt DateTime @default(now())
+
+  @@index([quotationId, decidedAt])
+}
+
+// General comment thread on a quotation (optionally scoped to one version).
+model QuotationComment {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  businessId  String
+  versionId   String?
+
+  authorType DesignCommentAuthorType
+  authorId   String?
+  author     User?                   @relation("QuotationCommentAuthor", fields: [authorId], references: [id])
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  body String
+
+  createdAt DateTime @default(now())
+
+  @@index([quotationId, createdAt])
+}
+
+// A customer's "Request Changes" submission against a specific version —
+// kept distinct from QuotationComment (mirrors DesignRevisionRequest vs
+// DesignComment in Phase 7) since it's a discrete, trackable ask rather than
+// open-ended back-and-forth.
+model QuotationRevisionRequest {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  businessId  String
+  versionId   String?
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  body   String
+  status DesignRevisionRequestStatus @default(OPEN)
+
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([quotationId, status])
+}
+
+// The formal contract generated the instant a customer accepts a quotation
+// (Part 7) — an immutable, fully self-contained snapshot of everything that
+// was agreed (price, delivery estimate, terms, policies), independent of
+// whatever the live Quotation/QuotationVersion/DesignVersion rows do
+// afterward. Deliberately duplicates fields already on QuotationVersion
+// rather than just pointing at it, because a contract must never change
+// meaning if the source records it referenced were ever edited.
+model OrderAgreement {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  quotationId        String           @unique
+  quotation          Quotation        @relation(fields: [quotationId], references: [id])
+  quotationVersionId String           @unique
+  quotationVersion   QuotationVersion @relation(fields: [quotationVersionId], references: [id])
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: SetNull)
+
+  designPreviewId String?
+  designPreview   DesignPreview? @relation(fields: [designPreviewId], references: [id], onDelete: SetNull)
+  designVersionId String?
+  designVersion   DesignVersion? @relation(fields: [designVersionId], references: [id], onDelete: SetNull)
+
+  measurementProfileId String?
+  measurementVersionId String?
+
+  // Immutable snapshot of the accepted version's pricing/terms — copied,
+  // never re-derived, exactly like OrderCustomization's snapshot pattern.
+  totalPrice         Float
+  currency           String    @default("NGN")
+  deliveryEstimate   DateTime?
+  productionDeadline DateTime?
+  paymentTerms       String?
+  cancellationPolicy String?
+  refundPolicy       String?
+  alterationPolicy   String?
+  deliveryPolicy     String?
+  customTerms        String?
+
+  customerAcceptedAt DateTime
+  customerIpAddress  String?
+  customerUserAgent  String?
+
+  businessAcceptedAt   DateTime
+  businessAcceptedById String?
+  businessAcceptedBy   User?    @relation("OrderAgreementBusinessAcceptedBy", fields: [businessAcceptedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId])
+  @@index([customerProfileId])
+}
+
+// A professional invoice, either created directly against an order or
+// converted from an accepted QuotationVersion (whose items/terms/pricing are
+// copied in as a fresh, independently-editable snapshot — the quotation
+// itself is never mutated by conversion).
+model Invoice {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  quotationId String?    @unique
+  quotation   Quotation? @relation(fields: [quotationId], references: [id])
+
+  // Human-friendly ID shown in the UI (e.g. INV-2026-0001), unique per business.
+  invoiceNumber String
+
+  status   InvoiceStatus @default(DRAFT)
+  currency String        @default("NGN")
+
+  issueDate DateTime  @default(now())
+  dueDate   DateTime?
+
+  subtotal          Float @default(0)
+  discount          Float @default(0)
+  tax               Float @default(0)
+  deliveryFee       Float @default(0)
+  additionalCharges Float @default(0)
+  total             Float @default(0)
+  amountPaid        Float @default(0)
+  balanceDue        Float @default(0)
+
+  paymentInstructions String?
+  paymentTerms        String?
+  cancellationPolicy  String?
+  refundPolicy        String?
+  alterationPolicy    String?
+  deliveryPolicy      String?
+  customTerms         String?
+
+  sentAt        DateTime?
+  firstViewedAt DateTime?
+  voidedAt      DateTime?
+
+  createdById String?
+  createdBy   User?   @relation("InvoiceCreatedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items           InvoiceItem[]
+  paymentSchedule PaymentSchedule?
+  payments        Payment[]
+  shares          InvoiceShare[]
+
+  @@unique([businessId, invoiceNumber])
+  @@index([businessId, status])
+  @@index([businessId, customerId])
+  @@index([orderId])
+  @@index([businessId, dueDate])
+}
+
+// A secure, expiring, revocable link a customer uses to view and pay an
+// invoice without needing a login — same mechanism as QuotationShare/
+// Phase 7's DesignShare.
+model InvoiceShare {
+  id         String  @id @default(cuid())
+  invoiceId  String
+  invoice    Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  businessId String
+
+  token          String             @unique
+  channel        DesignShareChannel @default(LINK)
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  accessCount    Int                @default(0)
+  lastAccessedAt DateTime?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+model InvoiceItem {
+  id         String  @id @default(cuid())
+  invoiceId  String
+  invoice    Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  businessId String
+
+  type        FinancialLineItemType @default(OTHER)
+  name        String
+  description String?
+  quantity    Float                 @default(1)
+  unitPrice   Float                 @default(0)
+  discount    Float                 @default(0)
+  tax         Float                 @default(0)
+  subtotal    Float                 @default(0)
+  sortOrder   Int                   @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+}
+
+// The milestone plan for an invoice (e.g. 50% Deposit / 30% Production / 20%
+// Completion). Optional — invoices without one are paid as a single balance.
+model PaymentSchedule {
+  id         String  @id @default(cuid())
+  invoiceId  String  @unique
+  invoice    Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  businessId String
+
+  createdAt DateTime @default(now())
+
+  milestones PaymentMilestone[]
+}
+
+model PaymentMilestone {
+  id         String          @id @default(cuid())
+  scheduleId String
+  schedule   PaymentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  businessId String
+
+  label      String
+  percentage Float?
+  amount     Float
+  dueDate    DateTime?
+  status     PaymentMilestoneStatus @default(PENDING)
+  sortOrder  Int                    @default(0)
+
+  paymentId String?   @unique
+  payment   Payment?  @relation(fields: [paymentId], references: [id])
+  paidAt    DateTime?
+
+  @@index([scheduleId])
+}
+
+// A single payment event against an invoice — online (via a connected
+// gateway) or offline (recorded manually by staff). Every payment belongs to
+// exactly one business and exactly one invoice per implementation rules
+// 16-17; orderId/customerId are denormalized from the invoice purely to keep
+// financial-history queries (customer profile, order summary) index-only.
+model Payment {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  invoiceId  String
+  invoice    Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  amount   Float
+  currency String @default("NGN")
+
+  method   PaymentMethod
+  provider PaymentProviderType
+
+  // The gateway's own transaction reference (or a staff-entered reference for
+  // offline payments). idempotencyKey is what webhook processing actually
+  // dedupes on — see PaymentWebhookEvent.
+  providerReference String?
+  idempotencyKey    String  @unique
+
+  status PaymentStatus @default(PENDING)
+
+  recordedById String?
+  recordedBy   User?   @relation("PaymentRecordedBy", fields: [recordedById], references: [id])
+  notes        String?
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  receipt   Receipt?
+  refunds   Refund[]
+  milestone PaymentMilestone?
+  payouts   Payout[]
+
+  @@index([businessId, status])
+  @@index([invoiceId])
+  @@index([orderId])
+  @@index([customerId])
+  @@index([provider, providerReference])
+}
+
+model Receipt {
+  id         String   @id @default(cuid())
+  paymentId  String   @unique
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  // Human-friendly ID shown in the UI (e.g. RCT-0001), unique per business.
+  receiptNumber String
+  pdfUrl        String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([businessId, receiptNumber])
+  @@index([businessId])
+}
+
+model Refund {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  paymentId String
+  payment   Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  amount Float
+  type   RefundType @default(FULL)
+  reason String
+
+  status RefundStatus @default(PENDING)
+
+  providerRefundReference String?
+
+  processedById String?
+  processedBy   User?     @relation("RefundProcessedBy", fields: [processedById], references: [id])
+  processedAt   DateTime?
+
+  createdAt          DateTime            @default(now())
+  disputeResolutions DisputeResolution[]
+
+  @@index([businessId, status])
+  @@index([paymentId])
+}
+
+// A business's own connection to a payment gateway — Fashion360 never holds
+// customer funds, it only stores enough to call the provider's API on the
+// business's behalf. secretKeyEncrypted/webhookSecretEncrypted are always
+// AES-256-GCM ciphertext (see lib/encryption.ts), never plaintext; publicKey
+// is safe to expose to the browser as-is.
+model PaymentGatewayConnection {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  provider PaymentProviderType
+
+  publicKey              String?
+  secretKeyEncrypted     String?
+  webhookSecretEncrypted String?
+
+  currency String                  @default("NGN")
+  status   GatewayConnectionStatus @default(DISCONNECTED)
+  isActive Boolean                 @default(false)
+
+  lastTestedAt   DateTime?
+  lastTestResult String?
+
+  connectedById  String?
+  connectedBy    User?     @relation("PaymentGatewayConnectedBy", fields: [connectedById], references: [id])
+  connectedAt    DateTime?
+  disconnectedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, provider])
+  @@index([businessId, isActive])
+}
+
+// Log of every inbound webhook call, independent of whether it could be
+// matched to a payment — this is what makes webhook processing idempotent
+// (providerEventId is deduped here) and gives support a trail for "the
+// customer says they paid but the invoice didn't update" investigations.
+model PaymentWebhookEvent {
+  id         String    @id @default(cuid())
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id])
+
+  provider        PaymentProviderType
+  providerEventId String
+  eventType       WebhookEventType?
+
+  providerReference String?
+  signatureValid    Boolean @default(false)
+  rawPayload        Json
+
+  status       WebhookProcessingStatus @default(RECEIVED)
+  errorMessage String?
+
+  paymentId String?
+
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, providerEventId])
+  @@index([businessId, createdAt])
+  @@index([providerReference])
+}
+
+// Unified financial ledger + audit trail — every money-moving event
+// (payment, refund) and every notable status transition (quotation sent,
+// invoice viewed, gateway connected, ...) writes one row here. Powers both
+// the Transaction History ledger (section 27) and audit logging (section 37)
+// without keeping two near-duplicate tables in sync.
+model FinancialTransaction {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  type FinancialTransactionType
+
+  orderId     String?
+  customerId  String?
+  quotationId String?
+  invoiceId   String?
+  paymentId   String?
+  refundId    String?
+
+  amount   Float?
+  currency String?
+  method   PaymentMethod?
+
+  description    String
+  reference      String?
+  previousStatus String?
+  newStatus      String?
+
+  actorType FinancialActorType @default(STAFF)
+  actorId   String?
+  actor     User?              @relation("FinancialTransactionActor", fields: [actorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([businessId, type])
+  @@index([invoiceId])
+  @@index([customerId])
+  @@index([orderId])
+}
+
+// ===================== CUSTOMER PLATFORM IDENTITY (Phase 1) =====================
+
+// The customer's own Fashion360 identity — 1:1 with a User (role CUSTOMER).
+// Deliberately independent of any business: a customer keeps this profile,
+// their Fashion Passport, and their history even if they work with several
+// businesses or leave one entirely (Part 6 of the Phase 1 spec).
+// Note: the Phase 2 spec's Part 9 ("Customer Profile") and Part 10 ("Fashion
+// Profile") describe two conceptual sections, but Phase 1 already unified
+// them into this one model — splitting it into two 1:1 tables now would
+// duplicate storage for no functional gain, so Part 10's few genuinely new
+// fields (preferredClothingCategories, commonOccasions) are just added here
+// alongside Part 9's (username, dateOfBirth) instead of a parallel
+// FashionProfile table.
+model CustomerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  username        String?   @unique
+  profilePhotoUrl String?
+  phone           String?
+  country         String?
+  state           String?
+  city            String?
+  gender          Gender?
+  dateOfBirth     DateTime?
+
+  preferredFit                FitPreference?
+  favoriteColors              String[]
+  favoriteFabrics             String[]
+  stylePreferences            String[]
+  fashionInterests            String[]
+  preferredClothingCategories String[]
+  commonOccasions             String[]
+
+  // Part 3 (Phase 10): the two Part 3 preference fields CustomerProfile
+  // didn't already carry from Phase 2.
+  priceRangeMin         Float?
+  priceRangeMax         Float?
+  preferredServiceTypes ServiceCategory[]
+
+  // Part 32: a "Suspend Review Privileges" admin moderation action — blocks
+  // future review submissions without touching the customer's account/login
+  // in any other way.
+  reviewPrivilegesSuspendedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fashionPassport       FashionPassport?
+  privacySettings       PrivacySettings?
+  businessRelationships BusinessCustomerRelationship[]
+  measurementProfiles   PassportMeasurementProfile[]
+  designHistory         CustomerDesignHistory[]
+  wardrobeItems         CustomerWardrobeItem[]
+  fashionHistory        CustomerFashionHistory[]
+
+  serviceRequests           ServiceRequest[]
+  businessFavorites         BusinessFavorite[]
+  portfolioFavorites        PortfolioFavorite[]
+  notifications             Notification[]
+  appointments              Appointment[]
+  measurementAccessRequests MeasurementAccessRequest[]
+  designPreviews            DesignPreview[]
+  designRevisionRequests    DesignRevisionRequest[]
+  designComments            DesignComment[]
+  designAnnotations         DesignAnnotation[]
+  designApprovals           DesignApproval[]
+  designApprovalRecords     DesignApprovalRecord[]
+  orders                    Order[]
+  quotations                Quotation[]
+  quotationApprovals        QuotationApproval[]
+  quotationComments         QuotationComment[]
+  quotationRevisionRequests QuotationRevisionRequest[]
+  orderAgreements           OrderAgreement[]
+  disputes                  Dispute[]
+  reviews                   Review[]
+
+  preferredDesigners      CustomerPreferredDesigner[]
+  behaviorSignals         CustomerBehaviorSignal[]
+  recommendations         Recommendation[]
+  fashionGoals            CustomerFashionGoal[]
+  personalizationSettings PersonalizationSettings?
+  designFavorites         DesignFavorite[]
+
+  @@index([userId])
+}
+
+// A lightweight, separate record from CustomerProfile on purpose: future
+// phases (Measurement Vault, Digital Wardrobe, Style Profile, Fashion
+// History) attach to the passport, not directly to the profile, so the
+// profile stays a simple "who is this person" record.
+model FashionPassport {
+  id                String          @id @default(cuid())
+  customerProfileId String          @unique
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  // Human-friendly ID shown in the UI (e.g. FXP-000001). Nullable rather
+  // than required-with-backfill-on-migration, since passports created
+  // before this field existed are backfilled once by script rather than
+  // blocking the schema push — every passport created from here on always
+  // gets one at creation time (see lib/fashion-passport.ts).
+  passportCode String? @unique
+
+  status            FashionPassportStatus @default(INCOMPLETE)
+  completionPercent Int                   @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Foundation only (Part 15) — the full privacy-management UI comes later;
+// this just gives every customer sane, explicit defaults from day one.
+// Default changed to PRIVATE in Phase 2 (Part 20 spec: "Default: Private" —
+// Phase 1 had defaulted to BUSINESS_ONLY before this was specified).
+model PrivacySettings {
+  id                String          @id @default(cuid())
+  customerProfileId String          @unique
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  profileVisibility               ProfileVisibility @default(PRIVATE)
+  allowMeasurementAccessByDefault Boolean           @default(false)
+  allowDesignSharing              Boolean           @default(true)
+  allowOrderDataAccess            Boolean           @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// The relationship between a platform CustomerProfile and a Business (Part
+// 17) — distinct from the business-owned Customer CRM row. linkedCustomer
+// bridges the two once matched (by email at registration, or claimed
+// later), so existing orders/measurements/designs/invoices keep working
+// against the CRM row while this models the platform-level relationship
+// and its access grant/revoke lifecycle.
+model BusinessCustomerRelationship {
+  id                String          @id @default(cuid())
+  businessId        String
+  business          Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  status BusinessCustomerRelationshipStatus @default(PENDING)
+
+  // Who created this PENDING request — determines which side's "accept" /
+  // "decline" applies (Part 16/17: the *other* side responds, never the
+  // side that asked). Irrelevant for rows created directly as ACTIVE (e.g.
+  // the auto-link at registration), which never pass through that gate.
+  initiatedBy RelationshipInitiator @default(BUSINESS)
+
+  linkedCustomerId String?   @unique
+  linkedCustomer   Customer? @relation(fields: [linkedCustomerId], references: [id])
+
+  requestedAt DateTime  @default(now())
+  respondedAt DateTime?
+  revokedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([businessId, customerProfileId])
+  @@index([businessId, status])
+  @@index([customerProfileId, status])
+}
+
+model UserConsent {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type       ConsentType
+  version    String
+  acceptedAt DateTime    @default(now())
+  ipAddress  String?
+
+  @@index([userId])
+}
+
+// Identity/access/security audit trail (Part 18) — see the AuditLogAction
+// comment for how this differs from the per-domain activity feeds.
+model AuditLog {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation("AuditLogUser", fields: [userId], references: [id], onDelete: SetNull)
+  businessId String?
+  business   Business? @relation("AuditLogBusiness", fields: [businessId], references: [id], onDelete: SetNull)
+
+  action     AuditLogAction
+  entityType String?
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  userAgent  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([businessId, createdAt])
+  @@index([action, createdAt])
+}
+
+// ===================== BUSINESS PROFILE & PORTFOLIO (Phase 2) =====================
+
+// The business's public-facing identity — 1:1 with Business, same pattern
+// as BusinessFinancialSettings/BusinessAvailability. Kept separate from the
+// core Business record (name/contact/operational settings) since this is
+// specifically the "how customers see you" layer, including fields with
+// their own visibility/verification lifecycle.
+model BusinessProfile {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  username           String? @unique
+  description        String?
+  serviceArea        String?
+  website            String?
+  registrationNumber String?
+
+  visibility BusinessProfileVisibility @default(PRIVATE)
+
+  // Self-reported, not a system-generated trust metric (unlike rating/
+  // completed-order-count/review-count, which are always computed live
+  // from real Order/review data — see lib/business-trust-profile.ts — and
+  // therefore deliberately have no editable field anywhere in this schema).
+  yearsOfExperience Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Mirrors CustomerTag/DesignTag/DesignCategory's pattern exactly: a system-
+// seeded catalog per business, extendable with custom entries.
+model BusinessSpecialty {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name     String
+  isSystem Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+// No separate "BusinessPortfolio" wrapper model — the portfolio is simply
+// "every item belonging to this business", same relationship shape as
+// Design -> DesignImage, so GET/POST /business/portfolio operate directly
+// on this collection without a pointless single-field parent row.
+model BusinessPortfolioItem {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  imageUrl    String
+  title       String
+  description String?
+  category    String?
+  tags        String[]
+  sortOrder   Int      @default(0)
+
+  uploadedById String?
+  uploadedBy   User?   @relation("PortfolioItemUploadedBy", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favoritedBy PortfolioFavorite[]
+
+  @@index([businessId, sortOrder])
+}
+
+// 1:1 status tracker for Phase 2's foundation — a real document-submission
+// and review workflow is future-phase work; for now this just gives the
+// Trust Profile (Part 8) something real to read instead of a fake badge.
+model BusinessVerification {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  status BusinessVerificationStatus @default(UNVERIFIED)
+  notes  String?
+
+  submittedAt  DateTime?
+  reviewedAt   DateTime?
+  reviewedById String?
+  reviewedBy   User?     @relation("BusinessVerificationReviewedBy", fields: [reviewedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ===================== CUSTOMER MEASUREMENT VAULT (Phase 2) =====================
+
+// The customer's own measurement record, created by themselves and never
+// tied to a business — contrast with the older business-side Measurement/
+// MeasurementProfile below, which a business's staff creates for a CRM
+// Customer row as part of taking an order. Both coexist; a future phase may
+// let a customer share a vault snapshot into an order.
+//
+// Phase 4: values no longer live directly on the profile — they live on
+// MeasurementVersion, so a Confirmed profile can never be silently
+// overwritten (Part 18/19). `unit` here is the customer's *preferred
+// display unit* only; every version stores values in centimeters
+// internally (Part 17) and the UI converts for display.
+model PassportMeasurementProfile {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  name       String
+  isDefault  Boolean @default(false)
+  isArchived Boolean @default(false)
+
+  status        MeasurementProfileStatus @default(DRAFT)
+  preferredUnit MeasurementUnit          @default(METRIC)
+
+  currentVersionId String?             @unique
+  currentVersion   MeasurementVersion? @relation("CurrentVersion", fields: [currentVersionId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions           MeasurementVersion[]           @relation("ProfileVersions")
+  accessGrants       MeasurementAccessGrant[]
+  correctionRequests MeasurementCorrectionRequest[]
+  designPreviews     DesignPreview[]
+  orders             Order[]
+  quotations         Quotation[]
+
+  @@index([customerProfileId])
+}
+
+enum MeasurementProfileStatus {
+  DRAFT
+  PENDING_REVIEW
+  CONFIRMED
+  ARCHIVED
+}
+
+// Part 19: an immutable snapshot. A Confirmed version is never edited in
+// place — any change (business re-capture, accepted correction) creates a
+// new version and repoints PassportMeasurementProfile.currentVersionId, so
+// "which measurements were actually used" is always answerable later.
+model MeasurementVersion {
+  id        String                     @id @default(cuid())
+  profileId String
+  profile   PassportMeasurementProfile @relation("ProfileVersions", fields: [profileId], references: [id], onDelete: Cascade)
+
+  versionNumber Int
+  status        MeasurementProfileStatus @default(DRAFT)
+
+  // Centimeters, always — { height, shoulder, chestBust, waist, hip,
+  // sleeveLength, armCircumference, wrist, thigh, knee, inseam, outseam,
+  // garmentLength, neck, custom: { [label]: number } }
+  values Json
+
+  reason String? // why this version was created (capture, correction, re-session...)
+  notes  String?
+
+  createdById String?
+  createdBy   User?   @relation("MeasurementVersionCreatedBy", fields: [createdById], references: [id])
+
+  capturedAtAppointmentId String?
+  capturedAtAppointment   Appointment? @relation(fields: [capturedAtAppointmentId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  currentForProfile  PassportMeasurementProfile?    @relation("CurrentVersion")
+  correctionRequests MeasurementCorrectionRequest[]
+  designPreviews     DesignPreview[]
+  orders             Order[]
+  quotations         Quotation[]
+
+  @@unique([profileId, versionNumber])
+  @@index([profileId, versionNumber])
+}
+
+// Grants are additive and explicit — no grant means no access. Revoking
+// sets revokedAt rather than deleting the row, so "View Access History" is
+// just querying a customer's own grants, not a separate log table (the
+// grant/revoke *events* themselves are also mirrored into AuditLog via
+// MEASUREMENT_ACCESS_GRANTED/REVOKED for the unified security trail).
+// Phase 4: expiresAt covers "Allow Once" / "Allow Until Service Completion"
+// / temporary access (Part 22/23); accessRequestId links back to the
+// business's ask when the grant originated there rather than from the
+// customer proactively sharing (Phase 2/3's existing flow, still supported).
+model MeasurementAccessGrant {
+  id                   String                     @id @default(cuid())
+  measurementProfileId String
+  measurementProfile   PassportMeasurementProfile @relation(fields: [measurementProfileId], references: [id], onDelete: Cascade)
+
+  scope      MeasurementAccessScope
+  businessId String?
+  business   Business?              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  orderId    String?
+
+  accessRequestId String?                   @unique
+  accessRequest   MeasurementAccessRequest? @relation(fields: [accessRequestId], references: [id], onDelete: SetNull)
+
+  expiresAt DateTime?
+
+  grantedById String?
+  grantedBy   User?   @relation("MeasurementAccessGrantedBy", fields: [grantedById], references: [id])
+
+  grantedAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  accessLogs MeasurementAccessLog[]
+
+  @@index([measurementProfileId])
+  @@index([businessId])
+}
+
+enum MeasurementAccessRequestStatus {
+  PENDING
+  ALLOWED
+  ALLOWED_ONCE
+  ALLOWED_UNTIL_COMPLETION
+  DECLINED
+}
+
+// Part 22/23: the business's ask, distinct from the grant it may produce.
+// A customer clicking Allow/Allow Once/Allow Until Service Completion turns
+// this into a MeasurementAccessGrant in the same transaction; Decline just
+// records the outcome here.
+// The business can't name a specific profile it has never seen, so the ask
+// targets the customer generally; the customer picks WHICH profile to share
+// (defaulting to their default one) at approval time, when measurementProfileId
+// gets set on the resulting grant.
+model MeasurementAccessRequest {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String
+  business          Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  serviceRequestId String?
+  serviceRequest   ServiceRequest? @relation(fields: [serviceRequestId], references: [id], onDelete: SetNull)
+  orderId          String?
+
+  reason String?
+  status MeasurementAccessRequestStatus @default(PENDING)
+
+  requestedById String?
+  requestedBy   User?   @relation("MeasurementAccessRequestedBy", fields: [requestedById], references: [id])
+
+  respondedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  grant MeasurementAccessGrant?
+
+  @@index([customerProfileId, status])
+  @@index([businessId, status])
+}
+
+// Part 24: a real log of the business actually reading measurement values —
+// distinct from grant/revoke lifecycle above. Written every time a business
+// user opens a customer's measurement values through an active grant.
+model MeasurementAccessLog {
+  id      String                 @id @default(cuid())
+  grantId String
+  grant   MeasurementAccessGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+
+  viewedById String?
+  viewedBy   User?   @relation("MeasurementAccessLogViewedBy", fields: [viewedById], references: [id])
+
+  viewedAt DateTime @default(now())
+
+  @@index([grantId, viewedAt])
+}
+
+enum MeasurementCorrectionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  NEW_SESSION_REQUESTED
+}
+
+// Part 21: the customer flags one field on a specific (usually Confirmed)
+// version as wrong. The original version is never touched — Accept creates
+// a new MeasurementVersion with the corrected field and repoints
+// currentVersionId; Reject/NewSessionRequested just close this request out.
+model MeasurementCorrectionRequest {
+  id                   String                     @id @default(cuid())
+  measurementProfileId String
+  measurementProfile   PassportMeasurementProfile @relation(fields: [measurementProfileId], references: [id], onDelete: Cascade)
+  versionId            String
+  version              MeasurementVersion         @relation(fields: [versionId], references: [id], onDelete: Cascade)
+
+  fieldKey       String // key within MeasurementVersion.values being corrected
+  requestedValue Float
+  reason         String?
+
+  status MeasurementCorrectionStatus @default(PENDING)
+
+  requestedById String?
+  requestedBy   User?   @relation("MeasurementCorrectionRequestedBy", fields: [requestedById], references: [id])
+
+  respondedById String?
+  respondedBy   User?     @relation("MeasurementCorrectionRespondedBy", fields: [respondedById], references: [id])
+  respondedAt   DateTime?
+  responseNote  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([measurementProfileId, status])
+  @@index([versionId])
+}
+
+// ===================== CUSTOMER DESIGN HISTORY / WARDROBE / FASHION HISTORY (Phase 2 foundations) =====================
+//
+// All three are read/write-minimal on purpose (Parts 23-25): schema +
+// empty-state UI only in this phase. Nothing writes to them yet — they'll
+// start filling up once Order/Design/Delivery events in later phases are
+// wired to append here.
+
+model CustomerDesignHistory {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String?
+  business          Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  designName     String
+  designerName   String?
+  designImageUrl String?
+  version        Int?
+  status         String?
+  orderReference String?
+
+  occurredAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([customerProfileId, occurredAt])
+}
+
+model CustomerWardrobeItem {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String?
+  business          Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  garmentName    String
+  imageUrl       String?
+  category       String?
+  color          String?
+  fabric         String?
+  orderReference String?
+
+  createdAt DateTime @default(now())
+
+  @@index([customerProfileId, createdAt])
+}
+
+model CustomerFashionHistory {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String?
+  business          Business?       @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  eventType        FashionHistoryEventType
+  description      String?
+  orderReference   String?
+  designReference  String?
+  garmentReference String?
+  status           String?
+
+  occurredAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([customerProfileId, occurredAt])
+}
+
+// ===================== DISCOVERY, SERVICES & SERVICE REQUESTS (Phase 3) =====================
+
+// Standardized categories from Part 10's example list. No separate global
+// "Service" catalog model on top of this — BusinessService already carries
+// the category, mirroring how BusinessSpecialty carries its own name
+// without a separate global "Specialty" table (Phase 2 pattern).
+enum ServiceCategory {
+  CUSTOM_CLOTHING
+  TRADITIONAL_WEAR
+  BRIDAL_WEAR
+  WEDDING_OUTFIT
+  CORPORATE_WEAR
+  CASUAL_WEAR
+  ALTERATIONS
+  CUSTOM_DESIGN
+  STYLING
+  CONSULTATION
+  OTHER
+}
+
+model BusinessService {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  category    ServiceCategory @default(OTHER)
+
+  priceMin              Decimal? @db.Decimal(12, 2)
+  priceMax              Decimal? @db.Decimal(12, 2)
+  estimatedDurationDays Int?
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequests ServiceRequest[]
+  reviews         Review[]
+
+  @@index([businessId, isActive])
+}
+
+// A business's own switch for whether it's currently open to new service
+// requests (Part 5's "Availability" filter) — separate from BusinessProfile
+// .visibility, which governs whether the profile is *found* at all. A
+// business can be publicly visible but temporarily not accepting requests.
+model BusinessDiscoverySettings {
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  isAcceptingRequests Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ServiceRequestStatus {
+  DRAFT
+  SUBMITTED
+  RECEIVED
+  UNDER_REVIEW
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+  CONVERTED_TO_APPOINTMENT
+  CONVERTED_TO_ORDER
+}
+
+// The customer-initiated request that starts a new business relationship
+// (Part 11) — deliberately CustomerProfile-scoped, not Customer(CRM)-scoped,
+// since the customer may have no prior relationship with this business at
+// all yet. Part 15's workflow (business accepts -> customer accepts ->
+// relationship ACTIVE) plays out via ServiceRequestResponse rows below;
+// `status` reflects the net outcome, not each side's individual action.
+model ServiceRequest {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  serviceId String?
+  service   BusinessService? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  // Human-friendly ID shown in the UI (e.g. SR-0001), unique per business.
+  requestCode String
+
+  status ServiceRequestStatus @default(SUBMITTED)
+
+  preferredDate      DateTime?
+  preferredTime      String?
+  locationPreference String?
+  description        String
+  budgetMin          Decimal?  @db.Decimal(12, 2)
+  budgetMax          Decimal?  @db.Decimal(12, 2)
+  additionalNotes    String?
+
+  viewedAt            DateTime?
+  businessRespondedAt DateTime?
+  customerRespondedAt DateTime?
+  expiresAt           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments               ServiceRequestAttachment[]
+  responses                 ServiceRequestResponse[]
+  statusHistory             ServiceRequestStatusHistory[]
+  appointments              Appointment[]
+  measurementAccessRequests MeasurementAccessRequest[]
+  designPreviews            DesignPreview[]
+  orders                    Order[]
+  quotations                Quotation[]
+
+  @@unique([businessId, requestCode])
+  @@index([businessId, status])
+  @@index([customerProfileId, status])
+}
+
+model ServiceRequestAttachment {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  imageUrl String
+
+  createdAt DateTime @default(now())
+
+  @@index([serviceRequestId])
+}
+
+enum ServiceRequestActor {
+  BUSINESS
+  CUSTOMER
+}
+
+// A "simple response thread" (Part 14) — not full chat. Each row is one
+// side's move: the business's decision/message, or the customer's reply to
+// it. authorId is nullable defensively (mirrors DesignComment's pattern)
+// but is always set in practice since both sides require an authenticated
+// User.
+enum ServiceRequestResponseType {
+  MESSAGE
+  ACCEPTED
+  DECLINED
+  INFO_REQUESTED
+  ALTERNATIVE_DATE_PROPOSED
+  CUSTOMER_ACCEPTED
+  CUSTOMER_DECLINED
+}
+
+model ServiceRequestResponse {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  actorType ServiceRequestActor
+  authorId  String?
+  author    User?               @relation("ServiceRequestResponseAuthor", fields: [authorId], references: [id])
+
+  type    ServiceRequestResponseType
+  message String?
+
+  proposedDate      DateTime?
+  estimatedPriceMin Decimal?  @db.Decimal(12, 2)
+  estimatedPriceMax Decimal?  @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+
+  @@index([serviceRequestId, createdAt])
+}
+
+// The real, only-real-events timeline backing Part 17/18 — one row per
+// status transition, so the UI never has to infer or fabricate a step.
+model ServiceRequestStatusHistory {
+  id               String         @id @default(cuid())
+  serviceRequestId String
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Cascade)
+
+  status ServiceRequestStatus
+  note   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([serviceRequestId, createdAt])
+}
+
+// ===================== FAVORITES (Phase 3) =====================
+//
+// Deliberately separate from the older DesignFavorite (Phase pre-2,
+// Customer/CRM-scoped, staff-recorded during a consultation) — these are
+// CustomerProfile-scoped, self-service favorites from the new discovery
+// experience. "Favorite Designs" from Part 9/20 is covered by
+// PortfolioFavorite for now: there is no customer-facing Design catalog to
+// browse yet (Design Management is explicitly out of scope for Phase 3),
+// so portfolio items are the browsable "designs" in the discovery world.
+
+model BusinessFavorite {
+  id                String          @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  businessId        String
+  business          Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerProfileId, businessId])
+  @@index([businessId])
+}
+
+model PortfolioFavorite {
+  id                String                @id @default(cuid())
+  customerProfileId String
+  customerProfile   CustomerProfile       @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  portfolioItemId   String
+  portfolioItem     BusinessPortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([customerProfileId, portfolioItemId])
+  @@index([portfolioItemId])
+}
+
+// ===================== PRE-LAUNCH WAITLIST =====================
+
+// Standalone — deliberately not linked to User/CustomerProfile/Business,
+// since a waitlist signup happens before an account exists. A person can
+// join both lists (customer + designer) with the same email; resubmitting
+// the same email+role is idempotent (upsert), never a duplicate row.
+enum WaitlistRole {
+  CUSTOMER
+  DESIGNER
+}
+
+model WaitlistSignup {
+  id     String       @id @default(cuid())
+  email  String
+  name   String?
+  phone  String?
+  role   WaitlistRole
+  source String? // e.g. "landing-hero" — free-form attribution, not enforced
+
+  // `city` doubles as "Location" for a DESIGNER signup and "City" for a
+  // CUSTOMER one, same underlying concept (free-text place name), one
+  // column. `country` is picked from a fixed list on both forms.
+  // `fashionInterest` is customer-only, always null for DESIGNER.
+  city            String?
+  country         String?
+  fashionInterest String?
+
+  // Designer-only fields — always null for role: CUSTOMER
+  businessName    String?
+  specialty       String?
+  yearsExperience Int?
+  portfolioUrl    String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([email, role])
 }

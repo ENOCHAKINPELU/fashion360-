@@ -15,13 +15,13 @@ export const measurementUnitOptions = [
 ] as const;
 
 export const currencyOptions = [
-  { value: "NGN", label: "NGN — Nigerian Naira" },
-  { value: "USD", label: "USD — US Dollar" },
-  { value: "GBP", label: "GBP — British Pound" },
-  { value: "EUR", label: "EUR — Euro" },
-  { value: "GHS", label: "GHS — Ghanaian Cedi" },
-  { value: "KES", label: "KES — Kenyan Shilling" },
-  { value: "ZAR", label: "ZAR — South African Rand" },
+  { value: "NGN", label: "NGN (Nigerian Naira)" },
+  { value: "USD", label: "USD (US Dollar)" },
+  { value: "GBP", label: "GBP (British Pound)" },
+  { value: "EUR", label: "EUR (Euro)" },
+  { value: "GHS", label: "GHS (Ghanaian Cedi)" },
+  { value: "KES", label: "KES (Kenyan Shilling)" },
+  { value: "ZAR", label: "ZAR (South African Rand)" },
 ] as const;
 
 export const timezoneOptions = [
@@ -34,6 +34,9 @@ export const timezoneOptions = [
 ] as const;
 
 export const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;
+
+export const DEFAULT_WORKING_HOURS: Record<string, { open: string; close: string; closed: boolean }> =
+  Object.fromEntries(WEEKDAYS.map((day) => [day, { open: "09:00", close: "18:00", closed: day === "sunday" }]));
 
 export const businessRegistrationSchema = z.object({
   name: z.string().min(2, "Business name is required"),

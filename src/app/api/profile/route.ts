@@ -10,6 +10,39 @@ const patchSchema = z.object({
   notificationPreferences: notificationPreferencesSchema.optional(),
 });
 
+// "Get Current User" — role-agnostic, used by both the business dashboard
+// and the customer account area.
+export async function GET() {
+  try {
+    const session = await auth();
+    if (!session?.user) throw new ApiError(401, "Not authenticated");
+
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        position: true,
+        image: true,
+        role: true,
+        businessId: true,
+        notificationPreferences: true,
+        createdAt: true,
+      },
+    });
+    if (!user) throw new ApiError(404, "User not found");
+
+    return NextResponse.json({ user });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth();

@@ -10,9 +10,7 @@ function VerifyEmailContent() {
   const [status, setStatus] = useState<"pending" | "success" | "error">(() => (token ? "pending" : "error"));
 
   useEffect(() => {
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const controller = new AbortController();
 
@@ -24,9 +22,7 @@ function VerifyEmailContent() {
     })
       .then((res) => setStatus(res.ok ? "success" : "error"))
       .catch((error) => {
-        if (error instanceof Error && error.name === "AbortError") {
-          return;
-        }
+        if (error instanceof Error && error.name === "AbortError") return;
         setStatus("error");
       });
 
@@ -34,16 +30,16 @@ function VerifyEmailContent() {
   }, [token]);
 
   return (
-    <Card>
-      <CardHeader className="flex-col items-start pb-4">
-        <CardTitle>Email verification</CardTitle>
+    <Card className="border-none shadow-lg">
+      <CardHeader className="items-start pb-4">
+        <CardTitle className="text-xl">Email verification</CardTitle>
         <CardDescription>Confirming your Fashion360 account.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-4 text-sm">
-        {status === "pending" && <p className="text-muted">Verifying...</p>}
+      <CardContent className="pt-2 text-sm">
+        {status === "pending" && <p className="text-muted-foreground">Verifying...</p>}
         {status === "success" && <p className="text-success">Your email is verified. You can sign in now.</p>}
         {status === "error" && <p className="text-danger">This verification link is invalid or has expired.</p>}
-        <Link href="/sign-in" className="mt-4 inline-block font-medium text-accent">
+        <Link href="/login" className="mt-4 inline-block font-medium text-primary hover:underline">
           Go to sign in
         </Link>
       </CardContent>

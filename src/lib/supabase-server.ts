@@ -15,3 +15,6 @@ export const supabaseServer = createClient(supabaseUrl, supabaseServiceRoleKey, 
 });
 
 export const UPLOAD_BUCKET = "fashion360-uploads";
+// Separate bucket for 3D model assets — created with a much higher
+// fileSizeLimit than the images bucket, which is fixed at creation time.
+export const MODEL_UPLOAD_BUCKET = "fashion360-models";

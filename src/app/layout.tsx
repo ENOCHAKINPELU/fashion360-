@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Fraunces } from "next/font/google";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { cn } from "@/lib/utils";
@@ -10,10 +10,19 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+// Editorial display face for hero/section headlines — Inter stays the only
+// UI/body font. Variable, so weight+optical-size flex per breakpoint without
+// loading multiple static cuts.
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
 export const metadata: Metadata = {
-  title: "Fashion360 — Fashion Business Management Platform",
+  title: "Fashion360: Discover Fashion Designers & Manage Your Fashion Journey",
   description:
-    "The all-in-one platform for fashion designers, tailors, and bespoke fashion houses to manage customers, orders, measurements, and payments.",
+    "Fashion360 is a premium fashion marketplace connecting customers with trusted fashion designers, from discovery and design collaboration to protected payments, production tracking, and delivery.",
 };
 
 export default function RootLayout({
@@ -22,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased font-sans", inter.variable)}>
+    <html lang="en" className={cn("h-full antialiased font-sans", inter.variable, fraunces.variable)}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>
           {children}

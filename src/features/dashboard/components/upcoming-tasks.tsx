@@ -1,10 +1,10 @@
 import { CalendarClock } from "lucide-react";
 
 const MOCK_TASKS = [
-  { title: "Fitting session — Amara Chukwu", when: "Tomorrow, 10:00 AM" },
-  { title: "Design approval due — Order #FN-2201", when: "Wed, 2:00 PM" },
+  { title: "Fitting session: Amara Chukwu", when: "Tomorrow, 10:00 AM" },
+  { title: "Design approval due: Order #FN-2201", when: "Wed, 2:00 PM" },
   { title: "Fabric delivery follow-up", when: "Thu, 9:00 AM" },
-  { title: "Consultation — Bola Adeyemi", when: "Fri, 11:30 AM" },
+  { title: "Consultation: Bola Adeyemi", when: "Fri, 11:30 AM" },
 ];
 
 export function UpcomingTasks() {

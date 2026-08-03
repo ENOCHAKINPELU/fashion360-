@@ -30,7 +30,7 @@ export function RevenueChart() {
         />
         <Tooltip
           cursor={{ stroke: "var(--primary)", strokeWidth: 1 }}
-          formatter={(value: number) => [`₦${value.toLocaleString()}`, "Revenue"]}
+          formatter={(value) => [`₦${Number(value).toLocaleString()}`, "Revenue"]}
           contentStyle={{
             borderRadius: 12,
             border: "1px solid var(--border)",

@@ -5,6 +5,7 @@ import { registerSchema } from "@/lib/validations/auth";
 import { sendEmail } from "@/lib/mailer";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -31,6 +32,21 @@ export async function POST(req: NextRequest) {
         passwordHash,
         role: "OWNER",
       },
+    });
+
+    // Part 23's "Business has accepted platform terms" discovery gate reads
+    // this — see lib/business-discovery.ts.
+    await prisma.userConsent.create({
+      data: { userId: user.id, type: "TERMS_OF_SERVICE", version: "1.0", ipAddress: ip },
+    });
+
+    await logAuditEvent(prisma, {
+      action: "USER_REGISTERED",
+      userId: user.id,
+      entityType: "User",
+      entityId: user.id,
+      ipAddress: ip,
+      userAgent: req.headers.get("user-agent"),
     });
 
     const token = crypto.randomBytes(32).toString("hex");

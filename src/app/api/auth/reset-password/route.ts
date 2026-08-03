@@ -4,6 +4,7 @@ import { apiErrorResponse, ApiError } from "@/lib/rbac";
 import { resetPasswordSchema } from "@/lib/validations/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -22,8 +23,9 @@ export async function POST(req: NextRequest) {
     const email = record.identifier.replace("reset:", "");
     const passwordHash = await bcrypt.hash(password, 12);
 
-    await prisma.user.update({ where: { email }, data: { passwordHash } });
+    const user = await prisma.user.update({ where: { email }, data: { passwordHash } });
     await prisma.verificationToken.delete({ where: { token } });
+    await logAuditEvent(prisma, { action: "PASSWORD_CHANGED", userId: user.id, entityType: "User", entityId: user.id, ipAddress: ip });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

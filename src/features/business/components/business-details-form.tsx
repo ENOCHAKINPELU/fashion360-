@@ -72,7 +72,7 @@ export function BusinessDetailsForm({ mode, defaultValues }: BusinessDetailsForm
       if (!res.ok) throw new Error(json.error ?? "Something went wrong");
 
       if (mode === "create") {
-        toast.success("Business created — welcome to Fashion360!");
+        toast.success("Business created, welcome to Fashion360!");
         router.push("/dashboard");
         router.refresh();
       } else {

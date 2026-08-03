@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { apiErrorResponse, ApiError } from "@/lib/rbac";
 import { changePasswordSchema } from "@/lib/validations/profile";
+import { logAuditEvent } from "@/lib/audit-log";
 import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    await logAuditEvent(prisma, { action: "PASSWORD_CHANGED", userId: user.id, entityType: "User", entityId: user.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

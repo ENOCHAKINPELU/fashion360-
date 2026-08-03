@@ -20,24 +20,24 @@ type NotificationItem = {
   createdAt: string;
 };
 
-export function NotificationBell() {
+export function NotificationBell({ apiBase = "/api/notifications" }: { apiBase?: string }) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/notifications")
+    fetch(apiBase)
       .then((res) => (res.ok ? res.json() : { notifications: [] }))
       .then((data) => setNotifications(data.notifications ?? []))
       .catch(() => setNotifications([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [apiBase]);
 
   const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   async function markAllRead() {
     setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
-    await fetch("/api/notifications", {
+    await fetch(apiBase, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ markAllRead: true }),

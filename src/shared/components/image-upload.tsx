@@ -14,7 +14,18 @@ export function ImageUpload({
 }: {
   value?: string | null;
   onChange: (url: string) => void;
-  folder: "logos" | "avatars";
+  folder:
+    | "logos"
+    | "avatars"
+    | "designs"
+    | "fabrics"
+    | "inspirations"
+    | "orders"
+    | "portfolio"
+    | "service-requests"
+    | "design-references"
+    | "production-photos"
+    | "dispute-evidence";
   shape?: "square" | "circle";
   label?: string;
 }) {
