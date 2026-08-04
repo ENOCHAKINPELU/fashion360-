@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Search,
   ClipboardList,
@@ -15,6 +17,8 @@ import {
 import { SectionHeading } from "@/shared/components/section-heading";
 import { Reveal } from "@/shared/components/motion/reveal";
 import { TiltCard } from "@/shared/components/motion/tilt-card";
+import { useWaitlistDialog } from "@/features/landing/components/waitlist-dialog-provider";
+import { cn } from "@/lib/utils";
 
 const ORDER_STAGES = ["Payment", "Design", "Approval", "Production", "Ready", "In Transit", "Delivered"];
 
@@ -24,6 +28,8 @@ const ORDER_STAGES = ["Payment", "Design", "Approval", "Production", "Ready", "I
 // Discovery/3D-preview/journey-timeline/wardrobe sections built earlier in
 // isolation became redundant with it and were removed (see page.tsx).
 export function ProductExperienceSection() {
+  const openWaitlist = useWaitlistDialog();
+
   return (
     <section id="experience" className="mx-auto max-w-7xl px-6 py-20 sm:py-28 lg:px-8 lg:py-32">
       <SectionHeading
@@ -85,7 +91,12 @@ export function ProductExperienceSection() {
 
         {/* 3. Design Preview */}
         <Reveal delay={0.1}>
-          <MockupCard icon={Eye} title="Design Preview" caption="See your design before it's made.">
+          <MockupCard
+            icon={Eye}
+            title="Design Preview"
+            caption="See your design before it's made."
+            onClick={() => openWaitlist("CUSTOMER")}
+          >
             {/* View selector — mirrors the real preset tabs the in-app 3D
                 viewer already uses, so this reads as an actual interface
                 rather than a placeholder swatch. */}
@@ -207,15 +218,25 @@ function MockupCard({
   title,
   caption,
   children,
+  onClick,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   title: string;
   caption: string;
   children: React.ReactNode;
+  onClick?: () => void;
 }) {
+  const Wrapper = onClick ? "button" : "div";
   return (
     <TiltCard className="group h-full">
-      <div className="flex h-full flex-col rounded-2xl border border-border bg-surface p-4 shadow-sm transition-shadow duration-300 group-hover:border-primary/25 group-hover:shadow-lg">
+      <Wrapper
+        type={onClick ? "button" : undefined}
+        onClick={onClick}
+        className={cn(
+          "flex h-full w-full flex-col rounded-2xl border border-border bg-surface p-4 text-left shadow-sm transition-shadow duration-300 group-hover:border-primary/25 group-hover:shadow-lg",
+          onClick && "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        )}
+      >
         <span className="inline-flex w-fit rounded-lg bg-accent-soft p-2 text-primary">
           <Icon className="size-4" strokeWidth={1.75} />
         </span>
@@ -223,7 +244,7 @@ function MockupCard({
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{caption}</p>
         <div className="mt-3 flex-1 rounded-xl bg-muted-surface p-2.5">{children}</div>
         <span className="mt-2 self-start text-[9px] font-medium tracking-wide text-muted-foreground uppercase">Product Preview</span>
-      </div>
+      </Wrapper>
     </TiltCard>
   );
 }

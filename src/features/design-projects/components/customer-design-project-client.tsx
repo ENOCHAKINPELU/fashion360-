@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Logo } from "@/shared/components/logo";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { Design3DViewer } from "@/features/design-studio/components/viewer/design-3d-viewer";
 import { CustomerApprovalDialog } from "@/features/design-studio/components/customer-review/customer-approval-dialog";
 import { DesignProjectStatusBadge } from "@/features/design-projects/components/design-project-status-badge";
@@ -38,8 +38,10 @@ interface VersionLite {
   fabric: string | null;
   color: string | null;
   styleNotes: string | null;
+  designInstructions: string | null;
   tags: string[];
   model: { url: string; format: string } | null;
+  createdAt: string;
 }
 
 interface Bundle {
@@ -48,6 +50,7 @@ interface Bundle {
     name: string;
     previewCode: string;
     status: string;
+    category: string | null;
     latestVersionNumber: number;
   };
   brief: Record<string, unknown> | null;
@@ -348,6 +351,29 @@ export function CustomerDesignProjectClient({ projectId }: { projectId: string }
         </div>
 
         <div className="space-y-6">
+          {selectedVersion && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Design Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <DetailRow label="Designer" value={assignedDesigner?.name ?? "Not Assigned"} />
+                {project.category && <DetailRow label="Category" value={project.category} />}
+                {selectedVersion.fabric && <DetailRow label="Fabric" value={selectedVersion.fabric} />}
+                {selectedVersion.color && <DetailRow label="Color" value={selectedVersion.color} />}
+                <DetailRow label="Version Created" value={formatDate(selectedVersion.createdAt)} />
+                {(selectedVersion.styleNotes || selectedVersion.designInstructions) && (
+                  <div className="border-t border-border pt-3">
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Designer Notes</p>
+                    <p className="mt-1 text-sm text-foreground">
+                      &ldquo;{selectedVersion.styleNotes || selectedVersion.designInstructions}&rdquo;
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Your Design Brief</CardTitle>
@@ -514,6 +540,15 @@ function AnnotatablePreview({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value}</span>
     </div>
   );
 }

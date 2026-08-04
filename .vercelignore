@@ -6,6 +6,9 @@
 node_modules
 coverage
 *.log
+*.out.log
+*.err.log
+*.exe
 
 # Environment files
 .env
@@ -13,3 +16,11 @@ coverage
 
 # Large local assets not needed for build
 public/images/fashion360/**
+/fashion360 icon.png
+/fashion360.png
+/futureimg.png
+/img 1.png
+/img2.png
+/img3.jpg
+/classin_win_install_6.0.8.2731_x64.exe
+/classin_win_install_6.0.8.2731_x64 (1).exe
