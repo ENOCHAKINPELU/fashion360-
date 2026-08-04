@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces } from "next/font/google";
+import { connection } from "next/server";
 import { Toaster } from "sonner";
 import { Providers } from "@/components/providers";
 import { cn } from "@/lib/utils";
@@ -25,11 +26,13 @@ export const metadata: Metadata = {
     "Fashion360 is a premium fashion marketplace connecting customers with trusted fashion designers, from discovery and design collaboration to protected payments, production tracking, and delivery.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await connection();
+
   return (
     <html lang="en" className={cn("h-full antialiased font-sans", inter.variable, fraunces.variable)}>
       <body className="min-h-full flex flex-col bg-background text-foreground">
