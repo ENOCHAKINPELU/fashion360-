@@ -15,7 +15,6 @@ coverage
 .env.*
 
 # Large local assets not needed for build
-public/images/fashion360/**
 /fashion360 icon.png
 /fashion360.png
 /futureimg.png
