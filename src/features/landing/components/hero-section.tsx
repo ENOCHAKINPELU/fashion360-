@@ -20,7 +20,7 @@ import { useMagnetic } from "@/hooks/use-magnetic";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 
-const HERO_IMAGE_SRC = "/images/fashion360/hero/hero-campaign.png";
+const HERO_IMAGE_SRC = "/images/fashion360/hero/hero.png";
 
 const MOCKUP_FEATURES = [
   { icon: Search, label: "Discover Designers" },
@@ -218,21 +218,21 @@ export function HeroSection() {
           >
             <FashionImage
               category="hero"
-              alt="A Fashion360 customer wearing a sophisticated custom-designed purple and cream gown"
+              alt="A Fashion360 family wearing coordinated custom-designed purple and gold outfits"
               aspect="4/5"
               className="lg:hidden"
               src={HERO_IMAGE_SRC}
-              objectPosition="70% 8%"
+              objectPosition="50% 12%"
               sizes="100vw"
               priority
             />
             <FashionImage
               category="hero"
-              alt="A Fashion360 customer wearing a sophisticated custom-designed purple and cream gown"
+              alt="A Fashion360 family wearing coordinated custom-designed purple and gold outfits"
               aspect="fill"
               className="hidden rounded-none lg:block"
               src={HERO_IMAGE_SRC}
-              objectPosition="78% 10%"
+              objectPosition="50% 12%"
               sizes="50vw"
               priority
             />

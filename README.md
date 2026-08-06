@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fashion360
 
-## Getting Started
+Fashion360 is a Next.js application for fashion businesses and their customers.
 
-First, run the development server:
+## Getting started
+
+Copy `.env.example` to `.env`, fill in the required values, then run:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Vercel deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Static marketing images are committed in `public/images/fashion360` and are served from URLs beginning with `/images/fashion360/`. Do not move these files outside `public` or add `public/images` to `.vercelignore`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Before deploying, add these environment variables in Vercel for the Production environment (and Preview if you use preview deployments):
 
-## Learn More
+```text
+DATABASE_URL
+DIRECT_URL
+AUTH_SECRET
+AUTH_URL
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+SUPABASE_SERVICE_ROLE_KEY
+AUTH_GOOGLE_ID
+AUTH_GOOGLE_SECRET
+PAYMENT_PROVIDER
+PAYSTACK_SECRET_KEY
+EMAIL_FROM
+RESEND_API_KEY
+ENCRYPTION_KEY
+```
 
-To learn more about Next.js, take a look at the following resources:
+Set `AUTH_URL` to your production site origin, for example `https://your-project.vercel.app` (without a trailing slash). Use a hosted PostgreSQL connection for `DATABASE_URL`; a local `localhost` database is not reachable from Vercel. The Supabase values are required for image and file uploads.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+After saving the variables, redeploy the latest commit. Vercel only applies environment-variable changes to newly created deployments.
