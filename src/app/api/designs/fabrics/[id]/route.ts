@@ -23,6 +23,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         ...(data.description !== undefined ? { description: data.description || null } : {}),
         ...(data.recommendedUses !== undefined ? { recommendedUses: data.recommendedUses } : {}),
         ...(data.availability !== undefined ? { availability: data.availability } : {}),
+        ...(data.baseColorHex !== undefined ? { baseColorHex: data.baseColorHex || null } : {}),
+        ...(data.roughness !== undefined ? { roughness: data.roughness } : {}),
+        ...(data.metalness !== undefined ? { metalness: data.metalness } : {}),
+        ...(data.opacity !== undefined ? { opacity: data.opacity } : {}),
+        ...(data.reflectivity !== undefined ? { reflectivity: data.reflectivity } : {}),
+        ...(data.textureMapUrl !== undefined ? { textureMapUrl: data.textureMapUrl || null } : {}),
+        ...(data.normalMapUrl !== undefined ? { normalMapUrl: data.normalMapUrl || null } : {}),
       },
     });
 

@@ -9,6 +9,25 @@ import { notifyDesignEvent } from "@/lib/design-notifications";
 // Deliberately hand-picks fields rather than reusing the staff detail
 // include, so private/internal data (other share tokens, private notes,
 // full activity log) can never leak through this route.
+//
+// DesignVersion is fetched with an explicit `select` (not a bare `include`)
+// specifically so `internalNotes` — marked in the schema as never safe for a
+// customer-facing response — can't leak here just because a future field
+// gets added to the model.
+const SHARE_VERSION_SELECT = {
+  id: true,
+  versionNumber: true,
+  status: true,
+  previewType: true,
+  previewImageUrl: true,
+  changesSummary: true,
+  createdAt: true,
+  createdBy: { select: { name: true } },
+  customization: true,
+  model: true,
+  textures: { include: { fabricLibraryItem: true } },
+} as const;
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
     const { token } = await params;
@@ -23,7 +42,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ toke
       prisma.designVersion.findMany({
         where: { previewId: preview.id },
         orderBy: { versionNumber: "desc" },
-        include: { customization: true, model: true, textures: true },
+        select: SHARE_VERSION_SELECT,
       }),
       prisma.designComment.findMany({
         where: { previewId: preview.id },

@@ -6,6 +6,10 @@ import bcrypt from "bcryptjs";
 import { encryptSecret } from "../src/lib/encryption";
 import { DEMO_MODEL_URL, DEMO_MODEL_FORMAT } from "../src/lib/design-demo-model";
 
+// Reference photo for the demo fabric assignment below — a generated
+// placeholder swatch (see the file itself), not a real photographed fabric.
+const DEMO_FABRIC_SWATCH_URL = "/images/fashion360/fabrics/demo-royal-silk-swatch.svg";
+
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
@@ -617,6 +621,30 @@ async function seedDesignPreviews(
     const previewCode = `DSN-${String(planIndex + 1).padStart(4, "0")}`;
     const createdAt = order.createdAt;
 
+    // Real PBR fabric so the demo model renders an actual digital material
+    // (color/roughness/metalness/reflectivity) rather than just its baked
+    // GLB color — the point of the fabric-material engine.
+    const demoFabric = plan.has3DDemo
+      ? await prisma.fabricLibraryItem.upsert({
+          where: { businessId_name: { businessId, name: "Royal Silk" } },
+          update: {},
+          create: {
+            businessId,
+            name: "Royal Silk",
+            imageUrl: DEMO_FABRIC_SWATCH_URL,
+            colorVariants: ["Royal Purple", "Wine", "Deep Blue"],
+            texture: "Smooth, fluid drape with a soft sheen",
+            recommendedUses: ["Gowns", "Evening Wear"],
+            availability: "IN_STOCK",
+            baseColorHex: "#3D1F5C",
+            roughness: 0.25,
+            metalness: 0.02,
+            opacity: 1,
+            reflectivity: 0.6,
+          },
+        })
+      : null;
+
     const customizationData = {
       primaryColor: COLORS[planIndex % COLORS.length].name,
       secondaryColor: COLORS[(planIndex + 1) % COLORS.length].name,
@@ -669,6 +697,19 @@ async function seedDesignPreviews(
               fileSizeBytes: 152068,
               uploadedById: ownerId,
             },
+          },
+          textures: {
+            create: [
+              {
+                businessId,
+                role: "PRIMARY",
+                name: demoFabric!.name,
+                imageUrl: DEMO_FABRIC_SWATCH_URL,
+                colorHex: demoFabric!.baseColorHex,
+                materialType: "Silk",
+                fabricLibraryItemId: demoFabric!.id,
+              },
+            ],
           },
         }),
       },

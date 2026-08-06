@@ -407,6 +407,7 @@ export function CustomerReviewClient({ token }: { token: string }) {
                 fallbackImageUrl={selectedVersion?.previewImageUrl ?? null}
                 className="h-full min-h-[420px]"
                 isDemo={isDemoModelUrl(selectedVersion?.model?.url)}
+                textures={selectedVersion?.textures}
               />
               {selectedVersion?.changesSummary && (
                 <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">

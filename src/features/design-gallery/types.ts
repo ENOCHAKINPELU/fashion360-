@@ -72,6 +72,13 @@ export interface FabricLibraryItemData {
   description: string | null;
   recommendedUses: string[];
   availability: string;
+  baseColorHex: string | null;
+  roughness: number | null;
+  metalness: number | null;
+  opacity: number | null;
+  reflectivity: number | null;
+  textureMapUrl: string | null;
+  normalMapUrl: string | null;
 }
 
 export interface ColorLibraryItemData {

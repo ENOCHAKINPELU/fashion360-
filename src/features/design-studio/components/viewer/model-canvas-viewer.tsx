@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ModelLoader } from "@/features/design-studio/components/viewer/model-loader";
+import type { DesignTextureData } from "@/features/design-studio/types";
 
 const VIEW_PRESETS: Record<string, [number, number, number]> = {
   Front: [0, 0.4, 4.5],
@@ -76,11 +77,13 @@ export function ModelCanvasViewer({
   format,
   className,
   isDemo,
+  textures,
 }: {
   modelUrl: string;
   format: string;
   className?: string;
   isDemo?: boolean;
+  textures?: DesignTextureData[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -205,7 +208,7 @@ export function ModelCanvasViewer({
           >
             <Suspense fallback={null}>
               <Stage environment="city" intensity={0.5} shadows="contact" adjustCamera={1.2}>
-                <ModelLoader url={modelUrl} format={format} />
+                <ModelLoader url={modelUrl} format={format} textures={textures} />
               </Stage>
               <Environment preset="studio" />
             </Suspense>

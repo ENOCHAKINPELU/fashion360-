@@ -91,6 +91,8 @@ export const designNoteSchema = z.object({
   body: z.string().trim().min(1, "Note cannot be empty"),
 });
 
+const unitInterval = z.number().min(0).max(1);
+
 export const fabricLibraryItemSchema = z.object({
   name: z.string().trim().min(1, "Fabric name is required").max(60),
   imageUrl: z.string().url().optional().or(z.literal("")),
@@ -99,6 +101,15 @@ export const fabricLibraryItemSchema = z.object({
   description: z.string().optional(),
   recommendedUses: z.array(z.string()),
   availability: z.enum(["IN_STOCK", "LIMITED", "OUT_OF_STOCK", "SEASONAL"]),
+  // PBR material properties for the 3D viewer — all optional so a fabric
+  // can be catalogued without them and still render as a flat color.
+  baseColorHex: z.string().trim().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Enter a valid hex colour").optional().or(z.literal("")),
+  roughness: unitInterval.optional(),
+  metalness: unitInterval.optional(),
+  opacity: unitInterval.optional(),
+  reflectivity: unitInterval.optional(),
+  textureMapUrl: z.string().url().optional().or(z.literal("")),
+  normalMapUrl: z.string().url().optional().or(z.literal("")),
 });
 export type FabricLibraryItemInput = z.infer<typeof fabricLibraryItemSchema>;
 

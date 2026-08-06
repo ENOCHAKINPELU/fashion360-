@@ -23,6 +23,7 @@ import { Logo } from "@/shared/components/logo";
 import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { Design3DViewer } from "@/features/design-studio/components/viewer/design-3d-viewer";
 import { isDemoModelUrl } from "@/lib/design-demo-model";
+import type { DesignTextureData } from "@/features/design-studio/types";
 import { CustomerApprovalDialog } from "@/features/design-studio/components/customer-review/customer-approval-dialog";
 import { DesignProjectStatusBadge } from "@/features/design-projects/components/design-project-status-badge";
 import { MultiImageUpload } from "@/shared/components/multi-image-upload";
@@ -42,6 +43,7 @@ interface VersionLite {
   designInstructions: string | null;
   tags: string[];
   model: { url: string; format: string } | null;
+  textures: DesignTextureData[];
   createdAt: string;
 }
 
@@ -294,6 +296,7 @@ export function CustomerDesignProjectClient({ projectId }: { projectId: string }
                     fallbackImageUrl={selectedVersion.previewImageUrl}
                     className="h-full min-h-[380px]"
                     isDemo={isDemoModelUrl(selectedVersion.model?.url)}
+                    textures={selectedVersion.textures}
                   />
                   {selectedVersion.changesSummary && (
                     <p className="rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">

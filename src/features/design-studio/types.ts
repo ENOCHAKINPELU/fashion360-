@@ -42,6 +42,18 @@ export interface DesignModelData {
   fileSizeBytes: number | null;
 }
 
+// The PBR subset of FabricLibraryItem needed to render this texture's fabric
+// as a real material — see src/features/design-studio/components/viewer/fabric-material.ts.
+export interface DesignTextureFabricData {
+  baseColorHex: string | null;
+  roughness: number | null;
+  metalness: number | null;
+  opacity: number | null;
+  reflectivity: number | null;
+  textureMapUrl: string | null;
+  normalMapUrl: string | null;
+}
+
 export interface DesignTextureData {
   id: string;
   role: string;
@@ -50,6 +62,9 @@ export interface DesignTextureData {
   colorHex: string | null;
   materialType: string | null;
   description: string | null;
+  // Present only when this texture is linked to a catalogued fabric with PBR
+  // properties set; the viewer falls back to colorHex/imageUrl-only when null.
+  fabricLibraryItem: DesignTextureFabricData | null;
 }
 
 export interface DesignAnnotationData {

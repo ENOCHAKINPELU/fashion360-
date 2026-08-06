@@ -45,6 +45,13 @@ export async function POST(req: NextRequest) {
         description: data.description || null,
         recommendedUses: data.recommendedUses,
         availability: data.availability,
+        baseColorHex: data.baseColorHex || null,
+        roughness: data.roughness,
+        metalness: data.metalness,
+        opacity: data.opacity,
+        reflectivity: data.reflectivity,
+        textureMapUrl: data.textureMapUrl || null,
+        normalMapUrl: data.normalMapUrl || null,
       },
     });
 

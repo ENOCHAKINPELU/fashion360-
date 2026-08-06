@@ -25,7 +25,7 @@ const CUSTOMER_VERSION_SELECT = {
   createdAt: true,
   updatedAt: true,
   model: true,
-  textures: true,
+  textures: { include: { fabricLibraryItem: true } },
 } as const;
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

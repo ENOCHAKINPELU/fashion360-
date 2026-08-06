@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { ImageUpload } from "@/shared/components/image-upload";
 import { fabricLibraryItemSchema, type FabricLibraryItemInput, fabricAvailabilityOptions } from "@/lib/validations/design";
 import type { FabricLibraryItemData } from "@/features/design-gallery/types";
@@ -29,7 +30,26 @@ const EMPTY: FabricLibraryItemInput = {
   description: "",
   recommendedUses: [],
   availability: "IN_STOCK",
+  baseColorHex: "",
+  roughness: 0.55,
+  metalness: 0.03,
+  opacity: 1,
+  reflectivity: 0.5,
+  textureMapUrl: "",
+  normalMapUrl: "",
 };
+
+// 0-1 PBR sliders shown as a friendlier 0-100 scale in the UI.
+const PBR_SLIDERS: {
+  key: "roughness" | "metalness" | "opacity" | "reflectivity";
+  label: string;
+  hint: string;
+}[] = [
+  { key: "roughness", label: "Roughness", hint: "Lower = glossier/shinier (satin), higher = matte (raw cotton)" },
+  { key: "metalness", label: "Metallic", hint: "Real fabrics are near 0 — only raise for metallic thread/lamé" },
+  { key: "opacity", label: "Opacity", hint: "Lower for sheer fabrics like lace or organza" },
+  { key: "reflectivity", label: "Reflectivity", hint: "How much light reflects straight back at the viewer" },
+];
 
 export function FabricFormDialog({
   open,
@@ -52,6 +72,13 @@ export function FabricFormDialog({
         description: fabric.description ?? "",
         recommendedUses: fabric.recommendedUses,
         availability: fabric.availability as FabricLibraryItemInput["availability"],
+        baseColorHex: fabric.baseColorHex ?? "",
+        roughness: fabric.roughness ?? 0.55,
+        metalness: fabric.metalness ?? 0.03,
+        opacity: fabric.opacity ?? 1,
+        reflectivity: fabric.reflectivity ?? 0.5,
+        textureMapUrl: fabric.textureMapUrl ?? "",
+        normalMapUrl: fabric.normalMapUrl ?? "",
       }
     : EMPTY;
 
@@ -115,6 +142,71 @@ export function FabricFormDialog({
               onChange={(e) => setValue("colorVariants", e.target.value.split(",").map((v) => v.trim()).filter(Boolean))}
             />
           </div>
+          <div className="space-y-3 rounded-xl border border-border bg-surface p-3.5">
+            <div>
+              <p className="text-sm font-medium text-foreground">3D Material</p>
+              <p className="text-xs text-muted-foreground">
+                Drives how this fabric actually renders on the 3D design preview — a real material, not just a flat color.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Base Colour</Label>
+              <div className="flex items-center gap-2">
+                <span
+                  className="size-9 shrink-0 rounded-lg border border-border"
+                  style={{ backgroundColor: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(watch("baseColorHex") ?? "") ? watch("baseColorHex") : "transparent" }}
+                />
+                <Input {...register("baseColorHex")} placeholder="#5A1D92" className="font-mono" />
+              </div>
+              {errors.baseColorHex && <p className="text-xs text-danger">{errors.baseColorHex.message}</p>}
+            </div>
+
+            {PBR_SLIDERS.map((s) => (
+              <div key={s.key} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>{s.label}</Label>
+                  <span className="text-xs text-muted-foreground">{Math.round((watch(s.key) ?? 0) * 100)}%</span>
+                </div>
+                <Controller
+                  control={control}
+                  name={s.key}
+                  render={({ field }) => (
+                    <Slider
+                      value={[field.value ?? 0]}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      onValueChange={([v]) => field.onChange(v)}
+                    />
+                  )}
+                />
+                <p className="text-[11px] text-muted-foreground">{s.hint}</p>
+              </div>
+            ))}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Texture Map</Label>
+                <ImageUpload
+                  value={watch("textureMapUrl")}
+                  onChange={(url) => setValue("textureMapUrl", url, { shouldDirty: true })}
+                  folder="fabrics"
+                  label="Upload weave photo"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Normal Map</Label>
+                <ImageUpload
+                  value={watch("normalMapUrl")}
+                  onChange={(url) => setValue("normalMapUrl", url, { shouldDirty: true })}
+                  folder="fabrics"
+                  label="Upload surface detail"
+                />
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-1.5">
             <Label>Recommended Uses</Label>
             <Input

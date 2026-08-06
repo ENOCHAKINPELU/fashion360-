@@ -2049,6 +2049,21 @@ model FabricLibraryItem {
   recommendedUses String[]
   availability    FabricAvailability @default(IN_STOCK)
 
+  // PBR material properties — lets the 3D viewer render this fabric as an
+  // actual digital material on the garment mesh instead of a flat colored
+  // object (see src/features/design-studio/components/viewer/fabric-material.ts).
+  // All optional/defaulted so existing catalog rows keep working unchanged;
+  // a fabric with no textureMapUrl still renders correctly as a solid PBR
+  // color. "Shine" is deliberately not a separate field — it's roughness
+  // (lower = shinier), a real PBR property rather than an invented one.
+  baseColorHex  String? // falls back to the free-text `colorVariants`/version colorHex when unset
+  roughness     Float?  @default(0.55) // 0 = mirror-glossy (satin), 1 = fully matte (raw cotton)
+  metalness     Float?  @default(0.03) // real fabrics are ~0; nonzero only for metallic thread/lamé
+  opacity       Float?  @default(1) // <1 for lace/organza/mesh
+  reflectivity  Float?  @default(0.5) // specular response at normal incidence
+  textureMapUrl String? // photographed weave/pattern, tiled onto the mesh
+  normalMapUrl  String? // surface relief (weave texture, embroidery) derived from the photo
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
