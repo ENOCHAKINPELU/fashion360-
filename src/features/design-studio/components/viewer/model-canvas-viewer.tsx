@@ -75,10 +75,12 @@ export function ModelCanvasViewer({
   modelUrl,
   format,
   className,
+  isDemo,
 }: {
   modelUrl: string;
   format: string;
   className?: string;
+  isDemo?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<OrbitControlsImpl>(null);
@@ -166,10 +168,15 @@ export function ModelCanvasViewer({
         className
       )}
     >
-      <div className="absolute top-3 left-3 z-10">
+      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5">
         <Badge className="gap-1 bg-primary text-white hover:bg-primary">
           <Box className="size-3" /> 3D Preview
         </Badge>
+        {isDemo && (
+          <Badge variant="outline" className="border-warning/40 bg-warning-soft text-warning">
+            Demo Model
+          </Badge>
+        )}
       </div>
 
       <div className="absolute top-3 right-3 z-10">

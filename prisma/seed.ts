@@ -4,6 +4,7 @@ import type { OrderType, OrderPriority, OrderStatus, OrderPaymentStatus } from "
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import { encryptSecret } from "../src/lib/encryption";
+import { DEMO_MODEL_URL, DEMO_MODEL_FORMAT } from "../src/lib/design-demo-model";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
@@ -586,9 +587,16 @@ const DESIGN_PREVIEW_PLAN: {
   orderIndex: number;
   status: "DRAFT" | "SENT_FOR_REVIEW" | "REVISION_REQUESTED" | "LOCKED";
   designName: string;
+  // Attaches the placeholder demo GLB (see src/lib/design-demo-model.ts) so
+  // this one seeded preview actually exercises the 3D viewer instead of
+  // falling back to the 2D preview image, without claiming to be any
+  // customer's real design — the viewer badges it "Demo Model". Left on the
+  // still-awaiting-review entry so the full approve/request-changes flow can
+  // be demoed against a real interactive 3D model.
+  has3DDemo?: boolean;
 }[] = [
   { orderIndex: 0, status: "DRAFT", designName: "Classic Agbada Preview" },
-  { orderIndex: 1, status: "SENT_FOR_REVIEW", designName: "Modern Senator Wear Preview" },
+  { orderIndex: 1, status: "SENT_FOR_REVIEW", designName: "Modern Senator Wear Preview", has3DDemo: true },
   { orderIndex: 2, status: "LOCKED", designName: "Bridal Ball Gown Preview" },
   { orderIndex: 3, status: "REVISION_REQUESTED", designName: "Ankara Wrap Dress Preview" },
   { orderIndex: 4, status: "LOCKED", designName: "Executive Two-Piece Suit Preview" },
@@ -633,7 +641,7 @@ async function seedDesignPreviews(
         customerId: order.customerId,
         previewCode,
         name: plan.designName,
-        previewType: "TWO_D",
+        previewType: plan.has3DDemo ? "THREE_D" : "TWO_D",
         latestVersionNumber: 1,
         status: "DRAFT",
         createdById: ownerId,
@@ -647,11 +655,22 @@ async function seedDesignPreviews(
         businessId,
         versionNumber: 1,
         status: "DRAFT",
-        previewType: "TWO_D",
+        previewType: plan.has3DDemo ? "THREE_D" : "TWO_D",
         changesSummary: "Initial design preview",
         createdById: ownerId,
         createdAt,
         customization: { create: customizationData },
+        ...(plan.has3DDemo && {
+          model: {
+            create: {
+              businessId,
+              format: DEMO_MODEL_FORMAT,
+              url: DEMO_MODEL_URL,
+              fileSizeBytes: 152068,
+              uploadedById: ownerId,
+            },
+          },
+        }),
       },
     });
 

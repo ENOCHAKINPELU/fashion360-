@@ -29,13 +29,18 @@ export function Design3DViewer({
   model,
   fallbackImageUrl,
   className,
+  isDemo,
 }: {
   model: Design3DViewerModel | null;
   fallbackImageUrl?: string | null;
   className?: string;
+  // True only for the placeholder model used to prove the 3D pipeline works
+  // before a designer has uploaded a real one — see src/lib/design-demo-model.ts.
+  // Never set for an actual designer-uploaded model.
+  isDemo?: boolean;
 }) {
   if (model) {
-    return <ModelCanvasViewer modelUrl={model.url} format={model.format} className={className} />;
+    return <ModelCanvasViewer modelUrl={model.url} format={model.format} className={className} isDemo={isDemo} />;
   }
   return <TwoDPreviewViewer imageUrl={fallbackImageUrl ?? null} className={className} />;
 }

@@ -28,6 +28,7 @@ import {
 import { Logo } from "@/shared/components/logo";
 import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { Design3DViewer } from "@/features/design-studio/components/viewer/design-3d-viewer";
+import { isDemoModelUrl } from "@/lib/design-demo-model";
 import { CustomerApprovalDialog } from "@/features/design-studio/components/customer-review/customer-approval-dialog";
 import { CustomerRejectDialog } from "@/features/design-studio/components/customer-review/customer-reject-dialog";
 import { CustomerRevisionDialog } from "@/features/design-studio/components/customer-review/customer-revision-dialog";
@@ -405,6 +406,7 @@ export function CustomerReviewClient({ token }: { token: string }) {
                 model={selectedVersion?.model ? { url: selectedVersion.model.url, format: selectedVersion.model.format } : null}
                 fallbackImageUrl={selectedVersion?.previewImageUrl ?? null}
                 className="h-full min-h-[420px]"
+                isDemo={isDemoModelUrl(selectedVersion?.model?.url)}
               />
               {selectedVersion?.changesSummary && (
                 <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
