@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Logo } from "@/shared/components/logo";
 import { Design3DViewer } from "@/features/design-studio/components/viewer/design-3d-viewer";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import type { DesignTextureData } from "@/features/design-studio/types";
 
 interface QuotationBundle {
   quotation: {
@@ -49,7 +50,13 @@ interface QuotationBundle {
     id: string;
     name: string;
     previewCode: string;
-    versions: { id: string; versionNumber: number; previewImageUrl: string | null; model: { url: string; format: string } | null }[];
+    versions: {
+      id: string;
+      versionNumber: number;
+      previewImageUrl: string | null;
+      model: { url: string; format: string } | null;
+      textures: DesignTextureData[];
+    }[];
   } | null;
   measurementVersion: { values: Record<string, number>; versionNumber: number } | null;
 }
@@ -266,6 +273,7 @@ export function CustomerQuotationClient({ quotationId }: { quotationId: string }
                   model={approvedDesignVersion.model ? { url: approvedDesignVersion.model.url, format: approvedDesignVersion.model.format } : null}
                   fallbackImageUrl={approvedDesignVersion.previewImageUrl}
                   className="h-full min-h-[320px]"
+                  textures={approvedDesignVersion.textures}
                 />
               </CardContent>
             </Card>

@@ -31,7 +31,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
               versions: {
                 where: { status: "APPROVED" },
                 take: 1,
-                select: { id: true, versionNumber: true, previewImageUrl: true, model: { select: { url: true, format: true } } },
+                select: {
+                  id: true,
+                  versionNumber: true,
+                  previewImageUrl: true,
+                  model: { select: { url: true, format: true } },
+                  textures: { include: { fabricLibraryItem: true } },
+                },
               },
             },
           })

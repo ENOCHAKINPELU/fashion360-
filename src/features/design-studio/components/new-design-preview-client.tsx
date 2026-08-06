@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import type { DesignVersionCustomizationInput } from "@/lib/validations/design-preview";
 import type { FabricLibraryItemData } from "@/features/design-gallery/types";
 import type { OrderListItem, OrderDetailData, OrderItemData } from "@/features/orders/types";
+import { deriveFabricTextures } from "@/features/design-studio/lib/derive-fabric-texture";
 
 export function NewDesignPreviewClient({
   initialOrderId,
@@ -140,7 +141,7 @@ export function NewDesignPreviewClient({
             customization,
             model:
               previewMode === "3d" && model ? { format: model.format, url: model.url, fileSizeBytes: model.fileSizeBytes } : undefined,
-            textures: [],
+            textures: deriveFabricTextures(previewMode === "3d" && !!model, customization.fabricId, fabrics),
           },
         }),
       });

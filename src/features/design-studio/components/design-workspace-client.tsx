@@ -36,6 +36,7 @@ import {
 import type { DesignPreviewDetailData, DesignVersionData } from "@/features/design-studio/types";
 import type { DesignVersionCustomizationInput } from "@/lib/validations/design-preview";
 import type { FabricLibraryItemData } from "@/features/design-gallery/types";
+import { deriveFabricTextures } from "@/features/design-studio/lib/derive-fabric-texture";
 
 const DIFF_FIELDS: { key: keyof DesignVersionCustomizationInput; label: string }[] = [
   { key: "fabricNameSnapshot", label: "Fabric" },
@@ -238,6 +239,7 @@ export function DesignWorkspaceClient({ preview }: { preview: DesignPreviewDetai
                       }
                       fallbackImageUrl={selectedVersion.previewImageUrl}
                       className="h-full min-h-[320px]"
+                      textures={selectedVersion.textures}
                     />
                   </div>
                   <div className="space-y-2">
@@ -248,6 +250,7 @@ export function DesignWorkspaceClient({ preview }: { preview: DesignPreviewDetai
                       }
                       fallbackImageUrl={compareVersion.previewImageUrl}
                       className="h-full min-h-[320px]"
+                      textures={compareVersion.textures}
                     />
                   </div>
                 </div>
@@ -256,6 +259,7 @@ export function DesignWorkspaceClient({ preview }: { preview: DesignPreviewDetai
                   model={selectedVersion?.model ? { url: selectedVersion.model.url, format: selectedVersion.model.format } : null}
                   fallbackImageUrl={selectedVersion?.previewImageUrl}
                   className="h-full min-h-[420px]"
+                  textures={selectedVersion?.textures}
                 />
               )}
 
@@ -418,7 +422,7 @@ function NewVersionDialog({
           customization,
           model:
             previewMode === "3d" && model ? { format: model.format, url: model.url, fileSizeBytes: model.fileSizeBytes } : undefined,
-          textures: [],
+          textures: deriveFabricTextures(previewMode === "3d" && !!model, customization.fabricId, fabrics),
         }),
       });
       const data = await res.json();
