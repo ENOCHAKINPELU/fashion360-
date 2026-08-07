@@ -5,12 +5,14 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { PageTransition } from "@/shared/components/page-transition";
 
+// This layout's own auth check is a second line of defense — the real
+// gate is middleware.ts at the project root, which runs at the Edge
+// before any page/layout code and is the actual reason a stale/missing
+// middleware bundle can make edits here appear to do nothing (see git
+// history: a middleware.ts existed, was deleted without a SUPER_ADMIN
+// exemption ever being added, and — per live testing — kept running
+// after deletion until middleware.ts was restored).
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  // Forces this layout to actually re-evaluate per request rather than
-  // risk a cached/prerendered render being reused across different
-  // sessions — see src/app/layout.tsx's identical `connection()` call and
-  // its commit message ("Defer database-backed rendering until request
-  // time") for the precedent this is following in this exact codebase.
   await connection();
   const session = await auth();
   if (!session?.user || !["OWNER", "STAFF", "SUPER_ADMIN"].includes(session.user.role)) {
