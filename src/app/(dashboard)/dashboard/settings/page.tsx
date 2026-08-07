@@ -16,6 +16,7 @@ import { ServicesManager } from "@/features/business/components/services-manager
 import { DiscoveryAvailabilityToggle } from "@/features/business/components/discovery-availability-toggle";
 import { BusinessCompletionBanner } from "@/features/business/components/business-completion-banner";
 import { BusinessTrustProfileCard } from "@/features/business/components/business-trust-profile-card";
+import { BusinessVerificationPanel } from "@/features/business/components/business-verification-panel";
 import { computeBusinessProfileCompletion } from "@/lib/business-profile-completion";
 import { getBusinessTrustProfile } from "@/lib/business-trust-profile";
 import { getBusinessResponseMetrics } from "@/lib/business-response-metrics";
@@ -25,7 +26,7 @@ export default async function SettingsPage() {
   const session = await auth();
   const businessId = session!.user.businessId!;
 
-  const [business, user, businessProfile, specialties, portfolioItems, services, discoverySettings, completion, trust, responseMetrics] =
+  const [business, user, businessProfile, specialties, portfolioItems, services, discoverySettings, completion, trust, responseMetrics, verification] =
     await Promise.all([
       prisma.business.findUnique({ where: { id: businessId } }),
       prisma.user.findUnique({ where: { id: session!.user.id } }),
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
       computeBusinessProfileCompletion(prisma, businessId),
       getBusinessTrustProfile(prisma, businessId),
       getBusinessResponseMetrics(prisma, businessId),
+      prisma.businessVerification.findUnique({ where: { businessId } }),
     ]);
 
   if (!business) return null;
@@ -102,6 +104,8 @@ export default async function SettingsPage() {
                 averageRating={trust.averageRating}
                 reviewCount={trust.reviewCount}
               />
+
+              <BusinessVerificationPanel initial={verification ? JSON.parse(JSON.stringify(verification)) : null} />
 
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3 text-sm">
                 <div className="flex gap-6">

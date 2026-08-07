@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Ban,
   UserX,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EditAppointmentDialog } from "@/features/appointments/components/edit-appointment-dialog";
@@ -35,6 +36,7 @@ interface DetailActionsProps {
     typeId: string;
     assignedStaffId: string | null;
     location: string | null;
+    meetingLink: string | null;
     notes: string | null;
     customerProfileId?: string | null;
     typeCategory?: string;
@@ -140,6 +142,16 @@ export function AppointmentDetailActions({ appointment }: DetailActionsProps) {
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-border pt-4">
+        {appointment.meetingLink && (
+          <a
+            href={appointment.meetingLink}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-accent-soft px-3 py-1.5 text-xs font-medium text-primary hover:bg-accent-soft/80"
+          >
+            <Video className="size-3.5" /> Join Call
+          </a>
+        )}
         <Link
           href={`/dashboard/measurements?customerId=${appointment.customer.id}`}
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-accent-soft"
@@ -188,6 +200,7 @@ export function AppointmentDetailActions({ appointment }: DetailActionsProps) {
           typeId: appointment.typeId,
           assignedStaffId: appointment.assignedStaffId,
           location: appointment.location,
+          meetingLink: appointment.meetingLink,
           notes: appointment.notes,
         }}
       />

@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, MapPin, CalendarClock } from "lucide-react";
+import { ChevronLeft, MapPin, CalendarClock, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireCustomerContext } from "@/lib/rbac";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AppointmentStatusBadge } from "@/features/appointments/components/appointment-status-badge";
 import { CustomerAppointmentActions } from "@/features/appointments/components/customer-appointment-actions";
 import { formatDate, formatRelativeTime } from "@/lib/utils";
@@ -93,6 +94,13 @@ export default async function CustomerAppointmentDetailPage({ params }: { params
                   </div>
                 )}
               </dl>
+              {appointment.meetingLink && (
+                <Button asChild size="sm" className="w-full gap-1.5 sm:w-auto">
+                  <a href={appointment.meetingLink} target="_blank" rel="noreferrer">
+                    <Video className="size-4" /> Join Call
+                  </a>
+                </Button>
+              )}
               {appointment.notes && (
                 <div>
                   <dt className="text-xs text-muted-foreground">Notes</dt>

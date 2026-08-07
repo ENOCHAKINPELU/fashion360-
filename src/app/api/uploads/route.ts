@@ -18,6 +18,7 @@ const ALLOWED_FOLDERS = new Set([
   "production-photos",
   "dispute-evidence",
   "review-photos",
+  "verification-documents",
 ]);
 
 const MODEL_ALLOWED_FOLDERS = new Set(["design-models"]);

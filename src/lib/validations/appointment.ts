@@ -54,6 +54,7 @@ export const appointmentFormSchema = z.object({
   durationMinutes: z.number().int().min(5).max(480),
   assignedStaffId: z.string().optional(),
   location: z.string().optional(),
+  meetingLink: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
   notes: z.string().optional(),
   reminderChannels: z.array(z.enum(["EMAIL", "WHATSAPP", "SMS", "PUSH"])),
   reminderOffsets: z.array(z.number()),

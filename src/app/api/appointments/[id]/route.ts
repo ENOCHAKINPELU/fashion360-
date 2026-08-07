@@ -54,6 +54,7 @@ const editSchema = z.object({
   typeId: z.string().optional(),
   assignedStaffId: z.string().nullable().optional(),
   location: z.string().nullable().optional(),
+  meetingLink: z.string().trim().url("Enter a valid URL").nullable().optional().or(z.literal("")),
   notes: z.string().nullable().optional(),
 });
 

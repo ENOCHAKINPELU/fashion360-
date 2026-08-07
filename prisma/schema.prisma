@@ -1459,6 +1459,14 @@ model Appointment {
   endTime   DateTime
 
   location        String?
+  // A business-pasted link (Google Meet/Zoom/Teams/whatever they already
+  // use) for a virtual appointment — not an in-app call, an external
+  // handoff, same honest pattern as the WhatsApp quick action elsewhere in
+  // this app. Presence of a link is what drives the "Join Call" UI, not a
+  // separate boolean, since AppointmentType.category already has VIRTUAL
+  // for the type-level default but any single appointment can carry its
+  // own per-occurrence link (most video tools mint a unique one per event).
+  meetingLink     String?
   assignedStaffId String?
   assignedStaff   User?   @relation("AppointmentAssignedStaff", fields: [assignedStaffId], references: [id])
 
@@ -5040,7 +5048,16 @@ model BusinessVerification {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   status BusinessVerificationStatus @default(UNVERIFIED)
-  notes  String?
+
+  // The "Verified" trust badge (business-trust-profile.ts) has always read
+  // this status, but until now nothing ever wrote it except a raw database
+  // edit — no business could request verification and no admin had a page
+  // to decide one. submissionNote/documentUrl are the business's own case
+  // for verification; notes is the admin's decision reasoning, kept
+  // separate so a resubmission never overwrites the reviewer's own record.
+  submissionNote String?
+  documentUrl    String?
+  notes          String?
 
   submittedAt  DateTime?
   reviewedAt   DateTime?

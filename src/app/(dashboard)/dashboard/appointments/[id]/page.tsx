@@ -99,6 +99,7 @@ export default async function AppointmentDetailPage({ params }: { params: Promis
                   customerProfileId: appointment.customerProfileId,
                   assignedStaffId: appointment.assignedStaffId,
                   location: appointment.location,
+                  meetingLink: appointment.meetingLink,
                   notes: appointment.notes,
                   customer: {
                     id: appointment.customer.id,

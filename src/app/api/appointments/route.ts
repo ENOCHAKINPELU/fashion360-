@@ -148,6 +148,7 @@ export async function POST(req: NextRequest) {
             endTime: end,
             assignedStaffId: data.assignedStaffId || null,
             location: data.location || null,
+            meetingLink: data.meetingLink || null,
             notes: data.notes || null,
             reminderPreferences: { channels: data.reminderChannels, offsetsMinutes: data.reminderOffsets },
             recurrenceGroupId,

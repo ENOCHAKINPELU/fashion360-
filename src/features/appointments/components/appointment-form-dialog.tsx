@@ -65,6 +65,7 @@ export function AppointmentFormDialog({
   const [duration, setDuration] = useState(60);
   const [assignedStaffId, setAssignedStaffId] = useState<string>("");
   const [location, setLocation] = useState("");
+  const [meetingLink, setMeetingLink] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("SCHEDULED");
   const [channels, setChannels] = useState<string[]>(["EMAIL"]);
@@ -129,6 +130,7 @@ export function AppointmentFormDialog({
         durationMinutes: duration,
         assignedStaffId: assignedStaffId || undefined,
         location: location || undefined,
+        meetingLink: meetingLink || undefined,
         notes: notes || undefined,
         reminderChannels: channels,
         reminderOffsets: offsets,
@@ -228,6 +230,19 @@ export function AppointmentFormDialog({
               <Label>Meeting Location</Label>
               <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="In-studio, Virtual..." />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Meeting Link (optional)</Label>
+            <Input
+              type="url"
+              value={meetingLink}
+              onChange={(e) => setMeetingLink(e.target.value)}
+              placeholder="https://meet.google.com/... or your Zoom/Teams link"
+            />
+            <p className="text-xs text-muted-foreground">
+              For a virtual appointment — paste your own Google Meet, Zoom, or Teams link. The customer sees a &quot;Join Call&quot; button.
+            </p>
           </div>
 
           <div className="space-y-1.5">

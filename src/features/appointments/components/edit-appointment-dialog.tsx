@@ -36,7 +36,7 @@ export function EditAppointmentDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointmentId: string;
-  defaultValues: { typeId: string; assignedStaffId: string | null; location: string | null; notes: string | null };
+  defaultValues: { typeId: string; assignedStaffId: string | null; location: string | null; meetingLink: string | null; notes: string | null };
 }) {
   const router = useRouter();
   const [types, setTypes] = useState<AppointmentTypeOption[]>([]);
@@ -44,6 +44,7 @@ export function EditAppointmentDialog({
   const [typeId, setTypeId] = useState(defaultValues.typeId);
   const [assignedStaffId, setAssignedStaffId] = useState(defaultValues.assignedStaffId ?? "");
   const [location, setLocation] = useState(defaultValues.location ?? "");
+  const [meetingLink, setMeetingLink] = useState(defaultValues.meetingLink ?? "");
   const [notes, setNotes] = useState(defaultValues.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,6 +54,7 @@ export function EditAppointmentDialog({
     setTypeId(defaultValues.typeId);
     setAssignedStaffId(defaultValues.assignedStaffId ?? "");
     setLocation(defaultValues.location ?? "");
+    setMeetingLink(defaultValues.meetingLink ?? "");
     setNotes(defaultValues.notes ?? "");
   } else if (!open && wasOpen) {
     setWasOpen(false);
@@ -75,7 +77,13 @@ export function EditAppointmentDialog({
       const res = await fetch(`/api/appointments/${appointmentId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ typeId, assignedStaffId: assignedStaffId || null, location: location || null, notes: notes || null }),
+        body: JSON.stringify({
+          typeId,
+          assignedStaffId: assignedStaffId || null,
+          location: location || null,
+          meetingLink: meetingLink || null,
+          notes: notes || null,
+        }),
       });
       if (!res.ok) throw new Error("Could not update appointment");
       toast.success("Appointment updated");
@@ -129,6 +137,10 @@ export function EditAppointmentDialog({
           <div className="space-y-1.5">
             <Label>Meeting Location</Label>
             <Input value={location} onChange={(e) => setLocation(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Meeting Link (optional)</Label>
+            <Input type="url" value={meetingLink} onChange={(e) => setMeetingLink(e.target.value)} placeholder="https://meet.google.com/..." />
           </div>
           <div className="space-y-1.5">
             <Label>Notes</Label>
