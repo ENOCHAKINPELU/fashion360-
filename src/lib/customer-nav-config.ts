@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Star,
   Sparkles,
+  MessageSquare,
 } from "lucide-react";
 import type { NavItem } from "@/types/nav";
 
@@ -36,6 +37,13 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     icon: Compass,
     implemented: true,
     description: "Find fashion businesses and designers on Fashion360.",
+  },
+  {
+    label: "Messages",
+    href: "/account/messages",
+    icon: MessageSquare,
+    implemented: true,
+    description: "Direct conversations with businesses you're working with.",
   },
   {
     label: "My Requests",

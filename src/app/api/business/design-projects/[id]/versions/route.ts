@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const versions = await prisma.designVersion.findMany({
       where: { previewId: id },
       orderBy: { versionNumber: "desc" },
-      include: { model: true, textures: true },
+      include: { model: true, textures: { include: { fabricLibraryItem: true } } },
     });
     return NextResponse.json({ versions });
   } catch (error) {
@@ -36,6 +36,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
     const versionNumber = project.latestVersionNumber + 1;
     const previewType = data.model ? "THREE_D" : "TWO_D";
+
+    // Same rule as the legacy order-anchored flow: only attach a material
+    // when there's a model to apply it to and the chosen fabric has a
+    // reference photo (DesignTexture.imageUrl is required).
+    const fabric = data.model && data.fabricLibraryItemId
+      ? await prisma.fabricLibraryItem.findFirst({ where: { id: data.fabricLibraryItemId, businessId } })
+      : null;
 
     const version = await prisma.$transaction(async (tx) => {
       const created = await tx.designVersion.create({
@@ -69,8 +76,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
                 },
               }
             : undefined,
+          textures: fabric?.imageUrl
+            ? {
+                create: [
+                  {
+                    businessId,
+                    role: "PRIMARY",
+                    name: fabric.name,
+                    imageUrl: fabric.imageUrl,
+                    colorHex: fabric.baseColorHex,
+                    materialType: fabric.texture,
+                    fabricLibraryItemId: fabric.id,
+                  },
+                ],
+              }
+            : undefined,
         },
-        include: { model: true, textures: true },
+        include: { model: true, textures: { include: { fabricLibraryItem: true } } },
       });
 
       await tx.designPreview.update({

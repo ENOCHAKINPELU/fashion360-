@@ -25,10 +25,13 @@ export const changePasswordSchema = z
   });
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
+// SMS/WhatsApp/push were removed from here — no provider for any of them is
+// integrated anywhere in the app (unlike the separate, honestly-labeled
+// per-appointment ReminderChannel system in appointment-reminders.ts, which
+// explicitly stubs those two), so a toggle for them was pure decoration:
+// saved to the database, read by nothing. Only keep a preference here once
+// something real enforces it.
 export const notificationPreferencesSchema = z.object({
   email: z.boolean(),
-  sms: z.boolean(),
-  whatsapp: z.boolean(),
-  push: z.boolean(),
 });
 export type NotificationPreferencesInput = z.infer<typeof notificationPreferencesSchema>;

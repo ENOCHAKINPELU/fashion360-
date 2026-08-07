@@ -1,12 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import {
-  CalendarClock,
-  Ruler,
-  Truck,
-  Star,
-} from "lucide-react";
+import { Star } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,14 +16,10 @@ import { CustomerPreferencesPanel } from "@/features/customers/components/custom
 import { CustomerFilesPanel } from "@/features/customers/components/customer-files-panel";
 import { CustomerOrdersPanel } from "@/features/customers/components/customer-orders-panel";
 import { CustomerFinancialPanel } from "@/features/customers/components/customer-financial-panel";
+import { CustomerAppointmentsPanel } from "@/features/customers/components/customer-appointments-panel";
+import { CustomerMeasurementsPanel } from "@/features/customers/components/customer-measurements-panel";
+import { CustomerDeliveryPanel } from "@/features/customers/components/customer-delivery-panel";
 import { ModulePlaceholder } from "@/shared/components/module-placeholder";
-
-const PLACEHOLDER_TABS = [
-  { value: "appointments", label: "Appointments", icon: CalendarClock, description: "A per-customer appointment view isn't available here yet. Use the Appointments tab and filter by this customer." },
-  { value: "measurements", label: "Measurements", icon: Ruler, description: "A per-customer measurements view isn't available here yet. Use the Measurements tab to look up this customer." },
-  { value: "delivery", label: "Delivery", icon: Truck, description: "A per-customer delivery view isn't available here yet. Use the Delivery tab to look up this customer's orders." },
-  { value: "reviews", label: "Reviews", icon: Star, description: "A per-customer reviews view isn't available here yet. Use the Reviews tab to look up this customer." },
-] as const;
 
 export default async function CustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -49,7 +40,20 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
   if (!customer) notFound();
 
   const activityCount = await prisma.customerActivity.count({ where: { customerId: id } });
+  const deliveries = await prisma.delivery.findMany({
+    where: { order: { customerId: id, businessId } },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      status: true,
+      trackingNumber: true,
+      estimatedDeliveryDate: true,
+      order: { select: { id: true, orderCode: true } },
+    },
+  });
   const serialized = JSON.parse(JSON.stringify(customer));
+  const serializedDeliveries = JSON.parse(JSON.stringify(deliveries));
   const lastVisit = customer.activities[0]?.createdAt.toISOString() ?? null;
 
   return (
@@ -86,11 +90,10 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
                 <TabsTrigger value="quotations">Quotations</TabsTrigger>
                 <TabsTrigger value="invoices">Invoices</TabsTrigger>
                 <TabsTrigger value="payments">Payments</TabsTrigger>
-                {PLACEHOLDER_TABS.map((tab) => (
-                  <TabsTrigger key={tab.value} value={tab.value}>
-                    {tab.label}
-                  </TabsTrigger>
-                ))}
+                <TabsTrigger value="appointments">Appointments</TabsTrigger>
+                <TabsTrigger value="measurements">Measurements</TabsTrigger>
+                <TabsTrigger value="delivery">Delivery</TabsTrigger>
+                <TabsTrigger value="reviews">Reviews</TabsTrigger>
                 <TabsTrigger value="activity-log">Activity Log</TabsTrigger>
                 <TabsTrigger value="files">Files</TabsTrigger>
               </TabsList>
@@ -155,11 +158,37 @@ export default async function CustomerProfilePage({ params }: { params: Promise<
               </Card>
             </TabsContent>
 
-            {PLACEHOLDER_TABS.map((tab) => (
-              <TabsContent key={tab.value} value={tab.value}>
-                <ModulePlaceholder icon={tab.icon} title={tab.label} description={tab.description} />
-              </TabsContent>
-            ))}
+            <TabsContent value="appointments">
+              <Card className="border-none shadow-sm">
+                <CardContent>
+                  <CustomerAppointmentsPanel customerId={customer.id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="measurements">
+              <Card className="border-none shadow-sm">
+                <CardContent>
+                  <CustomerMeasurementsPanel customerId={customer.id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="delivery">
+              <Card className="border-none shadow-sm">
+                <CardContent>
+                  <CustomerDeliveryPanel deliveries={serializedDeliveries} customerId={customer.id} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="reviews">
+              <ModulePlaceholder
+                icon={Star}
+                title="Reviews"
+                description="Reviews are tied to a customer's self-service Fashion360 account, not this business contact record, so they can't be reliably matched here yet. Use the Reviews tab to search by customer name."
+              />
+            </TabsContent>
 
             <TabsContent value="activity-log">
               <Card className="border-none shadow-sm">

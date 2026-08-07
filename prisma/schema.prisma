@@ -1051,6 +1051,7 @@ model Business {
   trustBadgeAssignments        TrustBadgeAssignment[]
   preferredByCustomers         CustomerPreferredDesigner[]
   payoutRecipient              PayoutRecipient?
+  conversations                Conversation[]
 
   @@index([slug])
 }
@@ -4788,6 +4789,7 @@ model CustomerProfile {
   fashionGoals            CustomerFashionGoal[]
   personalizationSettings PersonalizationSettings?
   designFavorites         DesignFavorite[]
+  conversations           Conversation[]
 
   @@index([userId])
 }
@@ -4867,6 +4869,57 @@ model BusinessCustomerRelationship {
   @@unique([businessId, customerProfileId])
   @@index([businessId, status])
   @@index([customerProfileId, status])
+}
+
+// V1 readiness audit finding: no messaging system existed at all —
+// designer<->customer communication was scattered across per-entity comment
+// threads (DesignComment, QuotationComment, ServiceRequestResponse) with no
+// unified inbox. One thread per (business, customerProfile) pair, not per
+// order/quotation/design — deliberately, so it's a real inbox rather than
+// another fragmented thread to check. Requires the self-service customer
+// account (CustomerProfile) on the customer side, same as
+// BusinessCustomerRelationship — a business-only Customer contact with no
+// platform login has no inbox to read a message in anyway.
+model Conversation {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  customerProfileId String
+  customerProfile   CustomerProfile @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+
+  lastMessageAt        DateTime?
+  lastMessagePreview    String?
+  businessUnreadCount  Int      @default(0)
+  customerUnreadCount  Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+
+  @@unique([businessId, customerProfileId])
+  @@index([businessId, lastMessageAt])
+  @@index([customerProfileId, lastMessageAt])
+}
+
+enum MessageSenderType {
+  BUSINESS
+  CUSTOMER
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderType MessageSenderType
+  senderId   String? // User.id on the business side; CustomerProfile's userId on the customer side
+  body       String
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
 }
 
 model UserConsent {

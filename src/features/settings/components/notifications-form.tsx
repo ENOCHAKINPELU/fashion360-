@@ -7,20 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import type { NotificationPreferencesInput } from "@/lib/validations/profile";
 
+// Email is the only channel Fashion360 can actually deliver today — SMS,
+// WhatsApp, and push were removed rather than left as toggles that saved a
+// preference nothing ever reads. All in-app activity (orders, appointments,
+// design updates) is always visible in the notification bell regardless of
+// this setting; this only controls the emailed copy of those updates.
 const CHANNELS: { key: keyof NotificationPreferencesInput; label: string; description: string }[] = [
   { key: "email", label: "Email", description: "Order, appointment, and payment updates by email." },
-  { key: "sms", label: "SMS", description: "Text message alerts for time-sensitive updates." },
-  { key: "whatsapp", label: "WhatsApp", description: "Updates delivered via WhatsApp." },
-  { key: "push", label: "Push notifications", description: "Browser and mobile push alerts." },
 ];
 
 export function NotificationsForm({ defaultValues }: { defaultValues?: Partial<NotificationPreferencesInput> }) {
   const router = useRouter();
   const [prefs, setPrefs] = useState<NotificationPreferencesInput>({
     email: true,
-    sms: false,
-    whatsapp: false,
-    push: true,
     ...defaultValues,
   });
   const [submitting, setSubmitting] = useState(false);

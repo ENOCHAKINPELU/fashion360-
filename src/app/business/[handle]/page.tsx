@@ -8,6 +8,7 @@ import { Logo } from "@/shared/components/logo";
 import { BusinessConnectCta } from "@/features/business/components/business-connect-cta";
 import { BusinessFavoriteButton } from "@/features/discover/components/business-favorite-button";
 import { RequestServiceDialog } from "@/features/discover/components/request-service-dialog";
+import { MessageBusinessButton } from "@/features/messaging/components/message-business-button";
 import { PortfolioGallery } from "@/features/discover/components/portfolio-gallery";
 import { BookAppointmentDialog } from "@/features/appointments/components/book-appointment-dialog";
 import { getBusinessTrustProfile } from "@/lib/business-trust-profile";
@@ -296,6 +297,7 @@ export default async function BusinessPublicProfilePage({ params }: { params: Pr
                     }))}
                   />
                   {activeRelationship?.status === "ACTIVE" && <BookAppointmentDialog businessId={business.id} businessName={business.name} />}
+                  {customerProfileId && <MessageBusinessButton businessId={business.id} />}
                   <BusinessConnectCta businessId={business.id} />
                 </CardContent>
               </Card>

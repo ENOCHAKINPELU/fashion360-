@@ -6,10 +6,13 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/admin", label: "Overview" },
+  { href: "/admin/businesses", label: "Businesses" },
   { href: "/admin/transactions", label: "Transactions" },
   { href: "/admin/disputes", label: "Disputes" },
   { href: "/admin/refunds", label: "Refunds" },
   { href: "/admin/payouts", label: "Payouts" },
+  { href: "/admin/reviews", label: "Reviews" },
+  { href: "/admin/settings", label: "Settings" },
 ];
 
 export function AdminNav() {

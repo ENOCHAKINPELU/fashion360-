@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Upload, Box, X } from "lucide-react";
+import { Loader2, Upload, Box, X, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export interface ModelUploadValue {
@@ -10,6 +10,15 @@ export interface ModelUploadValue {
   format: string;
   fileSizeBytes: number;
 }
+
+// Soft threshold, not a hard cap — the server still enforces the real 50MB
+// limit. This is guidance: an uncompressed model above ~15MB loads
+// noticeably slower on a customer's phone than the same garment exported
+// with Draco compression from most 3D tools' own export settings. No
+// compression pipeline runs here; this only surfaces the tradeoff before
+// upload so a designer can choose to re-export smaller instead of finding
+// out from a slow customer-side load.
+const SIZE_WARNING_BYTES = 15 * 1024 * 1024;
 
 export function ModelUpload({
   value,
@@ -25,6 +34,9 @@ export function ModelUpload({
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
+    if (file.size > SIZE_WARNING_BYTES) {
+      toast.warning("This is a large file — customers on mobile data may see a slow-loading preview. Re-exporting with Draco compression from your 3D tool is recommended, but upload will continue.");
+    }
     setUploading(true);
     try {
       const form = new FormData();
@@ -53,6 +65,11 @@ export function ModelUpload({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-foreground">{value.format} model attached</p>
             <p className="text-xs text-muted-foreground">{(value.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB</p>
+            {value.fileSizeBytes > SIZE_WARNING_BYTES && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-warning">
+                <TriangleAlert className="size-3.5 shrink-0" /> Large file — may load slowly for customers on mobile data
+              </p>
+            )}
           </div>
           <Button variant="ghost" size="icon-sm" onClick={() => onChange(null)} aria-label="Remove model">
             <X className="size-4" />

@@ -74,6 +74,11 @@ export const designerCreateVersionSchema = z.object({
   tags: z.array(z.string()),
   internalNotes: z.string().optional(),
   previewImageUrl: z.string().url().optional().or(z.literal("")),
+  // Links this version to a catalogued fabric so the 3D viewer can render
+  // it as a real material (see fabric-material.ts) — separate from the
+  // free-text `fabric` field above, which is just the customer-facing
+  // label and predates this relation.
+  fabricLibraryItemId: z.string().optional().or(z.literal("")),
   model: z
     .object({
       format: z.enum(["GLB", "GLTF", "OBJ", "FBX"]),

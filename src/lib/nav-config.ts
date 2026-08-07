@@ -16,11 +16,13 @@ import {
   Inbox,
   Palette,
   TrendingUp,
+  MessageSquare,
 } from "lucide-react";
 import type { NavItem } from "@/types/nav";
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, implemented: true },
+  { label: "Messages", href: "/dashboard/messages", icon: MessageSquare, implemented: true, description: "Direct conversations with your customers." },
   {
     label: "Customers",
     href: "/dashboard/customers",
@@ -67,7 +69,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Design Gallery",
     href: "/dashboard/design-gallery",
     icon: ImageIcon,
-    implemented: false,
+    implemented: true,
     description: "Browse and curate your digital design catalogue.",
   },
   {

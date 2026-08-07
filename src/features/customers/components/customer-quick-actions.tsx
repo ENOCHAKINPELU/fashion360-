@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   CalendarPlus,
   Ruler,
@@ -9,6 +11,7 @@ import {
   Receipt,
   Mail,
   MessageCircle,
+  MessageSquare,
   Printer,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,7 +26,27 @@ interface QuickActionsCustomer {
 }
 
 export function CustomerQuickActions({ customer }: { customer: QuickActionsCustomer }) {
+  const router = useRouter();
+  const [messaging, setMessaging] = useState(false);
   const phoneDigits = customer.phone?.replace(/[^\d]/g, "");
+
+  async function startConversation() {
+    setMessaging(true);
+    try {
+      const res = await fetch("/api/business/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerId: customer.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not start a conversation");
+      router.push(`/dashboard/messages?open=${data.conversation.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not start a conversation");
+    } finally {
+      setMessaging(false);
+    }
+  }
 
   function printCard() {
     const win = window.open("", "_blank", "width=420,height=560");
@@ -66,6 +89,13 @@ export function CustomerQuickActions({ customer }: { customer: QuickActionsCusto
           <action.icon className="size-3.5" /> {action.label}
         </Link>
       ))}
+      <button
+        onClick={startConversation}
+        disabled={messaging}
+        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-accent-soft disabled:opacity-60"
+      >
+        <MessageSquare className="size-3.5" /> {messaging ? "Opening..." : "Message"}
+      </button>
       <a
         href={customer.email ? `mailto:${customer.email}` : undefined}
         onClick={(e) => !customer.email && (e.preventDefault(), toast.error("No email on file"))}

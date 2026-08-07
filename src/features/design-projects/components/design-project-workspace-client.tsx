@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -29,6 +29,8 @@ import { DesignProjectStatusBadge } from "@/features/design-projects/components/
 import { CreateQuotationDialog } from "@/features/quotations/components/create-quotation-dialog";
 import { designReferenceTypeOptions } from "@/lib/validations/design-project";
 import { formatRelativeTime } from "@/lib/utils";
+import type { DesignTextureData } from "@/features/design-studio/types";
+import type { FabricLibraryItemData } from "@/features/design-gallery/types";
 
 interface DesignVersionLite {
   id: string;
@@ -47,6 +49,7 @@ interface DesignVersionLite {
   tags: string[];
   internalNotes: string | null;
   model: { url: string; format: string } | null;
+  textures: DesignTextureData[];
 }
 
 interface Bundle {
@@ -276,6 +279,7 @@ export function DesignProjectWorkspaceClient({ bundle }: { bundle: Bundle }) {
                   model={selectedVersion?.model ? { url: selectedVersion.model.url, format: selectedVersion.model.format } : null}
                   fallbackImageUrl={selectedVersion?.previewImageUrl}
                   className="h-full min-h-[420px]"
+                  textures={selectedVersion?.textures}
                 />
               )}
 
@@ -537,6 +541,8 @@ function NewVersionDialog({ open, onOpenChange, projectId }: { open: boolean; on
   const [designName, setDesignName] = useState("");
   const [description, setDescription] = useState("");
   const [fabric, setFabric] = useState("");
+  const [fabricLibraryItemId, setFabricLibraryItemId] = useState("");
+  const [fabrics, setFabrics] = useState<FabricLibraryItemData[]>([]);
   const [color, setColor] = useState("");
   const [styleNotes, setStyleNotes] = useState("");
   const [designInstructions, setDesignInstructions] = useState("");
@@ -548,10 +554,19 @@ function NewVersionDialog({ open, onOpenChange, projectId }: { open: boolean; on
   const [model, setModel] = useState<ModelUploadValue | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/designs/fabrics")
+      .then((r) => r.json())
+      .then((d) => setFabrics(d.fabrics ?? []))
+      .catch(() => setFabrics([]));
+  }, [open]);
+
   function reset() {
     setDesignName("");
     setDescription("");
     setFabric("");
+    setFabricLibraryItemId("");
     setColor("");
     setStyleNotes("");
     setDesignInstructions("");
@@ -577,6 +592,7 @@ function NewVersionDialog({ open, onOpenChange, projectId }: { open: boolean; on
           designName: designName.trim(),
           description,
           fabric,
+          fabricLibraryItemId,
           color,
           styleNotes,
           designInstructions,
@@ -627,7 +643,42 @@ function NewVersionDialog({ open, onOpenChange, projectId }: { open: boolean; on
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-1.5">
               <Label>Fabric</Label>
-              <Input value={fabric} onChange={(e) => setFabric(e.target.value)} disabled={submitting} />
+              {fabrics.length > 0 ? (
+                <Select
+                  value={fabricLibraryItemId || "custom"}
+                  onValueChange={(v) => {
+                    if (v === "custom") {
+                      setFabricLibraryItemId("");
+                      return;
+                    }
+                    const f = fabrics.find((x) => x.id === v);
+                    setFabricLibraryItemId(v);
+                    setFabric(f?.name ?? "");
+                  }}
+                >
+                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Type manually</SelectItem>
+                    {fabrics.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : null}
+              {(fabricLibraryItemId === "" || fabrics.length === 0) && (
+                <Input
+                  value={fabric}
+                  onChange={(e) => setFabric(e.target.value)}
+                  disabled={submitting}
+                  placeholder={fabrics.length > 0 ? "Or type a fabric name" : undefined}
+                  className={fabrics.length > 0 ? "mt-1.5" : undefined}
+                />
+              )}
+              {fabricLibraryItemId && !fabrics.find((f) => f.id === fabricLibraryItemId)?.imageUrl && (
+                <p className="text-[11px] text-warning">
+                  This fabric has no reference photo yet, so it won&apos;t render as a 3D material until one is added in the Design Gallery.
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Color</Label>

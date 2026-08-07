@@ -23,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         prisma.designVersion.findMany({
           where: { previewId: id },
           orderBy: { versionNumber: "desc" },
-          include: { model: true, textures: true },
+          include: { model: true, textures: { include: { fabricLibraryItem: true } } },
         }),
         prisma.designRevisionRequest.findMany({ where: { previewId: id }, orderBy: { createdAt: "desc" } }),
         prisma.designComment.findMany({ where: { previewId: id }, orderBy: { createdAt: "desc" } }),
