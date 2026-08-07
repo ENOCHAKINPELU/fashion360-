@@ -29,6 +29,7 @@ export default auth((req) => {
 
   const isBusinessUser = BUSINESS_ROLES.includes(user.role);
   const isCustomer = user.role === "CUSTOMER";
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
 
   // Business-only areas: the existing business dashboard, unchanged, plus
   // its onboarding step. A customer landing here is sent to their own area
@@ -40,6 +41,14 @@ export default auth((req) => {
   // Customer-only areas: the new account dashboard and its onboarding step.
   if ((pathname.startsWith(ACCOUNT_PREFIX) || pathname.startsWith(ONBOARDING_CUSTOMER_PREFIX)) && !isCustomer) {
     return NextResponse.redirect(new URL(isBusinessUser ? DASHBOARD_PREFIX : "/", req.nextUrl.origin));
+  }
+
+  // SUPER_ADMIN is platform-level and never has a businessId by design —
+  // its home is /admin, not /dashboard. Without this exemption it fell
+  // into the "no business yet" branch below on every single login and
+  // got sent through business onboarding, which it can never complete.
+  if (isSuperAdmin && pathname.startsWith(DASHBOARD_PREFIX)) {
+    return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
   }
 
   // Owners/staff without a business yet must finish onboarding first —

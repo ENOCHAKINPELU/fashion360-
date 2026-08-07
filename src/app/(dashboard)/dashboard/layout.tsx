@@ -6,12 +6,14 @@ import { Topbar } from "@/components/layout/topbar";
 import { PageTransition } from "@/shared/components/page-transition";
 
 // This layout's own auth check is a second line of defense — the real
-// gate is middleware.ts at the project root, which runs at the Edge
-// before any page/layout code and is the actual reason a stale/missing
-// middleware bundle can make edits here appear to do nothing (see git
-// history: a middleware.ts existed, was deleted without a SUPER_ADMIN
-// exemption ever being added, and — per live testing — kept running
-// after deletion until middleware.ts was restored).
+// gate is proxy.ts at the project root, which runs at the Edge before
+// any page/layout code. Next.js 16 renamed Middleware to Proxy and only
+// recognizes proxy.ts (see node_modules/next/dist/docs/.../16-proxy.md);
+// a middleware.ts file is dead code that Next never executes. Past git
+// history chased a "stale middleware bundle" theory and repeatedly
+// added/restored middleware.ts to fix the SUPER_ADMIN redirect — that
+// was a red herring the whole time. Don't recreate middleware.ts; put
+// Edge-level auth logic in proxy.ts.
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   await connection();
   const session = await auth();
