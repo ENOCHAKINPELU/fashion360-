@@ -87,125 +87,159 @@ export function BusinessDetailsForm({ mode, defaultValues }: BusinessDetailsForm
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <div>
-        <Label className="mb-2 block">Business Logo</Label>
-        <ImageUpload
-          value={watch("logoUrl")}
-          onChange={(url) => setValue("logoUrl", url, { shouldDirty: true })}
-          folder="logos"
-          label="Upload logo"
-        />
-      </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
+      <Section title="Branding">
+        <div>
+          <Label className="mb-2.5 block">Business Logo</Label>
+          <ImageUpload
+            value={watch("logoUrl")}
+            onChange={(url) => setValue("logoUrl", url, { shouldDirty: true })}
+            folder="logos"
+            label="Upload logo"
+          />
+        </div>
+      </Section>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Business Name" error={errors.name?.message}>
-          <Input {...register("name")} placeholder="Ada Couture" />
-        </Field>
-        <Field label="Business Type" error={errors.businessType?.message}>
-          <Controller
-            control={control}
-            name="businessType"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {businessTypeOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
-        <Field label="Business Email" error={errors.email?.message}>
-          <Input {...register("email")} type="email" placeholder="hello@adacouture.com" />
-        </Field>
-        <Field label="Business Phone" error={errors.phone?.message}>
-          <Input {...register("phone")} placeholder="+234 800 000 0000" />
-        </Field>
-        <Field label="Country" error={errors.country?.message}>
-          <Input {...register("country")} placeholder="Nigeria" />
-        </Field>
-        <Field label="State" error={errors.state?.message}>
-          <Input {...register("state")} placeholder="Lagos" />
-        </Field>
-        <Field label="City" error={errors.city?.message}>
-          <Input {...register("city")} placeholder="Ikeja" />
-        </Field>
-        <Field label="Business Address" error={errors.address?.message}>
-          <Input {...register("address")} placeholder="12 Allen Avenue" />
-        </Field>
-        <Field label="Currency" error={errors.currency?.message}>
-          <Controller
-            control={control}
-            name="currency"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencyOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
-        <Field label="Timezone" error={errors.timezone?.message}>
-          <Controller
-            control={control}
-            name="timezone"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezoneOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
-        <Field label="Measurement Unit" error={errors.measurementUnit?.message}>
-          <Controller
-            control={control}
-            name="measurementUnit"
-            render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {measurementUnitOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-        </Field>
-      </div>
+      <Section title="Business Details" description="How Fashion360 and your customers identify your business.">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Business Name" error={errors.name?.message}>
+            <Input {...register("name")} placeholder="Ada Couture" />
+          </Field>
+          <Field label="Business Type" error={errors.businessType?.message}>
+            <Controller
+              control={control}
+              name="businessType"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {businessTypeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          <Field label="Business Email" error={errors.email?.message}>
+            <Input {...register("email")} type="email" placeholder="hello@adacouture.com" />
+          </Field>
+          <Field label="Business Phone" error={errors.phone?.message}>
+            <Input {...register("phone")} placeholder="+234 800 000 0000" />
+          </Field>
+        </div>
+      </Section>
+
+      <Section title="Location" description="Where customers can find or reach you.">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Country" error={errors.country?.message}>
+            <Input {...register("country")} placeholder="Nigeria" />
+          </Field>
+          <Field label="State" error={errors.state?.message}>
+            <Input {...register("state")} placeholder="Lagos" />
+          </Field>
+          <Field label="City" error={errors.city?.message}>
+            <Input {...register("city")} placeholder="Ikeja" />
+          </Field>
+          <Field label="Business Address" error={errors.address?.message}>
+            <Input {...register("address")} placeholder="12 Allen Avenue" />
+          </Field>
+        </div>
+      </Section>
+
+      <Section title="Preferences" description="How prices, dates, and measurements display across your dashboard.">
+        <div className="grid gap-5 sm:grid-cols-3">
+          <Field label="Currency" error={errors.currency?.message}>
+            <Controller
+              control={control}
+              name="currency"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencyOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          <Field label="Timezone" error={errors.timezone?.message}>
+            <Controller
+              control={control}
+              name="timezone"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezoneOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+          <Field label="Measurement Unit" error={errors.measurementUnit?.message}>
+            <Controller
+              control={control}
+              name="measurementUnit"
+              render={({ field }) => (
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {measurementUnitOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+          </Field>
+        </div>
+      </Section>
 
       <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
         {submitting ? "Saving..." : mode === "create" ? "Create business" : "Save changes"}
       </Button>
     </form>
+  );
+}
+
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-4 border-t border-border pt-8 first:border-t-0 first:pt-0">
+      <div>
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {description && <p className="mt-1 text-xs text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -219,7 +253,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <Label>{label}</Label>
       {children}
       {error && <p className="text-xs text-danger">{error}</p>}

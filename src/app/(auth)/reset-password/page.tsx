@@ -42,12 +42,12 @@ function ResetPasswordForm() {
   }
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader className="items-start pb-4">
+    <Card className="border-none shadow-lg [--card-spacing:--spacing(7)]">
+      <CardHeader className="items-start">
         <CardTitle className="text-xl">Set a new password</CardTitle>
         <CardDescription>Choose something you haven&apos;t used before.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent>
         {!token ? (
           <p className="text-sm text-danger">
             Missing reset token. Use the link from your email, or{" "}
@@ -57,13 +57,13 @@ function ResetPasswordForm() {
             .
           </p>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-2">
               <Label htmlFor="password">New password</Label>
               <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
               {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm new password</Label>
               <Input
                 id="confirmPassword"

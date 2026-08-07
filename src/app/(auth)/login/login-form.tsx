@@ -60,19 +60,19 @@ function LoginFormInner({ googleEnabled }: { googleEnabled: boolean }) {
   }
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader className="items-start pb-4">
+    <Card className="border-none shadow-lg [--card-spacing:--spacing(7)]">
+      <CardHeader className="items-start">
         <CardTitle className="text-xl">Welcome back</CardTitle>
         <CardDescription>Sign in to manage your fashion business.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" {...register("email")} />
             {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">
@@ -93,7 +93,7 @@ function LoginFormInner({ googleEnabled }: { googleEnabled: boolean }) {
 
         {googleEnabled && (
           <>
-            <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
               <div className="h-px flex-1 bg-border" />
               OR
               <div className="h-px flex-1 bg-border" />

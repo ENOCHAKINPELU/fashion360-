@@ -77,29 +77,29 @@ export default function CustomerRegisterPage() {
   }
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader className="items-start pb-4">
+    <Card className="border-none shadow-lg [--card-spacing:--spacing(7)]">
+      <CardHeader className="items-start">
         <CardTitle className="text-xl">Join Fashion360</CardTitle>
         <CardDescription>Create your Fashion Passport and start your style journey.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1.5">
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="space-y-2">
             <Label htmlFor="fullName">Full name</Label>
             <Input id="fullName" placeholder="Enoch Adeyemi" {...register("fullName")} />
             {errors.fullName && <p className="text-xs text-danger">{errors.fullName.message}</p>}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" {...register("email")} />
             {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="phone">Phone number</Label>
             <Input id="phone" type="tel" autoComplete="tel" placeholder="+234 800 000 0000" {...register("phone")} />
             {errors.phone && <p className="text-xs text-danger">{errors.phone.message}</p>}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
             {errors.password ? (
@@ -108,13 +108,13 @@ export default function CustomerRegisterPage() {
               <p className="text-xs text-muted-foreground">At least 8 characters, with an uppercase letter and a number.</p>
             )}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
             <Input id="confirmPassword" type="password" autoComplete="new-password" {...register("confirmPassword")} />
             {errors.confirmPassword && <p className="text-xs text-danger">{errors.confirmPassword.message}</p>}
           </div>
 
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2.5 pt-1">
             <label className="flex items-start gap-2 text-sm text-muted-foreground">
               <input
                 type="checkbox"

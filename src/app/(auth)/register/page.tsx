@@ -68,31 +68,31 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader className="items-start pb-4">
+    <Card className="border-none shadow-lg [--card-spacing:--spacing(7)]">
+      <CardHeader className="items-start">
         <CardTitle className="text-xl">Start your business on Fashion360</CardTitle>
         <CardDescription>Set up your fashion house in under a minute.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-2">
               <Label htmlFor="firstName">First name</Label>
               <Input id="firstName" placeholder="Ada" {...register("firstName")} />
               {errors.firstName && <p className="text-xs text-danger">{errors.firstName.message}</p>}
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <Label htmlFor="lastName">Last name</Label>
               <Input id="lastName" placeholder="Okafor" {...register("lastName")} />
               {errors.lastName && <p className="text-xs text-danger">{errors.lastName.message}</p>}
             </div>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" {...register("email")} />
             {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" autoComplete="new-password" {...register("password")} />
             {errors.password ? (

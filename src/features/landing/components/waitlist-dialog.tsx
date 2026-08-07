@@ -160,39 +160,39 @@ export function WaitlistDialog({
             exit={{ opacity: 0, scale: reduceMotion ? 1 : 0.97 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
           >
-            <DialogHeader>
+            <DialogHeader className="pb-1">
               <DialogTitle>{copy.title}</DialogTitle>
               <DialogDescription>{copy.description}</DialogDescription>
             </DialogHeader>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
+            <div className="space-y-4">
+              <div className="space-y-2">
                 <Label htmlFor="wl-name">{role === "DESIGNER" ? "Full Name" : "Name"}</Label>
                 <Input id="wl-name" value={form.name} onChange={(e) => set("name", e.target.value)} placeholder="Your full name" />
               </div>
 
               {role === "DESIGNER" && (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="wl-business">Business Name (optional)</Label>
                   <Input id="wl-business" value={form.businessName} onChange={(e) => set("businessName", e.target.value)} placeholder="Your fashion brand or studio" />
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="wl-email">Email</Label>
                 <Input id="wl-email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="you@example.com" />
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <Label htmlFor="wl-phone">Phone / WhatsApp</Label>
                 <Input id="wl-phone" type="tel" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+234..." />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
                   <Label htmlFor="wl-city">City (optional)</Label>
                   <Input id="wl-city" value={form.city} onChange={(e) => set("city", e.target.value)} placeholder="Your city" />
                 </div>
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="wl-country">Country (optional)</Label>
                   <Select value={form.country} onValueChange={(value) => set("country", value)}>
                     <SelectTrigger id="wl-country" className="w-full">
@@ -210,7 +210,7 @@ export function WaitlistDialog({
               </div>
 
               {role === "CUSTOMER" ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   <Label htmlFor="wl-interest">Fashion Interest (optional)</Label>
                   <Input
                     id="wl-interest"
@@ -221,11 +221,11 @@ export function WaitlistDialog({
                 </div>
               ) : (
                 <>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <Label htmlFor="wl-specialty">Fashion Specialty (optional)</Label>
                     <Input id="wl-specialty" value={form.specialty} onChange={(e) => set("specialty", e.target.value)} placeholder="e.g. bridal couture, tailoring" />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <Label htmlFor="wl-experience">Years of Experience (optional)</Label>
                     <Input
                       id="wl-experience"
@@ -237,7 +237,7 @@ export function WaitlistDialog({
                       placeholder="e.g. 5"
                     />
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <Label htmlFor="wl-portfolio">Instagram / Portfolio Link (optional)</Label>
                     <Input id="wl-portfolio" value={form.portfolioUrl} onChange={(e) => set("portfolioUrl", e.target.value)} placeholder="@yourhandle or a link" />
                   </div>
@@ -246,7 +246,7 @@ export function WaitlistDialog({
 
               {error && <p className="text-xs text-danger">{error}</p>}
             </div>
-            <Button className="w-full" onClick={submit} disabled={submitting}>
+            <Button className="mt-6 w-full" onClick={submit} disabled={submitting}>
               {submitting && <Loader2 className="size-4 animate-spin" />}
               {submitting ? "Joining..." : "Join the Waitlist"}
             </Button>

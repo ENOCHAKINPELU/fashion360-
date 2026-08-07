@@ -28,19 +28,19 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <Card className="border-none shadow-lg">
-      <CardHeader className="items-start pb-4">
+    <Card className="border-none shadow-lg [--card-spacing:--spacing(7)]">
+      <CardHeader className="items-start">
         <CardTitle className="text-xl">Reset your password</CardTitle>
         <CardDescription>We&apos;ll email you a link to reset it.</CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent>
         {sent ? (
           <p className="text-sm text-foreground">
             If an account exists for that email, a reset link is on its way.
           </p>
         ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-1.5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" autoComplete="email" {...register("email")} />
               {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
