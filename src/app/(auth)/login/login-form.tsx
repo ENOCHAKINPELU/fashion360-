@@ -47,11 +47,15 @@ function LoginFormInner({ googleEnabled }: { googleEnabled: boolean }) {
 
     // No explicit destination (e.g. the middleware didn't bounce them off a
     // protected page) — route by role instead of always defaulting to the
-    // business dashboard, since customers now have their own area.
+    // business dashboard, since customers and the platform admin each have
+    // their own area. SUPER_ADMIN specifically must never land on
+    // /dashboard — that route group requires a businessId, which a
+    // platform-level admin account never has.
     let destination = explicitCallbackUrl;
     if (!destination) {
       const session = await getSession();
-      destination = session?.user?.role === "CUSTOMER" ? "/account" : "/dashboard";
+      destination =
+        session?.user?.role === "CUSTOMER" ? "/account" : session?.user?.role === "SUPER_ADMIN" ? "/admin" : "/dashboard";
     }
 
     setLoading(false);

@@ -9,6 +9,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!session?.user || !["OWNER", "STAFF", "SUPER_ADMIN"].includes(session.user.role)) {
     redirect("/login");
   }
+  // SUPER_ADMIN is platform-level and never has a businessId by design —
+  // this route group isn't its home (see /admin), but if an admin session
+  // ever ends up here directly, sending it through business onboarding
+  // (which it can't complete) is the wrong failure mode. Send it to the
+  // area it actually belongs in instead.
+  if (session.user.role === "SUPER_ADMIN") redirect("/admin");
   if (!session.user.businessId) redirect("/onboarding/business");
 
   return (
