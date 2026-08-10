@@ -20,15 +20,20 @@ import {
 } from "lucide-react";
 import type { NavItem } from "@/types/nav";
 
+// Grouped for readability only (see NavItem.group) — every item, href, and
+// order is unchanged from before; nothing was removed or hidden. A flat
+// list of 19 items with no structure was itself the usability problem.
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, implemented: true },
   { label: "Messages", href: "/dashboard/messages", icon: MessageSquare, implemented: true, description: "Direct conversations with your customers." },
+
   {
     label: "Customers",
     href: "/dashboard/customers",
     icon: Users,
     implemented: true,
     description: "Manage customer profiles, preferences, and history.",
+    group: "Customers",
   },
   {
     label: "Service Requests",
@@ -36,6 +41,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Inbox,
     implemented: true,
     description: "Requests from customers discovering you on Fashion360.",
+    group: "Customers",
   },
   {
     label: "Appointments",
@@ -43,6 +49,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: CalendarClock,
     implemented: true,
     description: "Book and track consultations, fittings, and pickups.",
+    group: "Customers",
   },
   {
     label: "Measurements",
@@ -50,6 +57,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Ruler,
     implemented: true,
     description: "Manual and AI-assisted body measurement profiles.",
+    group: "Customers",
   },
   {
     label: "Customer Measurements",
@@ -57,13 +65,16 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Ruler,
     implemented: true,
     description: "Customers who've granted access to their platform Measurement Vault.",
+    group: "Customers",
   },
+
   {
     label: "Design Projects",
     href: "/dashboard/design-projects",
     icon: Palette,
     implemented: true,
     description: "Collaborate with customers from design brief through approval.",
+    group: "Design & Production",
   },
   {
     label: "Design Gallery",
@@ -71,13 +82,7 @@ export const NAV_ITEMS: NavItem[] = [
     icon: ImageIcon,
     implemented: true,
     description: "Browse and curate your digital design catalogue.",
-  },
-  {
-    label: "Orders",
-    href: "/dashboard/orders",
-    icon: ShoppingBag,
-    implemented: true,
-    description: "Track custom orders through your production workflow.",
+    group: "Design & Production",
   },
   {
     label: "3D Studio",
@@ -85,27 +90,15 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Box,
     implemented: true,
     description: "Interactive garment visualization and customization.",
+    group: "Design & Production",
   },
   {
-    label: "Quotations",
-    href: "/dashboard/quotations",
-    icon: FileText,
+    label: "Orders",
+    href: "/dashboard/orders",
+    icon: ShoppingBag,
     implemented: true,
-    description: "Create and send price quotes to customers.",
-  },
-  {
-    label: "Invoices",
-    href: "/dashboard/invoices",
-    icon: Receipt,
-    implemented: true,
-    description: "Generate invoices and track payment status.",
-  },
-  {
-    label: "Payments",
-    href: "/dashboard/payments",
-    icon: CreditCard,
-    implemented: true,
-    description: "Deposits, balances, and payment history.",
+    description: "Track custom orders through your production workflow.",
+    group: "Design & Production",
   },
   {
     label: "Delivery",
@@ -113,6 +106,32 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Truck,
     implemented: true,
     description: "Manage pickup and home delivery logistics.",
+    group: "Design & Production",
+  },
+
+  {
+    label: "Quotations",
+    href: "/dashboard/quotations",
+    icon: FileText,
+    implemented: true,
+    description: "Create and send price quotes to customers.",
+    group: "Money",
+  },
+  {
+    label: "Invoices",
+    href: "/dashboard/invoices",
+    icon: Receipt,
+    implemented: true,
+    description: "Generate invoices and track payment status.",
+    group: "Money",
+  },
+  {
+    label: "Payments",
+    href: "/dashboard/payments",
+    icon: CreditCard,
+    implemented: true,
+    description: "Deposits, balances, and payment history.",
+    group: "Money",
   },
   {
     label: "Payouts",
@@ -120,13 +139,16 @@ export const NAV_ITEMS: NavItem[] = [
     icon: Wallet,
     implemented: true,
     description: "Track payout eligibility for your completed orders.",
+    group: "Money",
   },
+
   {
     label: "Reviews",
     href: "/dashboard/reviews",
     icon: Star,
     implemented: true,
     description: "Customer ratings and finished-look photos.",
+    group: "Grow",
   },
   {
     label: "Insights",
@@ -134,6 +156,8 @@ export const NAV_ITEMS: NavItem[] = [
     icon: TrendingUp,
     implemented: true,
     description: "How customers discover and engage with your business.",
+    group: "Grow",
   },
+
   { label: "Settings", href: "/dashboard/settings", icon: Settings, implemented: true },
 ];

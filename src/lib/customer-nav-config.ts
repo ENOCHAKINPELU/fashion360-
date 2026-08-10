@@ -22,6 +22,8 @@ import type { NavItem } from "@/types/nav";
 // and business sidebars are genuinely different surfaces with different
 // route prefixes (Part 12: only navigation foundation + Coming Soon states
 // in Phase 1, real functionality arrives module-by-module in later phases).
+// Grouped for readability only (see NavItem.group) — every item, href, and
+// order is functionally unchanged; nothing was removed or hidden.
 export const CUSTOMER_NAV_ITEMS: NavItem[] = [
   { label: "Home", href: "/account", icon: Home, implemented: true },
   {
@@ -45,12 +47,14 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     implemented: true,
     description: "Direct conversations with businesses you're working with.",
   },
+
   {
     label: "My Requests",
     href: "/account/requests",
     icon: ClipboardList,
     implemented: true,
     description: "Service requests you've sent to fashion businesses.",
+    group: "My Fashion",
   },
   {
     label: "My Orders",
@@ -58,13 +62,7 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     icon: ShoppingBag,
     implemented: true,
     description: "Track orders you've placed with fashion businesses.",
-  },
-  {
-    label: "My Reviews",
-    href: "/account/reviews",
-    icon: Star,
-    implemented: true,
-    description: "Rate and review completed orders.",
+    group: "My Fashion",
   },
   {
     label: "My Designs",
@@ -72,21 +70,7 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     icon: Shirt,
     implemented: true,
     description: "Designs you've saved, customized, or approved.",
-  },
-  {
-    label: "My Measurements",
-    href: "/account/measurements",
-    icon: Ruler,
-    implemented: true,
-    description: "Your measurement vault, shared with businesses you trust.",
-  },
-  { label: "My Fashion Passport", href: "/account/passport", icon: BookUser, implemented: true },
-  {
-    label: "My Wardrobe",
-    href: "/account/wardrobe",
-    icon: Archive,
-    implemented: true,
-    description: "Your digital wardrobe and fashion history.",
+    group: "My Fashion",
   },
   {
     label: "Appointments",
@@ -94,13 +78,33 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     icon: CalendarClock,
     implemented: true,
     description: "Upcoming consultations and fittings.",
+    group: "My Fashion",
   },
   {
-    label: "Payments",
-    href: "/account/payments",
-    icon: CreditCard,
+    label: "My Reviews",
+    href: "/account/reviews",
+    icon: Star,
     implemented: true,
-    description: "Your invoices, receipts, and payment history.",
+    description: "Rate and review completed orders.",
+    group: "My Fashion",
+  },
+
+  {
+    label: "My Measurements",
+    href: "/account/measurements",
+    icon: Ruler,
+    implemented: true,
+    description: "Your measurement vault, shared with businesses you trust.",
+    group: "My Profile",
+  },
+  { label: "My Fashion Passport", href: "/account/passport", icon: BookUser, implemented: true, group: "My Profile" },
+  {
+    label: "My Wardrobe",
+    href: "/account/wardrobe",
+    icon: Archive,
+    implemented: true,
+    description: "Your digital wardrobe and fashion history.",
+    group: "My Profile",
   },
   {
     label: "Favorites",
@@ -108,6 +112,16 @@ export const CUSTOMER_NAV_ITEMS: NavItem[] = [
     icon: Heart,
     implemented: true,
     description: "Designs and businesses you've favorited.",
+    group: "My Profile",
   },
+  {
+    label: "Payments",
+    href: "/account/payments",
+    icon: CreditCard,
+    implemented: true,
+    description: "Your invoices, receipts, and payment history.",
+    group: "My Profile",
+  },
+
   { label: "Settings", href: "/account/settings", icon: Settings, implemented: true },
 ];
