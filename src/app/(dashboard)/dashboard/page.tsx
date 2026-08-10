@@ -1,26 +1,27 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ShoppingBag, Wallet, CalendarClock, ImageIcon, ExternalLink, Inbox } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ExternalLink, ArrowRight, CheckCircle2, Sparkles, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { StatCard } from "@/features/dashboard/components/stat-card";
-import { SampleBadge } from "@/features/dashboard/components/sample-badge";
-import { RevenueChart } from "@/features/dashboard/components/revenue-chart";
 import { QuickActions } from "@/features/dashboard/components/quick-actions";
-import { UpcomingTasks } from "@/features/dashboard/components/upcoming-tasks";
-import { RecentCustomers } from "@/features/dashboard/components/recent-customers";
-import { LatestOrders } from "@/features/dashboard/components/latest-orders";
 import { RecentActivity } from "@/features/dashboard/components/recent-activity";
 import { CustomerRequestsPanel } from "@/features/business/components/customer-requests-panel";
 import { BusinessCompletionBanner } from "@/features/business/components/business-completion-banner";
 import { BusinessTrustProfileCard } from "@/features/business/components/business-trust-profile-card";
 import { computeBusinessProfileCompletion } from "@/lib/business-profile-completion";
 import { getBusinessTrustProfile } from "@/lib/business-trust-profile";
-import { getBusinessResponseMetrics } from "@/lib/business-response-metrics";
 import { getBusinessActionItems } from "@/lib/action-center";
 import { EmptyState } from "@/shared/components/empty-state";
 
+// One-focus "personal assistant" home, mirroring the customer dashboard's
+// redesign: a single hero answers "what needs me right now" (real, live
+// data from action-center.ts — already computing a properly prioritized
+// list, it just used to be buried as a small pill row under three other
+// full cards). Previously 16 stacked content blocks, four of them showing
+// hardcoded fake "Sample data" (a live business's dashboard showing made-up
+// customers/orders/tasks is worse than showing nothing) plus two literal
+// "Not tracked yet" cards — all removed rather than kept as decoration.
 export default async function DashboardPage() {
   const session = await auth();
   const businessId = session!.user.businessId!;
@@ -31,13 +32,10 @@ export default async function DashboardPage() {
     trust,
     connectedCustomerCount,
     portfolioItems,
-    responseMetrics,
-    serviceRequestCounts,
     actionItems,
-    totalCustomerCount,
     activeOrderCount,
     revenueAgg,
-    upcomingAppointmentCount,
+    newRequestCount,
     businessProfile,
   ] = await Promise.all([
       prisma.business.findUnique({ where: { id: businessId } }),
@@ -50,55 +48,116 @@ export default async function DashboardPage() {
       getBusinessTrustProfile(prisma, businessId),
       prisma.businessCustomerRelationship.count({ where: { businessId, status: "ACTIVE" } }),
       prisma.businessPortfolioItem.findMany({ where: { businessId }, orderBy: { sortOrder: "asc" }, take: 4 }),
-      getBusinessResponseMetrics(prisma, businessId),
-      prisma.serviceRequest.groupBy({ by: ["status"], where: { businessId }, _count: true }),
       getBusinessActionItems(prisma, businessId),
-      prisma.customer.count({ where: { businessId } }),
       prisma.order.count({ where: { businessId, status: { notIn: ["DRAFT", "COMPLETED", "DELIVERED", "CANCELLED"] } } }),
       prisma.order.aggregate({ where: { businessId }, _sum: { amountPaid: true } }),
-      prisma.appointment.count({
-        where: { businessId, startTime: { gte: new Date() }, status: { in: ["SCHEDULED", "CONFIRMED"] } },
-      }),
+      prisma.serviceRequest.count({ where: { businessId, status: "SUBMITTED" } }),
       prisma.businessProfile.findUnique({ where: { businessId } }),
     ]);
   const profileHandle = businessProfile?.username ?? businessId;
-
-  const countFor = (statuses: string[]) =>
-    serviceRequestCounts.filter((c) => statuses.includes(c.status)).reduce((sum, c) => sum + c._count, 0);
-  const newRequestCount = countFor(["SUBMITTED"]);
-  const pendingRequestCount = countFor(["RECEIVED", "UNDER_REVIEW"]);
-  const acceptedRequestCount = countFor(["ACCEPTED"]);
+  const topAction = actionItems[0] ?? null;
+  const moreActionsCount = Math.max(0, actionItems.length - 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Welcome back{business ? `, ${business.name}` : ""}
         </h1>
-        <p className="text-sm text-muted-foreground">Here&apos;s an overview of your business today.</p>
+        <p className="text-sm text-muted-foreground">Here&apos;s where things stand today.</p>
       </div>
 
       <BusinessCompletionBanner completionPercent={completion.completionPercent} missingItems={completion.missingItems} />
 
-      {actionItems.length > 0 && (
+      {/* Hero: the one thing that matters most right now */}
+      {topAction ? (
         <Card className="border-none bg-accent-soft shadow-sm">
-          <CardContent>
-            <p className="mb-3 text-xs font-medium tracking-wide text-primary uppercase">Action Center: What Needs Your Attention</p>
-            <ul className="flex flex-wrap gap-2">
-              {actionItems.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="inline-flex items-center rounded-full border border-primary/20 bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:border-primary/40"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-primary">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <p className="text-xs font-medium tracking-wide text-primary uppercase">Needs your attention</p>
+                <p className="mt-0.5 text-base font-medium text-foreground">{topAction.label}</p>
+                {moreActionsCount > 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    +{moreActionsCount} more thing{moreActionsCount > 1 ? "s" : ""} on your list
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button asChild className="w-full gap-1.5 sm:w-auto">
+              <Link href={topAction.href}>
+                Handle it <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-none bg-accent-soft shadow-sm">
+          <CardContent className="flex items-center gap-3">
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-surface text-success">
+              <CheckCircle2 className="size-5" />
+            </div>
+            <div>
+              <p className="text-base font-medium text-foreground">You&apos;re all caught up</p>
+              <p className="text-sm text-muted-foreground">Nothing needs you right now — we&apos;ll notify you the moment something does.</p>
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* At a glance — three numbers that matter, nothing more */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <Link href="/dashboard/service-requests?status=SUBMITTED" className="rounded-2xl border border-border bg-surface p-4 text-center transition hover:border-primary/40 hover:bg-accent-soft sm:text-left">
+          <p className="text-2xl font-semibold text-foreground">{newRequestCount}</p>
+          <p className="text-xs text-muted-foreground">New Requests</p>
+        </Link>
+        <Link href="/dashboard/orders" className="rounded-2xl border border-border bg-surface p-4 text-center transition hover:border-primary/40 hover:bg-accent-soft sm:text-left">
+          <p className="text-2xl font-semibold text-foreground">{activeOrderCount}</p>
+          <p className="text-xs text-muted-foreground">Active Orders</p>
+        </Link>
+        <Link href="/dashboard/payments" className="rounded-2xl border border-border bg-surface p-4 text-center transition hover:border-primary/40 hover:bg-accent-soft sm:text-left">
+          <p className="text-2xl font-semibold text-foreground">₦{(revenueAgg._sum.amountPaid ?? 0).toLocaleString()}</p>
+          <p className="text-xs text-muted-foreground">Revenue</p>
+        </Link>
+      </div>
+
+      {/* Only shown when there's actually something to decide — no empty "0 requests" card */}
+      {connectionRequests.length > 0 && (
+        <Card className="border-none shadow-sm">
+          <CardContent>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-semibold text-foreground">Customers Wanting to Connect</p>
+              <span className="text-xs font-medium text-primary">{connectionRequests.length} pending</span>
+            </div>
+            <CustomerRequestsPanel
+              requests={connectionRequests.map((r) => ({
+                id: r.id,
+                requestedAt: r.requestedAt.toISOString(),
+                customerProfile: r.customerProfile,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card className="border-none shadow-sm">
+          <CardContent>
+            <p className="mb-4 text-sm font-semibold text-foreground">Recent Activity</p>
+            <RecentActivity businessId={businessId} userId={session!.user.id} />
+          </CardContent>
+        </Card>
+
+        <Card className="border-none shadow-sm">
+          <CardContent>
+            <p className="mb-4 text-sm font-semibold text-foreground">Quick Actions</p>
+            <QuickActions />
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <BusinessTrustProfileCard
@@ -141,143 +200,6 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="border-none shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Service Requests</CardTitle>
-          <Button asChild variant="outline" size="sm" className="gap-1.5">
-            <Link href="/dashboard/service-requests">
-              <Inbox className="size-3.5" /> View All
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-            <div>
-              <p className="text-2xl font-semibold text-foreground">{newRequestCount}</p>
-              <p className="text-xs text-muted-foreground">New</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-foreground">{pendingRequestCount}</p>
-              <p className="text-xs text-muted-foreground">Pending</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-foreground">{acceptedRequestCount}</p>
-              <p className="text-xs text-muted-foreground">Accepted</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-foreground">{responseMetrics.responseRate == null ? "N/A" : `${responseMetrics.responseRate}%`}</p>
-              <p className="text-xs text-muted-foreground">Response Rate</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-foreground">
-                {responseMetrics.avgResponseTimeHours == null ? "N/A" : `~${responseMetrics.avgResponseTimeHours}h`}
-              </p>
-              <p className="text-xs text-muted-foreground">Response Time</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Customers" value={String(totalCustomerCount)} icon={Users} />
-        <StatCard label="Active Orders" value={String(activeOrderCount)} icon={ShoppingBag} />
-        <StatCard label="Revenue" value={`₦${(revenueAgg._sum.amountPaid ?? 0).toLocaleString()}`} icon={Wallet} />
-        <StatCard label="Upcoming Appointments" value={String(upcomingAppointmentCount)} icon={CalendarClock} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Card className="border-none shadow-sm">
-          <CardContent>
-            <p className="text-sm font-medium text-foreground">Profile Views</p>
-            <p className="text-xs text-muted-foreground">Not tracked yet</p>
-          </CardContent>
-        </Card>
-        <Card className="border-none shadow-sm">
-          <CardContent>
-            <p className="text-sm font-medium text-foreground">Portfolio Views</p>
-            <p className="text-xs text-muted-foreground">Not tracked yet</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="border-none shadow-sm xl:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Revenue</CardTitle>
-            <SampleBadge />
-          </CardHeader>
-          <CardContent>
-            <RevenueChart />
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RecentActivity businessId={businessId} userId={session!.user.id} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <Card className="border-none shadow-sm">
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <QuickActions />
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Upcoming Tasks</CardTitle>
-            <SampleBadge />
-          </CardHeader>
-          <CardContent>
-            <UpcomingTasks />
-          </CardContent>
-        </Card>
-
-        <Card className="border-none shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Recent Customers</CardTitle>
-            <SampleBadge />
-          </CardHeader>
-          <CardContent>
-            <RecentCustomers />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border-none shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Customer Requests</CardTitle>
-          {connectionRequests.length > 0 && <span className="text-xs font-medium text-primary">{connectionRequests.length} pending</span>}
-        </CardHeader>
-        <CardContent>
-          <CustomerRequestsPanel
-            requests={connectionRequests.map((r) => ({
-              id: r.id,
-              requestedAt: r.requestedAt.toISOString(),
-              customerProfile: r.customerProfile,
-            }))}
-          />
-        </CardContent>
-      </Card>
-
-      <Card className="border-none shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Latest Orders</CardTitle>
-          <SampleBadge />
-        </CardHeader>
-        <CardContent>
-          <LatestOrders />
-        </CardContent>
-      </Card>
     </div>
   );
 }
