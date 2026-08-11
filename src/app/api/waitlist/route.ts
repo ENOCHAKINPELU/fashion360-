@@ -6,11 +6,11 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 
 // Public, unauthenticated — this is the pre-launch landing page, there's no
-// account to be signed into yet. Upserts on [email, role] so resubmitting
-// (double-click, retry after a flaky connection) is always a clean success,
-// never a "you already joined" error. Role-specific fields from the other
-// role's form are simply never sent (each form only collects its own
-// fields) rather than needing to be stripped here.
+// account to be signed into yet. Rejects a second signup on the same
+// [email, role] with a clear, friendly "already joined" message rather than
+// silently upserting over it — a genuine race (two near-simultaneous
+// submits) still resolves correctly via apiErrorResponse's P2002 handler,
+// since the create() below would hit the same unique constraint either way.
 export async function POST(req: NextRequest) {
   try {
     const ip = getClientIp(req);
@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
 
     const data = waitlistSignupSchema.parse(await req.json());
     const email = data.email.toLowerCase();
+
+    const existing = await prisma.waitlistSignup.findUnique({ where: { email_role: { email, role: data.role } } });
+    if (existing) {
+      throw new ApiError(409, `You're already on the ${data.role === "DESIGNER" ? "designer" : "customer"} waitlist — we'll be in touch.`);
+    }
 
     const shared = {
       name: data.name,
@@ -32,11 +37,7 @@ export async function POST(req: NextRequest) {
       portfolioUrl: data.role === "DESIGNER" ? data.portfolioUrl || null : null,
     };
 
-    await prisma.waitlistSignup.upsert({
-      where: { email_role: { email, role: data.role } },
-      create: { email, role: data.role, source: data.source, ...shared },
-      update: shared,
-    });
+    await prisma.waitlistSignup.create({ data: { email, role: data.role, source: data.source, ...shared } });
 
     return NextResponse.json({ joined: true }, { status: 201 });
   } catch (error) {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { UserRole, StaffPermission } from "@prisma/client";
@@ -28,12 +29,29 @@ function formatZodError(error: ZodError): string {
   return path ? `${path}: ${first.message}` : first.message;
 }
 
+// Most routes that create a unique row (a User by email, a WaitlistSignup
+// by [email, role], ...) already check for an existing one first and throw
+// a proper ApiError before ever reaching the database write. This branch
+// exists for the gap that check alone can't close: two requests racing each
+// other both pass the pre-check before either has committed, so the second
+// write still hits the database's own unique constraint. Without this, that
+// race surfaced as an opaque 500 instead of the same "already exists"
+// message the normal, non-racing path already gives.
+function formatUniqueConstraintError(error: Prisma.PrismaClientKnownRequestError): string {
+  const target = error.meta?.target;
+  const fields = Array.isArray(target) ? target.join(", ") : String(target ?? "this value");
+  return `An entry with this ${fields} already exists`;
+}
+
 export function apiErrorResponse(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
   }
   if (error instanceof ZodError) {
     return NextResponse.json({ error: formatZodError(error) }, { status: 400 });
+  }
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    return NextResponse.json({ error: formatUniqueConstraintError(error) }, { status: 409 });
   }
   console.error(error);
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });
