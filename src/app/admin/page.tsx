@@ -1,71 +1,138 @@
+import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
-import { PAYMENT_ARCHITECTURE_SUMMARY } from "@/lib/payment-architecture";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/shared/components/empty-state";
+import { CheckCircle2, AlertTriangle, Users, Shirt, ShoppingBag, Inbox, History } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
-function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+const ORDER_INACTIVE_STATUSES = ["CANCELLED", "COMPLETED"] as const;
+const REQUEST_TERMINAL_STATUSES = ["ACCEPTED", "DECLINED", "CANCELLED", "EXPIRED", "CONVERTED_TO_APPOINTMENT", "CONVERTED_TO_ORDER"] as const;
+
+function StatCard({ icon: Icon, label, value, href }: { icon: LucideIcon; label: string; value: number; href: string }) {
   return (
-    <Card className="border-none shadow-sm">
-      <CardContent>
-        <p className="text-xs text-muted-foreground uppercase">{label}</p>
-        <p className="mt-1 text-xl font-semibold text-foreground">{value}</p>
-        {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-      </CardContent>
-    </Card>
+    <Link href={href}>
+      <Card className="border-none shadow-sm transition-shadow hover:shadow-md">
+        <CardContent className="flex items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-primary">
+            <Icon className="size-5" aria-hidden="true" />
+          </div>
+          <div>
+            <p className="text-xl font-semibold tabular-nums text-foreground">{value.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground">{label}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
-function fmt(n: number) {
-  return new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN", maximumFractionDigits: 0 }).format(n);
+function AttentionRow({ label, count, href }: { label: string; count: number; href: string }) {
+  const needsAttention = count > 0;
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-4 py-3 transition-colors hover:bg-muted"
+    >
+      <div className="flex items-center gap-2.5">
+        {needsAttention ? (
+          <AlertTriangle className="size-4 shrink-0 text-warning" aria-hidden="true" />
+        ) : (
+          <CheckCircle2 className="size-4 shrink-0 text-success" aria-hidden="true" />
+        )}
+        <span className="text-sm font-medium text-foreground">{label}</span>
+      </div>
+      <Badge variant={needsAttention ? "default" : "outline"} className={needsAttention ? "bg-warning-soft text-warning hover:bg-warning-soft" : ""}>
+        {count}
+      </Badge>
+    </Link>
+  );
 }
 
-export default async function AdminOverviewPage() {
+// Phase 1's Dashboard structure (AGENTS.md Admin brief §9): Overview,
+// Needs Attention, Recent Activity. Every number here is a real aggregate
+// query against models that already exist — never a fabricated stat. Where
+// a bucket links somewhere not yet built (Requests, Deliveries), the count
+// is still real; only the destination page is a Phase-1 placeholder.
+export default async function AdminDashboardPage() {
   const [
-    successfulAgg,
-    failedCount,
-    amountMismatchCount,
-    refundsAgg,
-    disputesOpenCount,
-    payoutsEligibleAgg,
-    payoutsPaidAgg,
-    platformFeeAgg,
+    customerCount,
+    designerCount,
+    activeOrderCount,
+    pendingRequestCount,
+    paymentIssueCount,
+    deliveryIssueCount,
+    openDisputeCount,
+    recentActivity,
   ] = await Promise.all([
-    prisma.payment.aggregate({ where: { status: "SUCCESSFUL" }, _sum: { amount: true }, _count: true }),
-    prisma.payment.count({ where: { status: "FAILED" } }),
-    prisma.payment.count({ where: { status: "AMOUNT_MISMATCH" } }),
-    prisma.refund.aggregate({ where: { status: "SUCCESSFUL" }, _sum: { amount: true }, _count: true }),
+    prisma.customerProfile.count(),
+    prisma.business.count(),
+    prisma.order.count({ where: { status: { notIn: [...ORDER_INACTIVE_STATUSES] } } }),
+    prisma.serviceRequest.count({ where: { status: { notIn: [...REQUEST_TERMINAL_STATUSES] } } }),
+    prisma.payment.count({ where: { status: { in: ["FAILED", "AMOUNT_MISMATCH"] } } }),
+    prisma.delivery.count({ where: { status: "FAILED" } }),
     prisma.dispute.count({ where: { status: { in: ["OPEN", "UNDER_REVIEW"] } } }),
-    prisma.payout.aggregate({ where: { status: "ELIGIBLE" }, _sum: { netAmount: true }, _count: true }),
-    prisma.payout.aggregate({ where: { status: "PAID" }, _sum: { netAmount: true }, _count: true }),
-    prisma.payout.aggregate({ where: { status: "PAID" }, _sum: { platformFee: true } }),
+    prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      include: { user: { select: { name: true, email: true } }, business: { select: { name: true } } },
+    }),
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Transaction Overview</h1>
-        <p className="text-sm text-muted-foreground">Platform-wide payment, refund, dispute, and payout activity across every business.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">Platform-wide overview across every business on Fashion360.</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Payment Volume" value={fmt(successfulAgg._sum.amount ?? 0)} hint={`${successfulAgg._count} successful payments`} />
-        <StatCard label="Failed Payments" value={String(failedCount)} hint={amountMismatchCount > 0 ? `${amountMismatchCount} amount mismatch, blocked` : undefined} />
-        <StatCard label="Refunds Processed" value={fmt(refundsAgg._sum.amount ?? 0)} hint={`${refundsAgg._count} refunds`} />
-        <StatCard label="Open Disputes" value={String(disputesOpenCount)} />
-        <StatCard label="Pending Payouts" value={fmt(payoutsEligibleAgg._sum.netAmount ?? 0)} hint={`${payoutsEligibleAgg._count} eligible`} />
-        <StatCard label="Payouts Completed" value={fmt(payoutsPaidAgg._sum.netAmount ?? 0)} hint={`${payoutsPaidAgg._count} paid`} />
-        <StatCard label="Platform Revenue" value={fmt(platformFeeAgg._sum.platformFee ?? 0)} hint="Fees earned on completed payouts" />
-      </div>
+      <section>
+        <h2 className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Overview</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard icon={Users} label="Customers" value={customerCount} href="/admin/customers" />
+          <StatCard icon={Shirt} label="Designers" value={designerCount} href="/admin/businesses" />
+          <StatCard icon={ShoppingBag} label="Active Orders" value={activeOrderCount} href="/admin/orders" />
+          <StatCard icon={Inbox} label="Pending Requests" value={pendingRequestCount} href="/admin/requests" />
+        </div>
+      </section>
 
-      <Card className="border-none shadow-sm">
-        <CardContent className="space-y-2">
-          <p className="text-sm font-medium text-foreground">Provider Settlement Information</p>
-          <p className="text-xs text-muted-foreground">
-            Every business connects and settles through its own payment provider account, Fashion360 does not hold funds
-            {" "}({PAYMENT_ARCHITECTURE_SUMMARY.settlementDestination}, {PAYMENT_ARCHITECTURE_SUMMARY.settlementTiming}). &quot;Payouts&quot;
-            above track this platform&apos;s payout-eligibility bookkeeping, not a Fashion360-held balance. See the Payouts tab for details on what &quot;Paid&quot; means today.
-          </p>
-        </CardContent>
-      </Card>
+      <section>
+        <h2 className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Needs Attention</h2>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <AttentionRow label="Pending requests awaiting a response" count={pendingRequestCount} href="/admin/requests" />
+          <AttentionRow label="Payment issues (failed or mismatched)" count={paymentIssueCount} href="/admin/payouts" />
+          <AttentionRow label="Delivery issues" count={deliveryIssueCount} href="/admin/deliveries" />
+          <AttentionRow label="Open disputes" count={openDisputeCount} href="/admin/disputes" />
+        </div>
+      </section>
+
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">Recent Activity</h2>
+          <Link href="/admin/activity" className="text-xs font-medium text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        {recentActivity.length === 0 ? (
+          <EmptyState icon={History} title="No activity yet" description="Data will appear here as Fashion360 activity grows." />
+        ) : (
+          <div className="space-y-2">
+            {recentActivity.map((log) => (
+              <Card key={log.id} className="border-none shadow-sm">
+                <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="outline">{log.action.replace(/_/g, " ")}</Badge>
+                    {log.user && <p className="text-sm text-foreground">{log.user.name ?? log.user.email}</p>}
+                    {log.business && <p className="text-xs text-muted-foreground">on {log.business.name}</p>}
+                  </div>
+                  <p className="shrink-0 text-xs text-muted-foreground">{formatDate(log.createdAt)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

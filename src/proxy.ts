@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { authConfig } from "@/lib/auth.config";
+import { authConfig, homeFor } from "@/lib/auth.config";
 
 // Uses the slim config (no Prisma adapter/providers) so this request-gating
 // layer never depends on the database — it only needs to decode the JWT.
@@ -8,6 +8,7 @@ const { auth } = NextAuth(authConfig);
 
 const DASHBOARD_PREFIX = "/dashboard";
 const ACCOUNT_PREFIX = "/account";
+const ADMIN_PREFIX = "/admin";
 const ONBOARDING_BUSINESS_PREFIX = "/onboarding/business";
 const ONBOARDING_CUSTOMER_PREFIX = "/onboarding/customer";
 const ONBOARDING_PREFIX = "/onboarding";
@@ -16,7 +17,10 @@ const BUSINESS_ROLES = ["OWNER", "STAFF", "SUPER_ADMIN"];
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isProtected =
-    pathname.startsWith(DASHBOARD_PREFIX) || pathname.startsWith(ACCOUNT_PREFIX) || pathname.startsWith(ONBOARDING_PREFIX);
+    pathname.startsWith(DASHBOARD_PREFIX) ||
+    pathname.startsWith(ACCOUNT_PREFIX) ||
+    pathname.startsWith(ADMIN_PREFIX) ||
+    pathname.startsWith(ONBOARDING_PREFIX);
 
   if (!isProtected) return NextResponse.next();
 
@@ -31,16 +35,34 @@ export default auth((req) => {
   const isCustomer = user.role === "CUSTOMER";
   const isSuperAdmin = user.role === "SUPER_ADMIN";
 
+  // Admin-only area — the Edge-level gate that was missing here; previously
+  // the only thing standing between a non-admin and /admin's pages was
+  // admin/layout.tsx's own server check, which works but breaks the
+  // defense-in-depth pattern every other protected area in this file
+  // follows (a page-level check reachable only after a request already got
+  // this far, rather than being turned away before rendering starts).
+  //
+  // Routed through /unauthorized rather than straight to homeFor() like the
+  // other cross-role redirects below: a signed-in user who typed or clicked
+  // their way to /admin deserves to be told why they ended up somewhere
+  // else, not silently teleported. The other protected areas keep their
+  // existing silent-redirect behavior unchanged.
+  if (pathname.startsWith(ADMIN_PREFIX) && !isSuperAdmin) {
+    const unauthorizedUrl = new URL("/unauthorized", req.nextUrl.origin);
+    unauthorizedUrl.searchParams.set("from", "admin");
+    return NextResponse.redirect(unauthorizedUrl);
+  }
+
   // Business-only areas: the existing business dashboard, unchanged, plus
-  // its onboarding step. A customer landing here is sent to their own area
-  // rather than the old blanket "/" bounce, since they now have one.
+  // its onboarding step. A signed-in user landing here who isn't a business
+  // user is sent to their own home rather than back through /login.
   if ((pathname.startsWith(DASHBOARD_PREFIX) || pathname.startsWith(ONBOARDING_BUSINESS_PREFIX)) && !isBusinessUser) {
-    return NextResponse.redirect(new URL(isCustomer ? ACCOUNT_PREFIX : "/", req.nextUrl.origin));
+    return NextResponse.redirect(new URL(homeFor(user.role), req.nextUrl.origin));
   }
 
   // Customer-only areas: the new account dashboard and its onboarding step.
   if ((pathname.startsWith(ACCOUNT_PREFIX) || pathname.startsWith(ONBOARDING_CUSTOMER_PREFIX)) && !isCustomer) {
-    return NextResponse.redirect(new URL(isBusinessUser ? DASHBOARD_PREFIX : "/", req.nextUrl.origin));
+    return NextResponse.redirect(new URL(homeFor(user.role), req.nextUrl.origin));
   }
 
   // SUPER_ADMIN is platform-level and never has a businessId by design —
@@ -48,7 +70,7 @@ export default auth((req) => {
   // into the "no business yet" branch below on every single login and
   // got sent through business onboarding, which it can never complete.
   if (isSuperAdmin && pathname.startsWith(DASHBOARD_PREFIX)) {
-    return NextResponse.redirect(new URL("/admin", req.nextUrl.origin));
+    return NextResponse.redirect(new URL(ADMIN_PREFIX, req.nextUrl.origin));
   }
 
   // Owners/staff without a business yet must finish onboarding first —
@@ -64,5 +86,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/account/:path*", "/onboarding/:path*"],
+  matcher: ["/dashboard/:path*", "/account/:path*", "/admin/:path*", "/onboarding/:path*"],
 };

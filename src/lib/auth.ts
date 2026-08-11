@@ -80,5 +80,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         await logAuditEvent(prisma, { action: "USER_LOGIN", userId: user.id, entityType: "User", entityId: user.id });
       }
     },
+    // USER_LOGOUT existed as an AuditLogAction value but nothing ever fired
+    // it — signOut() is called client-side (next-auth/react) with no
+    // server-side hook wired to log it. For a JWT-strategy session this
+    // event receives `token`, not `session` (there's no DB session row to
+    // hand back), so the actor is read from token.sub the same way the jwt
+    // callback's own update-trigger branch does above.
+    async signOut(message) {
+      const userId = "token" in message ? message.token?.sub : undefined;
+      if (userId) {
+        await logAuditEvent(prisma, { action: "USER_LOGOUT", userId, entityType: "User", entityId: userId });
+      }
+    },
   },
 });

@@ -4,16 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav-config";
 import { cn } from "@/lib/utils";
+import type { NavItem } from "@/types/nav";
 
-export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+// items/homeHref default to the business dashboard's own values, so the
+// existing call site (Sidebar/MobileSidebar) keeps working unchanged; the
+// admin shell is the first caller to pass its own nav list.
+export function SidebarNav({ items = NAV_ITEMS, homeHref = "/dashboard", onNavigate }: { items?: NavItem[]; homeHref?: string; onNavigate?: () => void }) {
   const pathname = usePathname();
 
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2 scrollbar-thin" aria-label="Primary">
-      {NAV_ITEMS.map((item, index) => {
-        const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+      {items.map((item, index) => {
+        const active = pathname === item.href || (item.href !== homeHref && pathname.startsWith(item.href));
         const Icon = item.icon;
-        const showGroupLabel = item.group !== NAV_ITEMS[index - 1]?.group;
+        const showGroupLabel = item.group !== items[index - 1]?.group;
         return (
           <div key={item.href}>
             {showGroupLabel && item.group && (
