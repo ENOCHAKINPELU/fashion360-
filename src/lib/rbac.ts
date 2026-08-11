@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { UserRole, StaffPermission } from "@prisma/client";
@@ -11,9 +12,28 @@ export class ApiError extends Error {
   }
 }
 
+// The one place a caught error becomes an HTTP response, for essentially
+// every route in the app — which is exactly why a ZodError (thrown by every
+// `schema.parse(await req.json())` call whose input fails validation) needs
+// its own branch here rather than falling through to the generic 500 below.
+// Before this, an invalid email, a weak password, a mistyped enum value —
+// anything a client-side form doesn't independently re-validate — surfaced
+// to the caller as an opaque "Internal server error" instead of the actual,
+// human-readable reason. Fixing it here closes the gap on every route at
+// once, rather than one schema.parse() call at a time.
+function formatZodError(error: ZodError): string {
+  const first = error.issues[0];
+  if (!first) return "Invalid request";
+  const path = first.path.join(".");
+  return path ? `${path}: ${first.message}` : first.message;
+}
+
 export function apiErrorResponse(error: unknown) {
   if (error instanceof ApiError) {
     return NextResponse.json({ error: error.message }, { status: error.status });
+  }
+  if (error instanceof ZodError) {
+    return NextResponse.json({ error: formatZodError(error) }, { status: 400 });
   }
   console.error(error);
   return NextResponse.json({ error: "Internal server error" }, { status: 500 });

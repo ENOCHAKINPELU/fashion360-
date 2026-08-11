@@ -40,22 +40,35 @@ export async function createInvoicePaymentLink(
     : invoice.balanceDue;
 
   const provider = new PlatformFlutterwaveProvider();
-  // Alphanumeric only — Flutterwave v4 rejects a reference containing "-"
-  // or "_" (confirmed empirically), which invoice numbers like
-  // "INV-2026-0001" and a plain randomUUID() both contain. This same
-  // reference also becomes Payment.idempotencyKey, so it still needs to be
-  // globally unique — the stripped invoice number plus a random hex suffix
-  // covers both constraints.
-  const reference = `${invoice.invoiceNumber.replace(/[^a-zA-Z0-9]/g, "")}${randomUUID().replace(/-/g, "")}`;
+  // Alphanumeric only, 6-42 characters — both confirmed empirically against
+  // Flutterwave v4's own validation, which rejects "-"/"_" and anything
+  // outside that length range. A prefixed invoice number
+  // ("INV20260001" + a 32-char UUID = 43 chars) blew past the ceiling on
+  // every single invoice, which is why every payment attempt was failing —
+  // dropping the invoice-number prefix and keeping just the UUID (36 chars
+  // incl. the "f360" tag) fixes it while keeping full UUID entropy for
+  // uniqueness — this also becomes Payment.idempotencyKey, so it still
+  // needs to be globally unique, not just unique per invoice.
+  const reference = `f360${randomUUID().replace(/-/g, "")}`;
 
-  const result = await provider.initializePayment({
-    amount,
-    currency: invoice.currency,
-    email: invoice.customer.email ?? "customer@fashion360.app",
-    reference,
-    callbackUrl: params.callbackUrl,
-    metadata: { invoiceId: invoice.id, businessId: params.businessId, milestoneId: params.milestoneId ?? undefined },
-  });
+  // Wrapped so a Flutterwave-side rejection (bad reference, provider
+  // outage, ...) surfaces as a clear 502 message instead of falling through
+  // apiErrorResponse's generic "Internal server error" — the same class of
+  // opaque failure fixed platform-wide for Zod errors in rbac.ts, applied
+  // here too since this throw is a plain Error, not an ApiError.
+  let result: Awaited<ReturnType<typeof provider.initializePayment>>;
+  try {
+    result = await provider.initializePayment({
+      amount,
+      currency: invoice.currency,
+      email: invoice.customer.email ?? "customer@fashion360.app",
+      reference,
+      callbackUrl: params.callbackUrl,
+      metadata: { invoiceId: invoice.id, businessId: params.businessId, milestoneId: params.milestoneId ?? undefined },
+    });
+  } catch (error) {
+    throw new ApiError(502, error instanceof Error ? `Could not start payment: ${error.message}` : "Could not start payment right now, please try again shortly.");
+  }
 
   // result.providerReference is the Flutterwave charge id (chg_...), not
   // the `reference` we just generated — see platform-flutterwave-provider.ts.

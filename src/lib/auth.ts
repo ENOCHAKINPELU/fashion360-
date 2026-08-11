@@ -49,6 +49,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    // Extends the edge-safe jwt() callback (which only ever sets
+    // businessId/role at initial sign-in — see auth.config.ts) with a
+    // DB-touching branch for `trigger === "update"`. Only possible here,
+    // not in auth.config.ts, since that file is shared with the
+    // Edge-runtime proxy and can't import Prisma. Triggered client-side via
+    // next-auth/react's update() right after a business is created (see
+    // business-details-form.tsx) — without this, a brand-new designer's
+    // session keeps the businessId: null it had at sign-in for the rest of
+    // that session's lifetime (up to 30 days), and dashboard/layout.tsx's
+    // `if (!session.user.businessId) redirect(...)` bounces them right back
+    // to onboarding forever, even though the business now exists.
+    async jwt(params) {
+      const token = await authConfig.callbacks!.jwt!(params);
+      if (token && params.trigger === "update" && token.sub) {
+        const dbUser = await prisma.user.findUnique({ where: { id: token.sub }, select: { businessId: true, role: true } });
+        if (dbUser) {
+          token.businessId = dbUser.businessId;
+          token.role = dbUser.role;
+        }
+      }
+      return token;
+    },
+  },
   events: {
     async signIn({ user }) {
       if (user.id) {

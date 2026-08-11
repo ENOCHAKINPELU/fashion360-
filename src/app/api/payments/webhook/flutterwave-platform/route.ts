@@ -44,6 +44,24 @@ export async function POST(req: NextRequest) {
 
   const matchedPayment = parsed?.reference ? await prisma.payment.findFirst({ where: { providerReference: parsed.reference } }) : null;
 
+  // Dedupe check moved ahead of the signature-invalid branch below: a
+  // replay of an event id already logged — whether its signature is valid
+  // this time or not — must short-circuit to the idempotent response
+  // immediately. Previously this check only ran after a valid-signature
+  // event, so replaying an *invalid*-signature event a second time hit
+  // PaymentWebhookEvent's `@@unique([provider, providerEventId])`
+  // constraint on the create() below and crashed with an uncaught 500
+  // instead of the intended 401/400 — found by this exact replay scenario
+  // during the V1 audit.
+  if (parsed) {
+    const existingEvent = await prisma.paymentWebhookEvent.findUnique({
+      where: { provider_providerEventId: { provider: "FLUTTERWAVE", providerEventId: parsed.providerEventId } },
+    });
+    if (existingEvent) {
+      return NextResponse.json({ received: true, alreadyProcessed: true });
+    }
+  }
+
   if (!signatureValid || !parsed) {
     await prisma.paymentWebhookEvent.create({
       data: {
@@ -60,13 +78,6 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json({ received: true }, { status: signatureValid ? 400 : 401 });
-  }
-
-  const existingEvent = await prisma.paymentWebhookEvent.findUnique({
-    where: { provider_providerEventId: { provider: "FLUTTERWAVE", providerEventId: parsed.providerEventId } },
-  });
-  if (existingEvent) {
-    return NextResponse.json({ received: true, alreadyProcessed: true });
   }
 
   const webhookEvent = await prisma.paymentWebhookEvent.create({

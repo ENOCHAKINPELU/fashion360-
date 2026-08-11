@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -32,6 +33,7 @@ interface BusinessDetailsFormProps {
 
 export function BusinessDetailsForm({ mode, defaultValues }: BusinessDetailsFormProps) {
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [submitting, setSubmitting] = useState(false);
 
   const {
@@ -73,6 +75,12 @@ export function BusinessDetailsForm({ mode, defaultValues }: BusinessDetailsForm
 
       if (mode === "create") {
         toast.success("Business created, welcome to Fashion360!");
+        // Refreshes the session's JWT so its businessId claim picks up the
+        // business just created — without this, dashboard/layout.tsx reads
+        // the stale (still-null) businessId from the sign-in-time token and
+        // bounces straight back to onboarding. See lib/auth.ts's jwt()
+        // callback for the server-side half of this fix.
+        await updateSession();
         router.push("/dashboard");
         router.refresh();
       } else {
