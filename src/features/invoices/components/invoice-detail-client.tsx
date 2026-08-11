@@ -291,7 +291,7 @@ export function InvoiceDetailClient({ invoice }: { invoice: InvoiceDetailData })
         reviewPath="/invoice-pay"
         shares={invoice.shares}
         title="Share Invoice"
-        description="Generate a secure, expiring link the customer can use to view this invoice and pay directly through your connected gateway."
+        description="Generate a secure, expiring link the customer can use to view this invoice and pay directly."
       />
 
       <ConfirmDialog

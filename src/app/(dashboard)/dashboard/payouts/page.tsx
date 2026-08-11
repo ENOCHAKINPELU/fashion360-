@@ -21,7 +21,7 @@ export default async function PayoutsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Payouts</h1>
-        <p className="text-sm text-muted-foreground">Payments settle directly to your own connected payment account. This tracks payout eligibility, reached once an order is paid, produced, delivered, and either confirmed by the customer or its dispute window has expired.</p>
+        <p className="text-sm text-muted-foreground">Fashion360 collects customer payments and transfers your share to the bank account below once an order is paid, produced, delivered, and either confirmed by the customer or its dispute window has expired.</p>
       </div>
       <PayoutAccountSettings recipient={recipient} />
       <PayoutsPageClient payouts={JSON.parse(JSON.stringify(payouts))} currency={business.currency} />

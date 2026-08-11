@@ -75,7 +75,7 @@ export default async function PaymentsPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Payments</h1>
         <p className="text-sm text-muted-foreground">
-          Financial overview, your connected payment gateway, and the full transaction history.
+          Financial overview and the full transaction history. Fashion360 collects customer payments directly — no gateway to connect.
         </p>
       </div>
 

@@ -84,13 +84,14 @@ async function applySuccessfulPayment(
     actorType: params.actorType,
     actorId: params.actorId,
   });
-  // Protected-payment audit: no "secured"/"held" language here — the
-  // business's own connected gateway settles this payment directly to the
-  // business, on the provider's own schedule. Fashion360 never holds it
-  // (see lib/payment-architecture.ts). "Platform-mediated" (customerProfileId
-  // set) orders get the fuller confirmation copy; legacy staff-recorded
-  // orders keep the plain "received" wording since they were never part of
-  // the platform-mediated order flow to begin with.
+  // Protected-payment audit: Fashion360 now genuinely holds this payment in
+  // its own platform Flutterwave balance until payout eligibility releases
+  // it (see lib/payment-architecture.ts) — this notification's copy is safe
+  // to say so plainly. "Platform-mediated" (customerProfileId set) orders
+  // get the fuller confirmation copy; legacy staff-recorded orders keep the
+  // plain "received" wording since they were never part of the
+  // platform-mediated order flow (and never funded through the platform
+  // account) to begin with.
   const order = await tx.order.findUnique({ where: { id: invoice.orderId }, select: { customerProfileId: true, orderCode: true } });
   const isPlatformMediatedOrder = !!order?.customerProfileId;
 

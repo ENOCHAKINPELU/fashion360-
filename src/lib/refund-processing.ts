@@ -6,6 +6,7 @@ import { notifyFinancialEvent } from "@/lib/financial-notifications";
 import { notifyCustomer } from "@/lib/service-request-notify";
 import { syncOrderFinancials } from "@/lib/order-financial-sync";
 import { resolvePaymentProvider } from "@/lib/payment-providers";
+import { PlatformFlutterwaveProvider } from "@/lib/payment-providers/platform-flutterwave-provider";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -29,7 +30,19 @@ export async function initiateRefundForPayment(
   let providerRefundReference: string | null = null;
   let status: RefundStatus = "SUCCESSFUL";
 
-  if (payment.provider !== "MANUAL" && payment.providerReference) {
+  // "chg_"-prefixed references are Fashion360's own platform Flutterwave
+  // charges (see lib/payment-link.ts) — refunded straight through the
+  // platform account, no PaymentGatewayConnection involved. Anything else
+  // is a payment from the legacy per-business-gateway flow.
+  if (payment.provider === "FLUTTERWAVE" && payment.providerReference?.startsWith("chg_")) {
+    const result = await new PlatformFlutterwaveProvider().initiateRefund({
+      providerReference: payment.providerReference,
+      amount: params.amount,
+      currency: payment.currency,
+    });
+    status = result.status;
+    providerRefundReference = result.providerRefundReference;
+  } else if (payment.provider !== "MANUAL" && payment.providerReference) {
     const connection = await db.paymentGatewayConnection.findUnique({ where: { businessId_provider: { businessId: params.businessId, provider: payment.provider } } });
     if (!connection) throw new ApiError(400, "The original payment gateway is no longer connected, process this refund manually");
     const result = await resolvePaymentProvider(connection).initiateRefund({ providerReference: payment.providerReference, amount: params.amount, currency: payment.currency });

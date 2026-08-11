@@ -60,7 +60,7 @@ export function RefundDialog({
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            If this payment was made through a connected gateway, the refund is initiated with that provider directly.
+            If this was an online payment, the refund is initiated with Flutterwave directly.
           </DialogDescription>
         </DialogHeader>
 

@@ -3,13 +3,13 @@ import { InvoicePayClient } from "@/features/invoices/components/customer/invoic
 
 export const metadata: Metadata = {
   title: "Invoice Payment | Fashion360",
-  description: "View your invoice and pay securely through your business's connected payment gateway.",
+  description: "View your invoice and pay securely.",
 };
 
 // Public, token-gated route — deliberately outside src/app/(dashboard). The
-// customer pays the business's own connected gateway directly (section 19 —
-// Fashion360 never holds or routes the funds); this page only displays the
-// invoice and hands off to that gateway's hosted checkout.
+// customer pays Fashion360's own platform Flutterwave account directly (see
+// lib/payment-architecture.ts); this page only displays the invoice and
+// hands off to that hosted checkout.
 export default async function InvoicePayPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 

@@ -26,7 +26,7 @@ export default async function AdminRefundsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Refunds</h1>
-        <p className="text-sm text-muted-foreground">Every refund is processed through the business&apos;s own connected provider and verified server-side before being marked successful.</p>
+        <p className="text-sm text-muted-foreground">Every refund is processed through Flutterwave (or manually, for legacy offline payments) and verified server-side before being marked successful.</p>
       </div>
 
       {refunds.length === 0 ? (

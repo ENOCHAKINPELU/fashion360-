@@ -241,12 +241,12 @@ export function InvoicePayClient({ token }: { token: string }) {
                   </Button>
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    Online payment isn't set up yet. Please contact {invoice.business.name} to arrange payment.
+                    Online payment isn&apos;t available for this invoice. Please contact {invoice.business.name} to arrange payment.
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  You'll be securely redirected to {invoice.business.name}'s payment provider. Fashion360 never holds
-                  your payment.
+                  You&apos;ll be securely redirected to complete payment. Fashion360 verifies and holds your payment,
+                  releasing it to {invoice.business.name} once your order is fulfilled and confirmed.
                 </p>
               </CardContent>
             </Card>

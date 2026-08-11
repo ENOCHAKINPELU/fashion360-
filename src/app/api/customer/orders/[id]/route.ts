@@ -5,6 +5,7 @@ import { loadCustomerOrder } from "@/lib/order-access";
 import { releaseIfWindowExpired } from "@/lib/payout";
 import { ensureReviewReminderSent } from "@/lib/review-reminders";
 import { getOrCreatePlatformSettings } from "@/lib/platform-settings";
+import { pollFlutterwaveChargeStatus } from "@/lib/payment-link";
 
 // Part 7: production stages are shown to the customer stripped of internal
 // notes/photos (those are for the business only) — customer-facing updates
@@ -27,6 +28,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
     await releaseIfWindowExpired(prisma, { orderId: id });
     await ensureReviewReminderSent(prisma, { orderId: id });
+
+    const invoiceForPoll = await prisma.invoice.findFirst({ where: { orderId: id }, select: { id: true } });
+    if (invoiceForPoll) await pollFlutterwaveChargeStatus(prisma, { invoiceId: invoiceForPoll.id });
 
     const [agreement, invoice, timeline, business, designPreview, assignedDesigner, productionStages, productionUpdates, delivery, dispute, qcSummary, review] =
       await Promise.all([

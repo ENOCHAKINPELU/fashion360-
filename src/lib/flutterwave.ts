@@ -1,3 +1,5 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 // Platform-level Flutterwave v4 client — the ONE Flutterwave account
 // Fashion360 itself holds (see FLUTTERWAVE_CLIENT_ID/SECRET/ENCRYPTION_KEY
 // and FLUTTERWAVE_SENDER_ID env vars). This is deliberately separate from
@@ -127,4 +129,101 @@ export async function createTransfer(params: {
 export async function getTransferStatus(transferId: string): Promise<{ status: string }> {
   const json = await flutterwaveFetch(`/transfers/${encodeURIComponent(transferId)}`);
   return { status: json.data.status as string };
+}
+
+// ---------------------------------------------------------------------------
+// Charges — the customer "pay in" side. Collected into Fashion360's own
+// platform Flutterwave balance (not a business's), then later moved out via
+// createTransfer above once an order is payout-eligible. See
+// src/lib/payment-providers/platform-flutterwave-provider.ts, the only
+// caller of these three functions.
+//
+// payment_method.type "bank_account" is the only charge type wired up.
+// v4's own hosted "Standard" checkout (the direct successor to v3's
+// /v3/payments, which returns one link covering every payment method) is
+// still unreleased as of this writing — Flutterwave's own engineers
+// describe it as "coming soon" in their v4 migration write-ups. Every other
+// v4 payment_method type needs something Fashion360 doesn't have: "card"
+// needs raw card fields AES-encrypted client-side (a PCI-scope widget that
+// doesn't exist yet for v4), "mobile_money"/"ussd" need a bank/network code
+// picked up front. "bank_account" was confirmed empirically (against the
+// real sandbox account) to need no extra fields and to return a genuine
+// Flutterwave-hosted redirect page — the same "customer clicks a link, pays,
+// comes back" shape as v3 Standard, just narrower in which methods it
+// offers on that page. Swap this for "card" or a true multi-method hosted
+// checkout the moment v4 Standard ships or a client-side card widget is
+// built — nothing above this function needs to change, PaymentProvider
+// callers only ever see an authorizationUrl.
+const CHARGES_PATH = "/orchestration/direct-charges";
+
+export interface CreateChargeResult {
+  id: string;
+  status: string;
+  redirectUrl: string | null;
+}
+
+export async function createCharge(params: {
+  amount: number;
+  currency: string;
+  reference: string;
+  redirectUrl: string;
+  customerEmail: string;
+}): Promise<CreateChargeResult> {
+  const json = await flutterwaveFetch(CHARGES_PATH, {
+    method: "POST",
+    headers: { "X-Trace-Id": params.reference, "X-Idempotency-Key": params.reference },
+    body: JSON.stringify({
+      amount: params.amount,
+      currency: params.currency,
+      reference: params.reference,
+      redirect_url: params.redirectUrl,
+      payment_method: { type: "bank_account" },
+      customer: { email: params.customerEmail },
+    }),
+  });
+  const redirectUrl = (json.data?.next_action?.redirect_url?.url as string | undefined) ?? null;
+  return { id: json.data.id as string, status: json.data.status as string, redirectUrl };
+}
+
+export interface ChargeStatus {
+  id: string;
+  status: string;
+  amount: number;
+  currency: string;
+  reference: string;
+}
+
+export async function getCharge(chargeId: string): Promise<ChargeStatus> {
+  const json = await flutterwaveFetch(`/charges/${encodeURIComponent(chargeId)}`);
+  return {
+    id: json.data.id as string,
+    status: json.data.status as string,
+    amount: json.data.amount as number,
+    currency: json.data.currency as string,
+    reference: json.data.reference as string,
+  };
+}
+
+export async function refundCharge(params: { chargeId: string; amount: number; reason?: string }): Promise<{ id: string; status: string }> {
+  const traceId = `refund${params.chargeId}`.slice(0, 60);
+  const json = await flutterwaveFetch("/refunds", {
+    method: "POST",
+    headers: { "X-Trace-Id": traceId, "X-Idempotency-Key": `${traceId}${Date.now()}` },
+    body: JSON.stringify({ charge_id: params.chargeId, amount: params.amount, reason: params.reason ?? "requested_by_customer" }),
+  });
+  return { id: json.data.id as string, status: json.data.status as string };
+}
+
+// v4 webhooks are signed with HMAC-SHA256 over the raw request body, using a
+// secret hash chosen by us and pasted into the Flutterwave dashboard
+// (Settings -> Webhooks) — there's no API to register it, only the
+// dashboard. See FLUTTERWAVE_WEBHOOK_SECRET and the platform webhook route.
+export function verifyChargeWebhookSignature(rawBody: string, signatureHeader: string | null): boolean {
+  const secret = process.env.FLUTTERWAVE_WEBHOOK_SECRET;
+  if (!secret || !signatureHeader) return false;
+  const expected = createHmac("sha256", secret).update(rawBody).digest("base64");
+  const expectedBuf = Buffer.from(expected);
+  const actualBuf = Buffer.from(signatureHeader);
+  if (expectedBuf.length !== actualBuf.length) return false;
+  return timingSafeEqual(expectedBuf, actualBuf);
 }

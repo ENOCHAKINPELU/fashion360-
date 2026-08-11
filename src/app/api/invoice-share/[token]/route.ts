@@ -4,6 +4,8 @@ import { apiErrorResponse } from "@/lib/rbac";
 import { getInvoiceShareOrThrow } from "@/lib/invoice-share";
 import { logFinancialTransaction } from "@/lib/financial-transaction";
 import { notifyFinancialEvent } from "@/lib/financial-notifications";
+import { pollFlutterwaveChargeStatus } from "@/lib/payment-link";
+import { isFlutterwaveConfigured } from "@/lib/flutterwave";
 
 // Public, token-authenticated bundle for the customer invoice/payment page.
 // Hand-picks fields — never exposes gateway secrets or other customers'
@@ -13,6 +15,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
     const { token } = await params;
     const share = await getInvoiceShareOrThrow(token);
     const invoice = share.invoice;
+
+    await pollFlutterwaveChargeStatus(prisma, { invoiceId: invoice.id });
 
     const [items, paymentSchedule, payments] = await Promise.all([
       prisma.invoiceItem.findMany({ where: { invoiceId: invoice.id }, orderBy: { sortOrder: "asc" } }),
@@ -26,11 +30,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
         include: { receipt: true },
       }),
     ]);
-
-    const activeGateway = await prisma.paymentGatewayConnection.findFirst({
-      where: { businessId: invoice.businessId, isActive: true, status: "CONNECTED" },
-      select: { provider: true },
-    });
 
     await prisma.$transaction(async (tx) => {
       await tx.invoiceShare.update({
@@ -93,7 +92,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ tok
       items,
       paymentSchedule,
       payments,
-      canPayOnline: Boolean(activeGateway),
+      canPayOnline: isFlutterwaveConfigured() && invoice.currency === "NGN",
     });
   } catch (error) {
     return apiErrorResponse(error);

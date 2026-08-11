@@ -27,7 +27,7 @@ export function PaymentsPageClient({
     <Tabs defaultValue="overview">
       <TabsList>
         <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="gateway">Payment Gateway</TabsTrigger>
+        <TabsTrigger value="gateway">Advanced (Optional)</TabsTrigger>
         <TabsTrigger value="transactions">Transactions</TabsTrigger>
         <TabsTrigger value="refunds">Refunds</TabsTrigger>
       </TabsList>

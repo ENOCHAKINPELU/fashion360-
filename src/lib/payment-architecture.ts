@@ -5,119 +5,94 @@
 // This file exists so every place that displays payment-protection language
 // to a customer or designer imports its wording from ONE place, instead of
 // each screen inventing its own claim about what Fashion360 does or doesn't
-// do with the money. It is the direct output of a capability audit against
-// Paystack's and Flutterwave's CURRENT official documentation (not
-// assumptions), done as part of the protected-payment-flow implementation.
+// do with the money.
 //
 // ---------------------------------------------------------------------------
 // HOW MONEY ACTUALLY MOVES TODAY
 // ---------------------------------------------------------------------------
-// Fashion360 does not process payments on a platform-level merchant account.
-// Each business connects ITS OWN Paystack/Flutterwave/Stripe account
-// (PaymentGatewayConnection, with the business's own secret key). When a
-// customer pays, the transaction is initialized directly against that
-// business's own merchant account. The money settles to the BUSINESS's own
-// bank account on the provider's standard schedule — for Paystack and
-// Flutterwave in Nigeria, that is T+1 (next business day), automatically,
-// with no mechanism for Fashion360 (or the business) to delay it.
+// Fashion360 collects payment on its OWN platform-level Flutterwave account
+// (see lib/flutterwave.ts, lib/payment-providers/platform-flutterwave-provider.ts)
+// — a business is never asked to connect a payment gateway or hand over an
+// API key. When a customer pays, the money lands in Fashion360's own
+// Flutterwave balance, not the business's. It stays there under
+// Fashion360's control until its own business logic (lib/payout.ts:
+// evaluatePayoutEligibility) decides the order is payout-eligible — order
+// fulfilled, delivered, and either customer-confirmed or the dispute window
+// expired, with no open dispute — at which point an admin triggers a real
+// Flutterwave Transfer (lib/payout.ts: executePayoutTransfer) that moves
+// the business's share to the bank account it registered
+// (lib/payout-recipients.ts). Nothing about this is simulated: both the
+// charge collection and the transfer are real Flutterwave v4 API calls
+// against a real account.
 //
-// Fashion360 therefore never has custody of a customer's payment at any
-// point. This is a deliberate architectural fact, not an oversight — see
-// PROVIDER CAPABILITIES below for why.
+// This IS genuine custody-based protection, not merely process-based: the
+// money is verifiably out of the business's reach until Fashion360 chooses
+// to release it. It is still not a regulated escrow account (no licensed
+// third-party escrow agent, no segregated trust account) — it is
+// Fashion360's own operating balance, held and released on Fashion360's own
+// schedule and business logic. That distinction matters for what can
+// honestly be claimed to a customer or a regulator, which is why it's
+// spelled out here instead of asserting "escrow."
 //
-// ---------------------------------------------------------------------------
-// PROVIDER CAPABILITIES VERIFIED (current docs, checked live)
-// ---------------------------------------------------------------------------
-// Paystack:
-//  - Subaccounts + Transaction Splits: real, documented. A transaction
-//    initialized under a MAIN account can route a percentage/flat portion to
-//    a subaccount. Settlement for BOTH the main account's share and the
-//    subaccount's share happens on the SAME automatic schedule (T+1 typical
-//    for NGN) — Paystack's own docs state settlement is "direct" to the
-//    subaccount's bank account and does not pass through the main balance.
-//    There is no parameter or product to hold/delay a subaccount's portion.
-//  - Transfers + Transfer Recipients: real, documented, API-driven (no
-//    hosted/embedded onboarding UI comparable to Stripe Connect Express —
-//    Fashion360 would build its own form and call Paystack's "Resolve
-//    Account Number" + "Create Transfer Recipient" endpoints).
-//  - Refunds: real, per-transaction, via POST /refund against a transaction
-//    reference. Processing fees are non-refundable per Paystack's own terms.
-//  - Disputes/Chargebacks: real, but this is the CARD NETWORK / ISSUING BANK
-//    disputing a charge with Paystack — a different concept from Fashion360's
-//    own marketplace "customer reports a problem with the order" dispute.
-//
-// Flutterwave: materially the same shape — Split Payments/Subaccounts settle
-// automatically (T+1 local / up to T+5-7 international) with no hold
-// mechanism, and Flutterwave's own documentation states the marketplace
-// owner bears chargeback/dispute liability for transactions routed through
-// its subaccounts (a real compliance consideration if Fashion360 ever
-// becomes the merchant of record).
-//
-// CONCLUSION: neither currently-integrated provider offers a way to hold or
-// delay settlement of a payment (or a split portion of one) pending a
-// business condition like "customer confirmed receipt" or "dispute window
-// expired." Split payments and subaccounts change WHERE money goes, never
-// WHEN. This rules out true escrow and true delayed payout under BOTH the
-// current architecture (business-owned gateway) and a hypothetical
-// platform-level-subaccount architecture, using either provider, as
-// currently integrated.
+// This is a change from V1's original architecture, where each business
+// connected its own gateway and Fashion360 never touched the money at all
+// (that model, and PaymentGatewayConnection/the per-business gateway
+// provider classes in lib/payment-providers, still exist in the schema but
+// are no longer how a business gets paid — see git history around the
+// "Real Flutterwave v4 payout transfers" and customer-charge-collection
+// commits for when and why this changed).
 //
 // ---------------------------------------------------------------------------
-// WHAT WOULD ACTUALLY ACHIEVE THE PROTECTED-PAYOUT FLOW
+// WHAT'S STILL A CONSTRAINT
 // ---------------------------------------------------------------------------
-// The one real mechanism that works: Fashion360 becomes the merchant of
-// record on its OWN platform-level Paystack/Flutterwave account (collecting
-// the full payment itself, not the business), and separately, once its own
-// business logic decides the order is payout-eligible, calls the provider's
-// Transfer API to send the designer's share to their registered bank
-// account. Between those two events, the money sits in Fashion360's own
-// settled balance/bank account — under Fashion360's control, not a
-// regulated escrow account, but genuinely capable of being withheld and
-// released on Fashion360's own schedule.
+// - NGN only. The one charge type currently wired up (payment_method.type
+//   "bank_account", see flutterwave.ts) is Nigeria-specific; an invoice in
+//   any other currency falls back to the honest "online payment isn't
+//   available, contact the business" path rather than pretending to work.
+// - No automatic transfer trigger yet. executePayoutTransfer is
+//   admin-triggered from /admin/payouts, not fired automatically the
+//   instant an order becomes eligible — an eligible payout can sit
+//   unactioned until an admin looks at the queue. There's no SLA on that
+//   today.
+// - Refunds go through the same platform account (lib/flutterwave.ts:
+//   refundCharge), independently of whether that order's payout has
+//   already been transferred out to the business — a refund issued after
+//   payout has already moved the money out is not automatically clawed
+//   back from the business; that reconciliation is manual today.
+// - Fashion360 is now the first line for chargeback/dispute liability on
+//   every charge it collects (this is Flutterwave's own documented
+//   position for whoever is the merchant of record), which it wasn't under
+//   the old per-business-gateway model. This is a real compliance/business
+//   consideration, not just an engineering one.
 //
-// This requires: Fashion360 obtaining its own verified Paystack/Flutterwave
-// business account, moving (or offering as an alternative to) the current
-// per-business-gateway model, and building the Transfer/Recipient
-// integration this codebase deliberately does NOT fake. It also means
-// Fashion360 would bear first-line dispute/chargeback exposure for
-// transactions it processes this way (see Flutterwave's own guidance
-// above), which is a real business/compliance decision, not just an
-// engineering one — it is documented here as the recommended next step, not
-// implemented, because it cannot be done truthfully with a MOCK or
-// unconfigured platform account.
-//
 // ---------------------------------------------------------------------------
-// WHAT FASHION360 DOES INSTEAD (the honest v1 protection model)
+// HOW THE TRANSACTION IS STILL PROTECTED BEYOND CUSTODY
 // ---------------------------------------------------------------------------
-// Fashion360 protects the transaction through PROCESS, not custody:
-//  1. Payment is verified server-side against the provider before anything
-//     is unlocked (never trusts a client callback).
+//  1. Payment is verified server-side against Flutterwave before anything
+//     is unlocked (never trusts a client redirect/callback alone — see
+//     lib/payment-link.ts: pollFlutterwaveChargeStatus and the webhook
+//     route's independent re-verify step).
 //  2. Production cannot start until payment is verified successful.
 //  3. A structured order-activity ledger, dispute process, and configurable
-//     refund/cancellation policy exist regardless of who holds the money.
-//  4. "Payout eligibility" is Fashion360's own internal bookkeeping gate
-//     (order produced + delivered + confirmed/window-expired + no dispute)
-//     — today it does not correspond to a real transfer of money BECAUSE
-//     the business already has the funds the moment the customer pays. It
-//     currently functions as a completion/accounting milestone, not a real
-//     payout trigger, until the platform-account architecture above exists.
-//  5. Refunds are real (call the business's connected gateway's Refund API,
-//     verified server-side, never marked successful without provider
-//     confirmation).
+//     refund/cancellation policy exist on top of the custody model.
+//  4. "Payout eligibility" (lib/payout.ts) gates the one real lever
+//     Fashion360 now has — whether to release the money it's actually
+//     holding — rather than being pure bookkeeping with no teeth, as it was
+//     before this architecture existed.
 
 export const PAYMENT_ARCHITECTURE_SUMMARY = {
-  fashion360HoldsFunds: false,
+  fashion360HoldsFunds: true,
   trueEscrowSupported: false,
-  trueDelayedPayoutSupported: false,
-  settlementDestination: "business's own connected payment gateway account" as const,
-  settlementTiming: "provider's standard automatic schedule (T+1 typical for NGN, outside Fashion360's control)" as const,
+  trueDelayedPayoutSupported: true,
+  settlementDestination: "business's registered bank account, via a Fashion360-initiated transfer" as const,
+  settlementTiming: "admin-triggered, once the order is payout-eligible (fulfilled, delivered, confirmed or dispute window expired, no open dispute)" as const,
 };
 
 // The one and only customer-facing sentence describing payment protection —
 // every payment screen/notification should reference this, not write its
 // own claim.
 export const PAYMENT_PROTECTION_STATEMENT =
-  "Your payment is processed securely through your designer's connected payment provider. Fashion360 verifies every payment directly with the provider before production can begin, and protects your order through our dispute and refund process. Payment does not guarantee production has started until it shows as confirmed here.";
+  "Your payment is collected securely by Fashion360 and verified before production can begin. Fashion360 holds the funds and releases your designer's share only once your order is fulfilled and confirmed, protecting you if something goes wrong through our dispute and refund process.";
 
 export const DESIGNER_PAYMENT_STATEMENT =
-  "Payment is verified directly with the provider before you're notified to begin production. Funds settle to your own connected payment account on your provider's normal schedule. Fashion360 does not hold or delay your funds.";
+  "Payment is collected by Fashion360, not you — no payment gateway or API key needed on your end. Once an order is fulfilled, delivered, and confirmed (or the confirmation window passes with no dispute), Fashion360 transfers your share to the bank account you registered.";

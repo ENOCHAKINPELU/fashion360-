@@ -51,8 +51,8 @@ export function PaymentLinkDialog({
         <DialogHeader>
           <DialogTitle>Create Payment Link</DialogTitle>
           <DialogDescription>
-            Generates a hosted checkout link through your connected payment gateway. The customer pays your business
-            directly, Fashion360 never holds the funds.
+            Generates a hosted checkout link. The customer pays Fashion360 directly — no gateway or API key needed on
+            your end — and your share is transferred to your registered bank account once the order is payout-eligible.
           </DialogDescription>
         </DialogHeader>
 

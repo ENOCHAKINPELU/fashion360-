@@ -80,10 +80,11 @@ export function GatewaySettings({ connections, businessId }: { connections: Paym
       <Card className="border-none shadow-sm">
         <CardContent className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-foreground">Connect a Payment Gateway</p>
+            <p className="text-sm font-medium text-foreground">Connect a Custom Gateway (not required)</p>
             <p className="text-xs text-muted-foreground">
-              Your business owns and controls this gateway account. Customers pay you directly, Fashion360 never
-              holds or routes the funds.
+              You don&apos;t need this. Fashion360 already collects customer payments for you and transfers your
+              share to your bank account under Payouts — no gateway or API key needed. This is only for a business
+              that specifically wants to route payments through its own gateway account instead.
             </p>
           </div>
 
