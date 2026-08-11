@@ -3,14 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { NAV_ITEMS } from "@/lib/nav-config";
+import { ADMIN_NAV_ITEMS } from "@/lib/admin-nav-config";
 import { cn } from "@/lib/utils";
-import type { NavItem } from "@/types/nav";
 
-// items/homeHref default to the business dashboard's own values, so the
-// existing call site (Sidebar/MobileSidebar) keeps working unchanged; the
-// admin shell is the first caller to pass its own nav list.
-export function SidebarNav({ items = NAV_ITEMS, homeHref = "/dashboard", onNavigate }: { items?: NavItem[]; homeHref?: string; onNavigate?: () => void }) {
+// `variant`, not an `items` prop carrying NavItem[] directly: NavItem.icon
+// is a live component reference (a Lucide icon), and Sidebar/AdminSidebar
+// are Server Components — passing an array of those across the Server-to-
+// Client boundary as a prop fails at runtime ("Functions cannot be passed
+// directly to Client Components"), even though it type-checks fine. A
+// string discriminator keeps the actual icon-bearing data inside this
+// client module's own imports instead, which is a value both possible
+// Server Component callers (Sidebar, AdminSidebar) can pass safely.
+export function SidebarNav({ variant = "dashboard", onNavigate }: { variant?: "dashboard" | "admin"; onNavigate?: () => void }) {
   const pathname = usePathname();
+  const items = variant === "admin" ? ADMIN_NAV_ITEMS : NAV_ITEMS;
+  const homeHref = variant === "admin" ? "/admin" : "/dashboard";
 
   return (
     <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2 scrollbar-thin" aria-label="Primary">

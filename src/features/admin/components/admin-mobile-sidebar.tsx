@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Logo } from "@/shared/components/logo";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { ADMIN_NAV_ITEMS } from "@/lib/admin-nav-config";
 
 // Mirrors components/layout/mobile-sidebar.tsx exactly.
 export function AdminMobileSidebar() {
@@ -28,7 +27,7 @@ export function AdminMobileSidebar() {
             <span className="text-sm font-semibold">Admin</span>
           </Link>
         </div>
-        <SidebarNav items={ADMIN_NAV_ITEMS} homeHref="/admin" onNavigate={() => setOpen(false)} />
+        <SidebarNav variant="admin" onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

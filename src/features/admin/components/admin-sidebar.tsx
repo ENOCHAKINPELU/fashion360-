@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/shared/components/logo";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { ADMIN_NAV_ITEMS } from "@/lib/admin-nav-config";
 
 // Mirrors components/layout/sidebar.tsx exactly (same fixed-left, same
 // width, same sidebar tokens) — the established shell pattern, not a new
@@ -15,7 +14,7 @@ export function AdminSidebar() {
           <span className="text-sm font-semibold">Admin</span>
         </Link>
       </div>
-      <SidebarNav items={ADMIN_NAV_ITEMS} homeHref="/admin" />
+      <SidebarNav variant="admin" />
       <div className="border-t border-sidebar-border p-4 text-xs text-white/40">
         Fashion360 Admin &copy; {new Date().getFullYear()}
       </div>

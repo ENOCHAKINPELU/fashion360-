@@ -4,13 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Home } from "lucide-react";
 import { NAV_ITEMS } from "@/lib/nav-config";
-import type { NavItem } from "@/types/nav";
+import { ADMIN_NAV_ITEMS } from "@/lib/admin-nav-config";
 
-// basePath/navItems default to the business dashboard's own values, so
-// every existing call site (just Topbar today) keeps working unchanged;
-// the admin shell is the first caller to pass different ones.
-export function Breadcrumb({ basePath = "/dashboard", navItems = NAV_ITEMS }: { basePath?: string; navItems?: NavItem[] }) {
+// `variant`, not a `navItems` prop carrying NavItem[] directly — see
+// sidebar-nav.tsx's comment on why: NavItem.icon is a live component
+// reference, and passing one across the Server-to-Client boundary as an
+// explicit prop from a Server Component caller (Topbar, AdminTopbar) fails
+// at runtime even though it type-checks. A string keeps the actual data
+// inside this client module's own imports.
+export function Breadcrumb({ variant = "dashboard" }: { variant?: "dashboard" | "admin" }) {
   const pathname = usePathname();
+  const basePath = variant === "admin" ? "/admin" : "/dashboard";
+  const navItems = variant === "admin" ? ADMIN_NAV_ITEMS : NAV_ITEMS;
   const baseSegment = basePath.replace(/^\//, "");
 
   function labelFor(segment: string) {
