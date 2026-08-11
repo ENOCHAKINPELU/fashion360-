@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Landmark, CheckCircle2, Clock, XCircle } from "lucide-react";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface PayoutRecipientData {
   legalName: string;
@@ -18,6 +19,11 @@ export interface PayoutRecipientData {
   accountNumber: string;
   accountName: string | null;
   kycStatus: "NOT_SUBMITTED" | "PENDING" | "VERIFIED" | "REJECTED";
+}
+
+interface Bank {
+  name: string;
+  code: string;
 }
 
 const KYC_BADGE: Record<PayoutRecipientData["kycStatus"], { label: string; className: string; icon: typeof CheckCircle2 }> = {
@@ -31,18 +37,32 @@ export function PayoutAccountSettings({ recipient }: { recipient: PayoutRecipien
   const router = useRouter();
   const [legalName, setLegalName] = useState(recipient?.legalName ?? "");
   const [businessName, setBusinessName] = useState(recipient?.businessName ?? "");
-  const [bankName, setBankName] = useState(recipient?.bankName ?? "");
   const [bankCode, setBankCode] = useState(recipient?.bankCode ?? "");
   const [accountNumber, setAccountNumber] = useState(recipient?.accountNumber ?? "");
+  const [banks, setBanks] = useState<Bank[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    fetch("/api/banks")
+      .then((res) => res.json())
+      .then((data) => setBanks(data.banks ?? []))
+      .catch(() => setBanks([]))
+      .finally(() => setBanksLoading(false));
+  }, []);
+
   async function save() {
+    const bank = banks.find((b) => b.code === bankCode);
+    if (!bank) {
+      toast.error("Select a bank from the list");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/payout-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ legalName, businessName: businessName || undefined, bankName, bankCode, accountNumber }),
+        body: JSON.stringify({ legalName, businessName: businessName || undefined, bankName: bank.name, bankCode, accountNumber }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not save payout account");
@@ -65,7 +85,7 @@ export function PayoutAccountSettings({ recipient }: { recipient: PayoutRecipien
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-foreground">Payout Account</p>
-            <p className="text-xs text-muted-foreground">Where your payouts are recorded as destined for. No card details, ever.</p>
+            <p className="text-xs text-muted-foreground">Where your payouts go. No card details or payment API keys, ever.</p>
           </div>
           <Badge className={status.className}>
             <StatusIcon className="mr-1 size-3" /> {status.label}
@@ -88,14 +108,21 @@ export function PayoutAccountSettings({ recipient }: { recipient: PayoutRecipien
             <Input value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Registered business name" />
           </div>
           <div className="space-y-1.5">
-            <Label>Bank Name</Label>
-            <Input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="e.g. Guaranty Trust Bank" />
+            <Label>Bank</Label>
+            <Select value={bankCode} onValueChange={setBankCode} disabled={banksLoading}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={banksLoading ? "Loading banks..." : "Select your bank"} />
+              </SelectTrigger>
+              <SelectContent>
+                {banks.map((b) => (
+                  <SelectItem key={b.code} value={b.code}>
+                    {b.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Bank Code</Label>
-            <Input value={bankCode} onChange={(e) => setBankCode(e.target.value)} placeholder="CBN bank code, e.g. 058" />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
             <Label>Account Number</Label>
             <Input value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="10-digit NUBAN" />
           </div>
@@ -103,7 +130,7 @@ export function PayoutAccountSettings({ recipient }: { recipient: PayoutRecipien
 
         <Button
           onClick={save}
-          disabled={saving || !legalName || !bankName || !bankCode || !accountNumber}
+          disabled={saving || !legalName || !bankCode || !accountNumber}
           className="gap-1.5"
         >
           <Landmark className="size-4" /> {saving ? "Saving..." : "Save Payout Account"}

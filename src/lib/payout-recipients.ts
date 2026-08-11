@@ -1,54 +1,44 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/lib/rbac";
-import { decryptSecret } from "@/lib/encryption";
 import { logAuditEvent } from "@/lib/audit-log";
+import { createTransferRecipient, isFlutterwaveConfigured } from "@/lib/flutterwave";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
-// Bank account name resolution, so a typo'd account number is caught before
-// anyone relies on it — real, per Paystack's own "Resolve Account Number"
-// endpoint (GET /bank/resolve). Only Paystack exposes this in the three
-// providers this codebase integrates: Flutterwave's account-resolution
-// endpoint has a different shape and Stripe doesn't support NG bank account
-// resolution at all, so this deliberately reports "unsupported" rather than
-// faking a result for those providers or for a business with no connected
-// gateway — see lib/payment-architecture.ts for the same honesty pattern
-// applied elsewhere.
-export async function resolveBankAccount(
-  businessId: string,
-  params: { accountNumber: string; bankCode: string }
-): Promise<{ supported: true; accountName: string } | { supported: false; message: string }> {
-  const connection = await prisma.paymentGatewayConnection.findFirst({
-    where: { businessId, isActive: true },
-  });
-
-  if (!connection || connection.provider !== "PAYSTACK" || !connection.secretKeyEncrypted) {
+// Real account-name verification via the PLATFORM's own Flutterwave
+// account (not a business's — businesses never provide a gateway key,
+// only a bank account). Registering a Transfer Recipient is itself the
+// verification: Flutterwave resolves and returns the real account holder's
+// name, which is what makes a wrong account number visible before anyone
+// relies on it. Falls back to "can't verify automatically" only if the
+// platform's own Flutterwave credentials aren't configured at all.
+async function resolveAndRegisterRecipient(params: {
+  accountNumber: string;
+  bankCode: string;
+}): Promise<{ supported: true; recipientId: string; accountName: string | null } | { supported: false; message: string }> {
+  if (!isFlutterwaveConfigured()) {
     return {
       supported: false,
-      message: "Automatic account name verification isn't available for this business's connected provider. The account name must be entered and confirmed manually.",
+      message: "Automatic account name verification isn't available right now. The account name must be entered and confirmed manually.",
     };
   }
 
-  const secretKey = decryptSecret(connection.secretKeyEncrypted);
-  const res = await fetch(
-    `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(params.accountNumber)}&bank_code=${encodeURIComponent(params.bankCode)}`,
-    { headers: { Authorization: `Bearer ${secretKey}` } }
-  );
-  const json = await res.json();
-  if (!res.ok || !json.status) {
-    return { supported: false, message: json.message ?? "Could not verify this account number with the provider." };
+  try {
+    const { id, accountName } = await createTransferRecipient({ accountNumber: params.accountNumber, bankCode: params.bankCode });
+    return { supported: true, recipientId: id, accountName };
+  } catch (error) {
+    return { supported: false, message: error instanceof Error ? error.message : "Could not verify this account number with Flutterwave." };
   }
-  return { supported: true, accountName: json.data.account_name as string };
 }
 
 // Creates/updates the business's single payout destination. Deliberately
-// collects only what's needed to eventually move money to a bank account —
-// no card data, no provider API credentials (implementation rule 12).
-// providerRecipientCode stays null: there's no platform-level merchant
-// account today to register a real Transfer Recipient against (see
-// lib/payment-architecture.ts) — this record exists so that piece can be
-// wired in later without a schema change.
+// collects only what's needed to move money to a bank account — no card
+// data, no provider API credentials (Part 12). Every save registers a real
+// Flutterwave Transfer Recipient (recipients are create-only, not
+// updatable, so changing bank details always registers a fresh one) —
+// providerRecipientCode is what processPayout (lib/payout.ts) later uses
+// to actually move money.
 export async function upsertPayoutRecipient(
   db: Db,
   params: {
@@ -61,11 +51,9 @@ export async function upsertPayoutRecipient(
     actorId?: string | null;
   }
 ) {
-  const resolution = await resolveBankAccount(params.businessId, {
-    accountNumber: params.accountNumber,
-    bankCode: params.bankCode,
-  });
+  const resolution = await resolveAndRegisterRecipient({ accountNumber: params.accountNumber, bankCode: params.bankCode });
   const accountName = resolution.supported ? resolution.accountName : null;
+  const recipientId = resolution.supported ? resolution.recipientId : null;
 
   const recipient = await db.payoutRecipient.upsert({
     where: { businessId: params.businessId },
@@ -77,6 +65,8 @@ export async function upsertPayoutRecipient(
       bankCode: params.bankCode,
       accountNumber: params.accountNumber,
       accountName,
+      provider: recipientId ? "FLUTTERWAVE" : null,
+      providerRecipientCode: recipientId,
       kycStatus: accountName ? "PENDING" : "NOT_SUBMITTED",
     },
     update: {
@@ -86,6 +76,8 @@ export async function upsertPayoutRecipient(
       bankCode: params.bankCode,
       accountNumber: params.accountNumber,
       accountName,
+      provider: recipientId ? "FLUTTERWAVE" : null,
+      providerRecipientCode: recipientId,
       kycStatus: accountName ? "PENDING" : "NOT_SUBMITTED",
       verifiedAt: null,
       verifiedNote: null,
@@ -108,11 +100,10 @@ export async function getPayoutRecipient(businessId: string) {
   return prisma.payoutRecipient.findUnique({ where: { businessId } });
 }
 
-// Staff-driven manual verification — since there's no real KYC provider
-// integration in this environment, this simply records who confirmed the
-// bank details are correct and lets an admin flip PENDING -> VERIFIED
-// (or REJECTED) with a note, the same "honest manual record-keeping"
-// pattern lib/payout.ts's processPayout already uses for offline settlement.
+// Staff-driven manual verification — Flutterwave resolving the account name
+// proves the account is real, but an admin still confirms it belongs to
+// the right business before payouts start flowing to it (same "human
+// checks before real money moves" pattern the rest of this system uses).
 export async function setPayoutRecipientKycStatus(
   db: Db,
   params: { businessId: string; status: "VERIFIED" | "REJECTED"; note?: string | null; actorId?: string | null }

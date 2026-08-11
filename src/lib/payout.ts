@@ -9,6 +9,7 @@ import { notifyCustomer } from "@/lib/service-request-notify";
 import { getOrCreatePlatformSettings } from "@/lib/platform-settings";
 import { recordGarmentDelivered } from "@/lib/fashion-milestones";
 import { logCustomerBehavior } from "@/lib/customer-behavior";
+import { createTransfer, getTransferStatus } from "@/lib/flutterwave";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -156,11 +157,13 @@ export async function releaseIfWindowExpired(db: Db, params: { orderId: string }
   }
 }
 
-// Part 25: staff-driven "process the payout" — Fashion360 has no live
-// payout-gateway integration configured (no recipient/transfer API
-// credentials exist for any provider in this environment), so this is the
-// same honest MANUAL-style record-keeping pattern Payment.MANUAL already
-// uses for offline-settled money movement, not a fabricated auto-transfer.
+// Part 25: staff-driven "process the payout" — records a status change and
+// everything that follows from it (activity log, notifications, wardrobe
+// timeline). Two ways this gets called: executePayoutTransfer below (a
+// real Flutterwave transfer actually ran) or, for a business with no
+// Flutterwave recipient on file yet, the original honest manual path
+// (Payment.MANUAL's same pattern — an admin marks a real-world transfer
+// they made outside the platform).
 export async function processPayout(db: Db, params: { payoutId: string; businessId: string; status: "PROCESSING" | "PAID" | "FAILED"; providerReference?: string | null; failureReason?: string | null; actorId: string }) {
   const payout = await db.payout.findUniqueOrThrow({ where: { id: params.payoutId } });
   if (payout.businessId !== params.businessId) throw new ApiError(404, "Payout not found");
@@ -218,4 +221,84 @@ export async function processPayout(db: Db, params: { payoutId: string; business
   });
 
   return updated;
+}
+
+// The real payout path: fires an actual Flutterwave transfer to the
+// business's registered bank account (see lib/payout-recipients.ts) and
+// records it as PROCESSING with the real transfer id as providerReference —
+// never marked PAID here, since "instant" is Flutterwave's request for
+// speed, not a guarantee; refreshTransferStatus below is what confirms it
+// actually landed. Requires an admin to have verified the recipient (see
+// setPayoutRecipientKycStatus) — Flutterwave resolving an account name at
+// registration proves the account exists, not that it's this business's.
+//
+// Deliberately takes the plain client, not a transaction one: the
+// Flutterwave call happens between the validation reads and the
+// processPayout write, and a real HTTP call to a third-party API must
+// never sit inside an open DB transaction — if the DB half then failed or
+// timed out, we'd have money moved with no record of it. Only the final
+// write (via processPayout) is wrapped in its own transaction.
+export async function executePayoutTransfer(db: typeof prisma, params: { payoutId: string; businessId: string; actorId: string }) {
+  const payout = await db.payout.findUniqueOrThrow({ where: { id: params.payoutId } });
+  if (payout.businessId !== params.businessId) throw new ApiError(404, "Payout not found");
+  if (payout.status !== "ELIGIBLE") throw new ApiError(400, `Payout is ${payout.status.toLowerCase()}, not eligible to pay`);
+
+  const recipient = await db.payoutRecipient.findUnique({ where: { businessId: params.businessId } });
+  if (!recipient?.providerRecipientCode) throw new ApiError(400, "This business has no verified Flutterwave payout account on file yet");
+  if (recipient.kycStatus !== "VERIFIED") throw new ApiError(400, "This business's payout account hasn't been verified by an admin yet");
+
+  const order = await db.order.findUnique({ where: { id: payout.orderId } });
+
+  const transfer = await createTransfer({
+    recipientId: recipient.providerRecipientCode,
+    amount: payout.netAmount,
+    reference: `payout_${payout.id}`,
+    narration: `Fashion360 payout for order ${order?.orderCode ?? payout.orderId}`,
+  });
+
+  return db.$transaction((tx) =>
+    processPayout(tx, {
+      payoutId: params.payoutId,
+      businessId: params.businessId,
+      status: "PROCESSING",
+      providerReference: transfer.id,
+      actorId: params.actorId,
+    })
+  );
+}
+
+// Polls Flutterwave for a PROCESSING payout's real status and advances it
+// to PAID/FAILED once Flutterwave itself confirms — the honest alternative
+// to assuming "instant" actually completed instantly. No webhook listener
+// exists for transfer events yet, so this is admin-triggered ("Refresh
+// Status" in /admin/payouts) rather than automatic; a future pass can add
+// the webhook and call this from it instead.
+export async function refreshTransferStatus(db: typeof prisma, params: { payoutId: string; businessId: string; actorId: string }) {
+  const payout = await db.payout.findUniqueOrThrow({ where: { id: params.payoutId } });
+  if (payout.businessId !== params.businessId) throw new ApiError(404, "Payout not found");
+  if (payout.status !== "PROCESSING" || !payout.providerReference) {
+    throw new ApiError(400, "This payout has no in-flight Flutterwave transfer to check");
+  }
+
+  const { status } = await getTransferStatus(payout.providerReference);
+  const normalized = status.toLowerCase();
+
+  if (normalized.includes("success")) {
+    return db.$transaction((tx) =>
+      processPayout(tx, { payoutId: params.payoutId, businessId: params.businessId, status: "PAID", providerReference: payout.providerReference, actorId: params.actorId })
+    );
+  }
+  if (normalized.includes("fail")) {
+    return db.$transaction((tx) =>
+      processPayout(tx, {
+        payoutId: params.payoutId,
+        businessId: params.businessId,
+        status: "FAILED",
+        providerReference: payout.providerReference,
+        failureReason: `Flutterwave reported status: ${status}`,
+        actorId: params.actorId,
+      })
+    );
+  }
+  return { payout, transferStatus: status };
 }
