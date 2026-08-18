@@ -912,6 +912,8 @@ enum AuditLogAction {
   PAYOUT_APPROVED_BY_ADMIN
   CANCELLATION_POLICY_UPDATED
   PAYOUT_RECIPIENT_VERIFIED
+  CUSTOMER_SUSPENDED
+  CUSTOMER_REACTIVATED
 }
 
 // ===================== BUSINESS PROFILE & PORTFOLIO (Phase 2) =====================
@@ -1078,6 +1080,19 @@ model User {
   business   Business? @relation(fields: [businessId], references: [id])
 
   notificationPreferences Json?
+
+  // Admin Phase 3 (Customer Management) — a generic, platform-wide account
+  // suspension, not a customer-only field, so a future phase that needs the
+  // same lever for a designer's own login doesn't need a second copy of it.
+  // Blocks login immediately (auth.ts's authorize()) and, for an
+  // already-active session, blocks every customer-facing API call within
+  // one request (rbac.ts's requireCustomerContext() already does a DB read
+  // per call — this piggybacks on that instead of adding a new query).
+  suspendedAt     DateTime?
+  suspendedReason String?
+  suspendedById   String?
+  suspendedBy     User?      @relation("UserSuspendedByAdmin", fields: [suspendedById], references: [id], onDelete: SetNull)
+  suspensionsMade User[]     @relation("UserSuspendedByAdmin")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

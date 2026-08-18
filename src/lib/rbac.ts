@@ -103,8 +103,17 @@ export async function requireCustomerContext() {
   if (!session?.user) throw new ApiError(401, "Not authenticated");
   if (session.user.role !== "CUSTOMER") throw new ApiError(403, "Not authorized");
 
-  const profile = await prisma.customerProfile.findUnique({ where: { userId: session.user.id } });
+  const profile = await prisma.customerProfile.findUnique({
+    where: { userId: session.user.id },
+    include: { user: { select: { suspendedAt: true } } },
+  });
   if (!profile) throw new ApiError(404, "Customer profile not found");
+  // Admin Phase 3: gives a suspension real, immediate effect on an
+  // already-active session — this function already reads the DB once per
+  // call (every customer-facing API route goes through it), so checking
+  // suspendedAt here is free; login alone (auth.ts) only stops a NEW
+  // session from starting.
+  if (profile.user.suspendedAt) throw new ApiError(403, "Your account has been suspended. Contact support for help.");
 
   return { session, profile };
 }

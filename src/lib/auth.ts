@@ -36,6 +36,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const valid = await bcrypt.compare(password, user.passwordHash);
         if (!valid) return null;
+        // Admin Phase 3: stops a suspended account from starting a NEW
+        // session at all — same generic "invalid credentials" outcome as a
+        // wrong password, deliberately not a distinct error message (a
+        // suspended customer learns why through support, not a self-serve
+        // login-page hint). requireCustomerContext() in rbac.ts is what
+        // gives this teeth against an already-active session.
+        if (user.suspendedAt) return null;
 
         return {
           id: user.id,
