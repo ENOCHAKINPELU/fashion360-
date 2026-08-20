@@ -914,6 +914,15 @@ enum AuditLogAction {
   PAYOUT_RECIPIENT_VERIFIED
   CUSTOMER_SUSPENDED
   CUSTOMER_REACTIVATED
+  DESIGNER_SUSPENDED
+  DESIGNER_REACTIVATED
+  PORTFOLIO_ITEM_MODERATED
+}
+
+enum PortfolioItemStatus {
+  APPROVED
+  REJECTED
+  UPDATE_REQUESTED
 }
 
 // ===================== BUSINESS PROFILE & PORTFOLIO (Phase 2) =====================
@@ -1160,6 +1169,7 @@ model User {
   auditLogEvents  AuditLog[]       @relation("AuditLogUser")
 
   uploadedPortfolioItems   BusinessPortfolioItem[]  @relation("PortfolioItemUploadedBy")
+  reviewedPortfolioItems   BusinessPortfolioItem[]  @relation("PortfolioItemReviewedBy")
   reviewedVerifications    BusinessVerification[]   @relation("BusinessVerificationReviewedBy")
   grantedMeasurementAccess MeasurementAccessGrant[] @relation("MeasurementAccessGrantedBy")
 
@@ -5046,6 +5056,18 @@ model BusinessPortfolioItem {
   uploadedById String?
   uploadedBy   User?   @relation("PortfolioItemUploadedBy", fields: [uploadedById], references: [id])
 
+  // Admin Phase 4 — ex-post content moderation, not a pre-publish gate: a
+  // business's portfolio has always shown live the moment they add it
+  // (existing, unchanged behavior), so new items default to APPROVED
+  // rather than sitting unpublished awaiting review. Only a REJECTED item
+  // is actually hidden from customer-facing queries; UPDATE_REQUESTED
+  // stays visible but flagged for the business to address.
+  status       PortfolioItemStatus @default(APPROVED)
+  reviewNote   String?
+  reviewedAt   DateTime?
+  reviewedById String?
+  reviewedBy   User?               @relation("PortfolioItemReviewedBy", fields: [reviewedById], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -5063,6 +5085,15 @@ model BusinessVerification {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   status BusinessVerificationStatus @default(UNVERIFIED)
+
+  // Admin Phase 4: what `status` was immediately before an admin set it to
+  // SUSPENDED, so reactivating restores the real prior state (VERIFIED
+  // stays VERIFIED, not silently reset to UNVERIFIED) instead of losing
+  // it. Null whenever status isn't SUSPENDED. Reuses notes/reviewedAt/
+  // reviewedById below for the suspend/reactivate reasoning and trail too
+  // — same "an admin acted on this business's standing, and why" event
+  // the verification decision already recorded, not a separate concept.
+  statusBeforeSuspension BusinessVerificationStatus?
 
   // The "Verified" trust badge (business-trust-profile.ts) has always read
   // this status, but until now nothing ever wrote it except a raw database

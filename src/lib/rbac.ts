@@ -68,6 +68,19 @@ export async function requireBusinessContext(allowed: UserRole[] = ["OWNER", "ST
   if (!allowed.includes(session.user.role)) throw new ApiError(403, "Not authorized");
   if (!session.user.businessId) throw new ApiError(403, "No business associated with this account");
 
+  // Admin Phase 4: gives a designer suspension the same immediate effect on
+  // an already-active session that Phase 3 gave customer suspension —
+  // status lives on BusinessVerification (already the real, enforced
+  // "hidden from discovery" signal — see business-discovery.ts) rather
+  // than on each individual staff User, so one field covers the whole
+  // team at once regardless of who's logged in. SUPER_ADMIN never has a
+  // businessId, so it never reaches this query.
+  const verification = await prisma.businessVerification.findUnique({
+    where: { businessId: session.user.businessId },
+    select: { status: true },
+  });
+  if (verification?.status === "SUSPENDED") throw new ApiError(403, "This business has been suspended. Contact support for help.");
+
   return { session, businessId: session.user.businessId };
 }
 
