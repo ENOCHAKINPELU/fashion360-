@@ -11,8 +11,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params;
     await getScopedOrder(businessId, id);
 
+    // ADMIN-category notes are Fashion360-admin-only — see schema.prisma's
+    // OrderNoteCategory comment and ORDER_DETAIL_INCLUDE's same filter.
     const notes = await prisma.orderNote.findMany({
-      where: { orderId: id },
+      where: { orderId: id, category: { not: "ADMIN" } },
       orderBy: { createdAt: "desc" },
       include: { author: { select: { name: true } } },
     });

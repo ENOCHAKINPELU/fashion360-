@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/shared/components/empty-state";
 import { AdminCustomerActions } from "@/features/admin/components/admin-customer-actions";
 import {
@@ -132,7 +133,19 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
           </div>
           <p className="text-sm text-muted-foreground">{customer.user.email}</p>
         </div>
-        <AdminCustomerActions customerId={customer.id} suspended={suspended} size="default" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/admin/requests?customerId=${customer.id}`}>
+            <Button size="default" variant="outline">
+              View Requests
+            </Button>
+          </Link>
+          <Link href={`/admin/orders?customerProfileId=${customer.id}`}>
+            <Button size="default" variant="outline">
+              View Orders
+            </Button>
+          </Link>
+          <AdminCustomerActions customerId={customer.id} suspended={suspended} size="default" />
+        </div>
       </div>
 
       {suspended && customer.user.suspendedReason && (

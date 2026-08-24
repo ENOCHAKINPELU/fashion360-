@@ -25,7 +25,10 @@ export const ORDER_DETAIL_INCLUDE = {
     orderBy: { sortOrder: "asc" as const },
     include: { files: { select: { id: true, url: true, name: true } }, completedBy: { select: { name: true } } },
   },
-  notes: { orderBy: { createdAt: "desc" as const }, include: { author: { select: { name: true } } } },
+  // ADMIN-category notes are Fashion360-admin-only (see schema.prisma's
+  // OrderNoteCategory comment) — excluded here so the business's own order
+  // fetch (and anything reusing this shared include) never receives them.
+  notes: { where: { category: { not: "ADMIN" } }, orderBy: { createdAt: "desc" as const }, include: { author: { select: { name: true } } } },
   files: { orderBy: { createdAt: "desc" as const }, include: { uploadedBy: { select: { name: true } } } },
   fittingSessions: {
     orderBy: { fittingDate: "desc" as const },

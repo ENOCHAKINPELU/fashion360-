@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/shared/components/empty-state";
 import { AdminDesignerActions } from "@/features/admin/components/admin-designer-actions";
 import { AdminDesignerVerificationPanel } from "@/features/admin/components/admin-designer-verification-panel";
@@ -192,7 +193,19 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
             {business.users[0]?.name ?? "No owner on file"} · {business.users[0]?.email ?? business.email}
           </p>
         </div>
-        <AdminDesignerActions businessId={business.id} suspended={suspended} size="default" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/admin/requests?designerId=${business.id}`}>
+            <Button size="default" variant="outline">
+              View Requests
+            </Button>
+          </Link>
+          <Link href={`/admin/orders?designerId=${business.id}`}>
+            <Button size="default" variant="outline">
+              View Orders
+            </Button>
+          </Link>
+          <AdminDesignerActions businessId={business.id} suspended={suspended} size="default" />
+        </div>
       </div>
 
       {/* Overview */}

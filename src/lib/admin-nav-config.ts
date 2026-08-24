@@ -31,10 +31,10 @@ import type { NavItem } from "@/types/nav";
 // a second, new way of marking something not-yet-built.
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard, implemented: true },
-  { label: "Customers", href: "/admin/customers", icon: Users, implemented: false, description: "Coming in a later Admin phase." },
+  { label: "Customers", href: "/admin/customers", icon: Users, implemented: true, description: "Every customer on the platform." },
   { label: "Designers", href: "/admin/businesses", icon: Shirt, implemented: true, description: "Every business on the platform." },
-  { label: "Requests", href: "/admin/requests", icon: Inbox, implemented: false, description: "Coming in a later Admin phase." },
-  { label: "Orders", href: "/admin/orders", icon: ShoppingBag, implemented: false, description: "Coming in a later Admin phase." },
+  { label: "Requests", href: "/admin/requests", icon: Inbox, implemented: true, description: "Every customer-to-designer service request." },
+  { label: "Orders", href: "/admin/orders", icon: ShoppingBag, implemented: true, description: "Every order on the platform." },
   { label: "Payments", href: "/admin/payouts", icon: CreditCard, implemented: true, description: "Payment volume, payouts, and platform revenue." },
   { label: "Deliveries", href: "/admin/deliveries", icon: Truck, implemented: false, description: "Coming in a later Admin phase." },
   { label: "Reviews", href: "/admin/reviews", icon: Star, implemented: true, description: "Moderate reported and flagged reviews." },

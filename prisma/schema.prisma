@@ -358,6 +358,15 @@ enum OrderNoteCategory {
   FITTING
   ALTERATION
   PRIVATE
+  // Admin Phase 6: genuinely admin-only, unlike PRIVATE (which the business's
+  // own OrderNotesTab already renders to its staff — "private" there means
+  // hidden from the *customer*, not from the business). ADMIN notes are
+  // filtered out of every business/customer-facing notes query (see
+  // ORDER_DETAIL_INCLUDE.notes and api/orders/[id]/notes/route.ts) and are
+  // only ever created by src/lib/admin-orders.ts, never by the business's
+  // own note-creation endpoint (orderNoteSchema's category enum was
+  // deliberately NOT extended with this value).
+  ADMIN
 }
 
 enum OrderFileCategory {
@@ -917,6 +926,9 @@ enum AuditLogAction {
   DESIGNER_SUSPENDED
   DESIGNER_REACTIVATED
   PORTFOLIO_ITEM_MODERATED
+  REQUEST_CANCELLED_BY_ADMIN
+  REQUEST_CONTACT_SENT_BY_ADMIN
+  ORDER_NOTE_ADDED_BY_ADMIN
 }
 
 enum PortfolioItemStatus {
