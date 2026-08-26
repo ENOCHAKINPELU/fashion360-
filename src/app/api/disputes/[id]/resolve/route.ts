@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, requireBusinessPermission } from "@/lib/rbac";
 import { resolveDispute } from "@/lib/dispute";
+import { attemptAutomaticPayoutRelease } from "@/lib/payout";
 
 const schema = z.object({
   resolutionType: z.enum(["RELEASE_FULL_PAYMENT", "PARTIAL_REFUND", "FULL_REFUND", "REWORK_REQUIRED", "RETURN_REQUIRED", "CANCEL_ORDER"]),
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { businessId, session } = await requireBusinessPermission("MANAGE_PAYMENTS");
     const data = schema.parse(await req.json());
 
-    const resolution = await prisma.$transaction((tx) =>
+    const { resolution, payoutId } = await prisma.$transaction((tx) =>
       resolveDispute(tx, {
         disputeId: id,
         businessId,
@@ -31,6 +32,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         resolvedById: session.user.id,
       })
     );
+    // Outside the transaction on purpose — see lib/payout.ts's
+    // attemptAutomaticPayoutRelease comment.
+    if (payoutId) await attemptAutomaticPayoutRelease(prisma, { payoutId });
 
     return NextResponse.json({ resolution }, { status: 201 });
   } catch (error) {

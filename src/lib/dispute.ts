@@ -121,7 +121,11 @@ export async function respondToDispute(db: Db, params: { disputeId: string; busi
 // Part 23: the single, explicitly-authorized resolution decision. A
 // refund-bearing outcome creates a real Refund via the same path as the
 // staff-initiated refund route (Part 24) — never automatic, always tied to
-// this one recorded decision.
+// this one recorded decision. Returns payoutId (set only for
+// RELEASE_FULL_PAYMENT) so the caller — always inside a $transaction, since
+// this function itself writes several rows — can attempt automatic payout
+// release after that transaction commits, never from inside it. See
+// lib/payout.ts's attemptAutomaticPayoutRelease for why.
 export async function resolveDispute(
   db: Db,
   params: {
@@ -166,13 +170,15 @@ export async function resolveDispute(
 
   const order = await db.order.findUniqueOrThrow({ where: { id: dispute.orderId } });
 
+  let payoutId: string | null = null;
   if (params.resolutionType === "CANCEL_ORDER") {
     await db.order.update({ where: { id: dispute.orderId }, data: { status: "CANCELLED" } });
   } else if (params.resolutionType === "REWORK_REQUIRED" || params.resolutionType === "RETURN_REQUIRED") {
     await db.order.update({ where: { id: dispute.orderId }, data: { status: "IN_PRODUCTION" } });
   } else if (params.resolutionType === "RELEASE_FULL_PAYMENT") {
     await db.order.update({ where: { id: dispute.orderId }, data: { status: "DELIVERED" } });
-    await makePayoutEligible(db, { orderId: dispute.orderId, businessId: params.businessId, actorId: params.resolvedById });
+    const payout = await makePayoutEligible(db, { orderId: dispute.orderId, businessId: params.businessId, actorId: params.resolvedById });
+    payoutId = payout.id;
   } else {
     // A refund alone doesn't complete the order — money already moved back
     // to the customer, but the garment relationship still needs a business
@@ -210,5 +216,5 @@ export async function resolveDispute(
     });
   }
 
-  return resolution;
+  return { resolution, payoutId };
 }

@@ -119,7 +119,14 @@ export async function makePayoutEligible(db: Db, params: { orderId: string; busi
   return payout;
 }
 
-// Part 18/19: the customer's own "Confirm Receipt" action.
+// Part 18/19: the customer's own "Confirm Receipt" action. Returns the
+// payout's id (if this confirmation made one eligible) so the route calling
+// this — always inside a $transaction, since this function itself writes
+// several rows — can attempt automatic release *after* that transaction
+// commits. See attemptAutomaticPayoutRelease below for why that ordering
+// isn't optional: firing the real Flutterwave transfer from inside this
+// function's own open transaction would mean checking for the payout on a
+// connection that can't see it yet.
 export async function confirmCustomerDelivery(db: Db, params: { orderId: string; customerProfileId: string }) {
   const order = await db.order.findUniqueOrThrow({ where: { id: params.orderId } });
   if (order.customerProfileId !== params.customerProfileId) throw new ApiError(404, "Order not found");
@@ -141,19 +148,122 @@ export async function confirmCustomerDelivery(db: Db, params: { orderId: string;
   });
 
   const { eligible } = await evaluatePayoutEligibility(db, { orderId: params.orderId });
-  if (eligible) await makePayoutEligible(db, { orderId: params.orderId, businessId: order.businessId, actorId: null });
+  let payoutId: string | null = null;
+  if (eligible) {
+    const payout = await makePayoutEligible(db, { orderId: params.orderId, businessId: order.businessId, actorId: null });
+    payoutId = payout.id;
+  }
 
-  return updated;
+  return { delivery: updated, payoutId };
 }
 
 // Part 21: called lazily whenever an order/delivery is read (no cron
 // infrastructure to schedule a sweep on) — if the dispute window has quietly
 // expired with no customer response and no dispute, the payout becomes
-// eligible exactly as if the customer had confirmed.
-export async function releaseIfWindowExpired(db: Db, params: { orderId: string }) {
+// eligible exactly as if the customer had confirmed. Deliberately typed to
+// the plain client, not the transaction-capable Db union: both real callers
+// already pass `prisma` directly (never wrapped in $transaction), and this
+// function now attempts a real Flutterwave transfer as part of the same
+// call — see attemptAutomaticPayoutRelease's own comment on why that must
+// never run inside an open transaction.
+export async function releaseIfWindowExpired(db: typeof prisma, params: { orderId: string }) {
   const { eligible, delivered, confirmed, windowExpired, order } = await evaluatePayoutEligibility(db, { orderId: params.orderId });
   if (eligible && delivered && !confirmed && windowExpired) {
-    await makePayoutEligible(db, { orderId: params.orderId, businessId: order.businessId, actorId: null });
+    const payout = await makePayoutEligible(db, { orderId: params.orderId, businessId: order.businessId, actorId: null });
+    await attemptAutomaticPayoutRelease(db, { payoutId: payout.id });
+  }
+}
+
+// ===================== Automatic release (Admin Phase 7 follow-up) =====
+//
+// Product decision, confirmed explicitly rather than assumed: automatic
+// release keeps today's real eligibility gate exactly as-is (delivered +
+// (customer confirmed OR the dispute window expired) + no open dispute —
+// evaluatePayoutEligibility, unchanged above). What changes is only what
+// happens the instant a payout reaches ELIGIBLE: a clean case fires the
+// transfer immediately instead of waiting for an admin to click Approve.
+// A payout that fails the risk check, or has no verified payout account to
+// send money to, simply stays ELIGIBLE — exactly the same queue
+// /admin/payments already shows an admin, with the reason now recorded on
+// the payout's own status history. This does not change the customer-
+// facing payment-protection promise in lib/payment-architecture.ts at all
+// (same gate, same money-holding period); it only removes the manual
+// checkpoint the architecture doc previously called out as a limitation
+// ("admin-triggered... no automatic transfer trigger yet").
+
+const AUTO_RELEASE_MULTIPLE_FAILED_ATTEMPTS_THRESHOLD = 3; // mirrors lib/admin-payments.ts's own MULTIPLE_FAILED_ATTEMPTS_THRESHOLD — kept as a local copy per this codebase's established convention (a small local copy per file rather than a shared export) since the two run against genuinely different data shapes: a bulk dashboard scan there vs. one payout's own order here.
+
+interface AutoReleaseRiskResult {
+  passed: boolean;
+  reasons: string[];
+}
+
+// The single-record counterpart of lib/admin-payments.ts's bulk
+// resolveFraudSignals — same four checks that apply before a payout even
+// exists (duplicate payment, repeated failed attempts, chargeback/
+// reversal, manually flagged), computed here at eligibility time rather
+// than re-run from the bulk dashboard resolver. "Repeated payout failures"
+// doesn't apply yet at this point — there's no payout attempt history
+// until one exists.
+async function runAutomaticReleaseRiskCheck(db: typeof prisma, params: { orderId: string; paymentId: string | null }): Promise<AutoReleaseRiskResult> {
+  const reasons: string[] = [];
+
+  const [successfulCount, failedCount] = await Promise.all([
+    db.payment.count({ where: { orderId: params.orderId, status: "SUCCESSFUL" } }),
+    db.payment.count({ where: { orderId: params.orderId, status: "FAILED" } }),
+  ]);
+  if (successfulCount >= 2) reasons.push("Duplicate payment — more than one successful charge on this order");
+  if (failedCount >= AUTO_RELEASE_MULTIPLE_FAILED_ATTEMPTS_THRESHOLD) reasons.push(`${AUTO_RELEASE_MULTIPLE_FAILED_ATTEMPTS_THRESHOLD}+ failed payment attempts on this order`);
+
+  if (params.paymentId) {
+    const [payment, latestFraudFlag] = await Promise.all([
+      db.payment.findUnique({ where: { id: params.paymentId }, select: { status: true } }),
+      db.auditLog.findFirst({
+        where: { action: { in: ["PAYMENT_FLAGGED_FOR_FRAUD", "PAYMENT_FRAUD_FLAG_CLEARED"] }, entityType: "Payment", entityId: params.paymentId },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+    if (payment?.status === "DISPUTED" || payment?.status === "REVERSED") reasons.push("Chargeback or reversal reported by the gateway");
+    if (latestFraudFlag?.action === "PAYMENT_FLAGGED_FOR_FRAUD") reasons.push("Manually flagged for fraud review");
+  }
+
+  return { passed: reasons.length === 0, reasons };
+}
+
+// Deliberately takes the plain client only, same reasoning executePayoutTransfer
+// documents: the real Flutterwave call inside must never sit inside an open
+// DB transaction. Every caller of this function must have already committed
+// whatever transaction made the payout eligible before calling this — see
+// confirmCustomerDelivery's and resolveDispute's own comments on why they
+// return a payoutId instead of calling this themselves.
+export async function attemptAutomaticPayoutRelease(db: typeof prisma, params: { payoutId: string }): Promise<{ released: boolean; reason: string | null }> {
+  try {
+    const payout = await db.payout.findUnique({ where: { id: params.payoutId } });
+    if (!payout || payout.status !== "ELIGIBLE") return { released: false, reason: null };
+
+    const risk = await runAutomaticReleaseRiskCheck(db, { orderId: payout.orderId, paymentId: payout.paymentId });
+    const recipient = risk.passed ? await db.payoutRecipient.findUnique({ where: { businessId: payout.businessId } }) : null;
+    const canFlutterwave = !!recipient && recipient.kycStatus === "VERIFIED" && !!recipient.providerRecipientCode;
+
+    const skipReason = !risk.passed ? risk.reasons.join("; ") : !canFlutterwave ? "No verified payout account on file yet" : null;
+    if (skipReason) {
+      await db.payoutStatusHistory.create({
+        data: { payoutId: params.payoutId, businessId: payout.businessId, previousStatus: "ELIGIBLE", newStatus: "ELIGIBLE", note: `Automatic release skipped: ${skipReason}` },
+      });
+      return { released: false, reason: skipReason };
+    }
+
+    await executePayoutTransfer(db, { payoutId: params.payoutId, businessId: payout.businessId, actorId: null });
+    return { released: true, reason: null };
+  } catch (error) {
+    // Never let a failed automatic-release attempt break the request that
+    // triggered eligibility (a customer confirming delivery, an admin
+    // resolving a dispute, or the lazy window-expiry sweep) — on any
+    // failure the payout simply stays ELIGIBLE, exactly where it already
+    // showed up for manual handling before automatic release existed.
+    const reason = error instanceof Error ? error.message : "Automatic release failed";
+    console.error(`attemptAutomaticPayoutRelease failed for payout ${params.payoutId}:`, error);
+    return { released: false, reason };
   }
 }
 
@@ -164,7 +274,7 @@ export async function releaseIfWindowExpired(db: Db, params: { orderId: string }
 // Flutterwave recipient on file yet, the original honest manual path
 // (Payment.MANUAL's same pattern — an admin marks a real-world transfer
 // they made outside the platform).
-export async function processPayout(db: Db, params: { payoutId: string; businessId: string; status: "PROCESSING" | "PAID" | "FAILED"; providerReference?: string | null; failureReason?: string | null; actorId: string }) {
+export async function processPayout(db: Db, params: { payoutId: string; businessId: string; status: "PROCESSING" | "PAID" | "FAILED"; providerReference?: string | null; failureReason?: string | null; actorId?: string | null }) {
   const payout = await db.payout.findUniqueOrThrow({ where: { id: params.payoutId } });
   if (payout.businessId !== params.businessId) throw new ApiError(404, "Payout not found");
 
@@ -194,7 +304,7 @@ export async function processPayout(db: Db, params: { payoutId: string; business
     description: `Payout ${params.status.toLowerCase()} for order ${order?.orderCode ?? payout.orderId}`,
     orderId: payout.orderId,
     amount: payout.netAmount,
-    actorType: "STAFF",
+    actorType: params.actorId ? "STAFF" : "SYSTEM",
     actorId: params.actorId,
   });
 
@@ -238,7 +348,7 @@ export async function processPayout(db: Db, params: { payoutId: string; business
 // never sit inside an open DB transaction — if the DB half then failed or
 // timed out, we'd have money moved with no record of it. Only the final
 // write (via processPayout) is wrapped in its own transaction.
-export async function executePayoutTransfer(db: typeof prisma, params: { payoutId: string; businessId: string; actorId: string }) {
+export async function executePayoutTransfer(db: typeof prisma, params: { payoutId: string; businessId: string; actorId?: string | null }) {
   const payout = await db.payout.findUniqueOrThrow({ where: { id: params.payoutId } });
   if (payout.businessId !== params.businessId) throw new ApiError(404, "Payout not found");
   if (payout.status !== "ELIGIBLE") throw new ApiError(400, `Payout is ${payout.status.toLowerCase()}, not eligible to pay`);

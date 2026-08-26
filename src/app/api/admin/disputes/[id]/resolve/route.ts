@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, ApiError, requireSuperAdmin } from "@/lib/rbac";
 import { resolveDispute } from "@/lib/dispute";
+import { attemptAutomaticPayoutRelease } from "@/lib/payout";
 import { logAuditEvent } from "@/lib/audit-log";
 
 const schema = z.object({
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const dispute = await prisma.dispute.findUnique({ where: { id } });
     if (!dispute) throw new ApiError(404, "Dispute not found");
 
-    const resolution = await prisma.$transaction((tx) =>
+    const { resolution, payoutId } = await prisma.$transaction((tx) =>
       resolveDispute(tx, {
         disputeId: id,
         businessId: dispute.businessId,
@@ -37,6 +38,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         resolvedById: session.user.id,
       })
     );
+    // Outside the transaction on purpose — see lib/payout.ts's
+    // attemptAutomaticPayoutRelease comment.
+    if (payoutId) await attemptAutomaticPayoutRelease(prisma, { payoutId });
 
     await logAuditEvent(prisma, {
       action: "DISPUTE_RESOLVED_BY_ADMIN",

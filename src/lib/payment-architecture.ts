@@ -18,12 +18,17 @@
 // Fashion360's control until its own business logic (lib/payout.ts:
 // evaluatePayoutEligibility) decides the order is payout-eligible — order
 // fulfilled, delivered, and either customer-confirmed or the dispute window
-// expired, with no open dispute — at which point an admin triggers a real
-// Flutterwave Transfer (lib/payout.ts: executePayoutTransfer) that moves
-// the business's share to the bank account it registered
-// (lib/payout-recipients.ts). Nothing about this is simulated: both the
-// charge collection and the transfer are real Flutterwave v4 API calls
-// against a real account.
+// expired, with no open dispute. As of Admin Phase 7's automatic-release
+// follow-up, that's also the moment a real Flutterwave Transfer
+// (lib/payout.ts: executePayoutTransfer) fires on its own — no admin click
+// required — provided an automated risk check comes back clean (no
+// duplicate/failed-attempt/chargeback/manual-fraud signal on the payment)
+// and the business has a verified payout account on file
+// (lib/payout-recipients.ts). Either condition failing leaves the payout
+// ELIGIBLE, exactly where it already sat before automatic release existed,
+// for an admin to review and approve manually from /admin/payments. Nothing
+// about this is simulated: both the charge collection and the transfer are
+// real Flutterwave v4 API calls against a real account.
 //
 // This IS genuine custody-based protection, not merely process-based: the
 // money is verifiably out of the business's reach until Fashion360 chooses
@@ -49,11 +54,12 @@
 //   "bank_account", see flutterwave.ts) is Nigeria-specific; an invoice in
 //   any other currency falls back to the honest "online payment isn't
 //   available, contact the business" path rather than pretending to work.
-// - No automatic transfer trigger yet. executePayoutTransfer is
-//   admin-triggered from /admin/payouts, not fired automatically the
-//   instant an order becomes eligible — an eligible payout can sit
-//   unactioned until an admin looks at the queue. There's no SLA on that
-//   today.
+// - Automatic release only covers the happy path. A payout that fails its
+//   risk check, or belongs to a business with no verified payout account,
+//   still has no SLA — it sits ELIGIBLE until an admin looks at the
+//   /admin/payments queue and approves it manually. There is still no
+//   webhook for transfer status either: refreshTransferStatus (confirming
+//   a PROCESSING transfer actually landed) remains admin-triggered.
 // - Refunds go through the same platform account (lib/flutterwave.ts:
 //   refundCharge), independently of whether that order's payout has
 //   already been transferred out to the business — a refund issued after
@@ -85,7 +91,8 @@ export const PAYMENT_ARCHITECTURE_SUMMARY = {
   trueEscrowSupported: false,
   trueDelayedPayoutSupported: true,
   settlementDestination: "business's registered bank account, via a Fashion360-initiated transfer" as const,
-  settlementTiming: "admin-triggered, once the order is payout-eligible (fulfilled, delivered, confirmed or dispute window expired, no open dispute)" as const,
+  settlementTiming:
+    "automatic, once the order is payout-eligible (fulfilled, delivered, confirmed or dispute window expired, no open dispute) and clears an automated risk check; flagged or unverified cases wait for admin review instead" as const,
 };
 
 // The one and only customer-facing sentence describing payment protection —
