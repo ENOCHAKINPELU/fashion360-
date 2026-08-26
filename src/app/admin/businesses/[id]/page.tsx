@@ -209,6 +209,11 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
               View Payments
             </Button>
           </Link>
+          <Link href={`/admin/deliveries?designerId=${business.id}`}>
+            <Button size="default" variant="outline">
+              View Deliveries
+            </Button>
+          </Link>
           <AdminDesignerActions businessId={business.id} suspended={suspended} size="default" />
         </div>
       </div>

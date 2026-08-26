@@ -1,0 +1,22 @@
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { apiErrorResponse, requireSuperAdmin } from "@/lib/rbac";
+import { cancelDeliveryByAdmin } from "@/lib/admin-deliveries";
+import { prisma } from "@/lib/prisma";
+
+const schema = z.object({ reason: z.string().trim().min(1, "A reason is required") });
+
+// [id] is Delivery.id.
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const { session } = await requireSuperAdmin();
+    const { reason } = schema.parse(await req.json());
+
+    await cancelDeliveryByAdmin(prisma, { deliveryId: id, reason, actorId: session.user.id });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}

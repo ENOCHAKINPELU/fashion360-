@@ -149,6 +149,11 @@ export default async function AdminCustomerDetailPage({ params }: { params: Prom
               View Payments
             </Button>
           </Link>
+          <Link href={`/admin/deliveries?customerProfileId=${customer.id}`}>
+            <Button size="default" variant="outline">
+              View Deliveries
+            </Button>
+          </Link>
           <AdminCustomerActions customerId={customer.id} suspended={suspended} size="default" />
         </div>
       </div>

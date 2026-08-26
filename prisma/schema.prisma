@@ -950,6 +950,11 @@ enum AuditLogAction {
   PAYOUT_REJECTED_BY_ADMIN
   PAYMENT_FLAGGED_FOR_FRAUD
   PAYMENT_FRAUD_FLAG_CLEARED
+  // Admin Phase 8: Delivery & Logistics Management. DELIVERY_CANCELLED_BY_ADMIN
+  // and DELIVERY_CONTACT_SENT_BY_ADMIN already existed above (added while
+  // this phase was paused mid-session) — the two below are genuinely new.
+  DELIVERY_ESCALATED_BY_ADMIN
+  DELIVERY_ESCALATION_RESOLVED_BY_ADMIN
 }
 
 enum PortfolioItemStatus {
@@ -2644,6 +2649,19 @@ model Delivery {
   pickedUpAt    DateTime?
   deliveredAt   DateTime?
   failureReason String?
+
+  // Admin Phase 8: proof-of-delivery — genuinely new capture fields, not
+  // populated by anything today (MOCK/MANUAL are the only providers; see
+  // lib/logistics-providers/types.ts's ParsedDeliveryWebhookEvent, which
+  // has no equivalent fields either). Added integration-ready, nullable,
+  // so a real courier webhook can populate them later without a further
+  // migration — the admin UI shows "Not provided by courier" until then
+  // rather than fabricating sample data.
+  recipientName      String?
+  proofPhotoUrl      String?
+  signatureUrl       String?
+  deliveryLatitude   Float?
+  deliveryLongitude  Float?
 
   // Part 19: the dispute-window clock — set the moment delivery is
   // confirmed, never recomputed afterward, so a later change to the
