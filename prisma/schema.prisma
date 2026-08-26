@@ -800,10 +800,16 @@ enum DisputeResolutionType {
 // NOT_ELIGIBLE maps to the spec's PAYOUT_NOT_READY, PAID maps to
 // PAYOUT_SUCCESSFUL (kept as-is rather than renamed, to avoid a breaking
 // migration across already-shipped Phase 7 code).
+// ON_HOLD added (Admin Phase 7: Payment & Escrow Management) — a genuinely
+// new state the existing payout flow had no way to represent: an admin
+// pausing an otherwise-eligible payout for investigation without either
+// paying it (ELIGIBLE) or declaring it failed (FAILED). Only reachable from
+// ELIGIBLE and only returns to ELIGIBLE or FAILED — see lib/admin-payments.ts.
 enum PayoutStatus {
   NOT_ELIGIBLE
   PENDING
   ELIGIBLE
+  ON_HOLD
   PROCESSING
   PAID
   FAILED
@@ -929,6 +935,21 @@ enum AuditLogAction {
   REQUEST_CANCELLED_BY_ADMIN
   REQUEST_CONTACT_SENT_BY_ADMIN
   ORDER_NOTE_ADDED_BY_ADMIN
+  // Reserved for a paused Delivery Management admin phase (not part of this
+  // commit — see the phase report) so that work-in-progress code elsewhere
+  // in the working tree keeps compiling; unused by anything shipped here.
+  DELIVERY_CANCELLED_BY_ADMIN
+  DELIVERY_CONTACT_SENT_BY_ADMIN
+  // Admin Phase 7: Payment & Escrow Management. PAYOUT_APPROVED_BY_ADMIN,
+  // PAYOUT_RETRIED_BY_ADMIN, REFUND_APPROVED_BY_ADMIN, and
+  // REFUND_REJECTED_BY_ADMIN above already existed in this enum, reserved
+  // but never written by any code path — this phase is the first to use
+  // them. Only the five below are genuinely new values.
+  PAYOUT_HELD_BY_ADMIN
+  PAYOUT_HOLD_RELEASED_BY_ADMIN
+  PAYOUT_REJECTED_BY_ADMIN
+  PAYMENT_FLAGGED_FOR_FRAUD
+  PAYMENT_FRAUD_FLAG_CLEARED
 }
 
 enum PortfolioItemStatus {

@@ -35,7 +35,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Designers", href: "/admin/businesses", icon: Shirt, implemented: true, description: "Every business on the platform." },
   { label: "Requests", href: "/admin/requests", icon: Inbox, implemented: true, description: "Every customer-to-designer service request." },
   { label: "Orders", href: "/admin/orders", icon: ShoppingBag, implemented: true, description: "Every order on the platform." },
-  { label: "Payments", href: "/admin/payouts", icon: CreditCard, implemented: true, description: "Payment volume, payouts, and platform revenue." },
+  { label: "Payments", href: "/admin/payments", icon: CreditCard, implemented: true, description: "Every payment, its escrow status, and the payout it funds." },
   { label: "Deliveries", href: "/admin/deliveries", icon: Truck, implemented: false, description: "Coming in a later Admin phase." },
   { label: "Reviews", href: "/admin/reviews", icon: Star, implemented: true, description: "Moderate reported and flagged reviews." },
   { label: "Notifications", href: "/admin/notifications", icon: Bell, implemented: false, description: "Coming in a later Admin phase." },
