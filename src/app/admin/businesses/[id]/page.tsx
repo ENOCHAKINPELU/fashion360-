@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { getDesignerActivityTimeline } from "@/lib/admin-designers";
+import { getDesignerRatingsSummary } from "@/lib/admin-reviews";
 
 const PORTFOLIO_STATUS_BADGE: Record<string, string> = {
   APPROVED: "bg-success-soft text-success",
@@ -81,7 +82,7 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
 
   const sixMonthsAgo = monthBuckets(6)[0].start;
 
-  const [orders, portfolioItems, reviews, payouts, disputes, activity, ordersByCustomer, monthlyPayments] = await Promise.all([
+  const [orders, portfolioItems, reviews, payouts, disputes, activity, ordersByCustomer, monthlyPayments, ratingsSummary] = await Promise.all([
     prisma.order.findMany({
       where: { businessId: id },
       orderBy: { orderDate: "desc" },
@@ -131,6 +132,7 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
       _sum: { amountPaid: true },
     }),
     prisma.payment.findMany({ where: { businessId: id, status: "SUCCESSFUL", paidAt: { gte: sixMonthsAgo } }, select: { amount: true, paidAt: true } }),
+    getDesignerRatingsSummary(id),
   ]);
 
   const completedOrders = orders.filter((o) => o.status === "COMPLETED").length;
@@ -214,6 +216,16 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
               View Deliveries
             </Button>
           </Link>
+          <Link href={`/admin/reviews?designerId=${business.id}`}>
+            <Button size="default" variant="outline">
+              View Reviews
+            </Button>
+          </Link>
+          <Link href={`/admin/disputes?designerId=${business.id}`}>
+            <Button size="default" variant="outline">
+              View Disputes
+            </Button>
+          </Link>
           <AdminDesignerActions businessId={business.id} suspended={suspended} size="default" />
         </div>
       </div>
@@ -252,6 +264,51 @@ export default async function AdminDesignerDetailPage({ params }: { params: Prom
           </CardContent>
         </Card>
       </div>
+
+      {/* Designer Ratings (Admin Phase 9) — Average Rating / Total Reviews
+          already lived above via the cached BusinessRating; Rating Trend
+          and the two percentages are new, computed live since nothing
+          caches them today (see lib/admin-reviews.ts). */}
+      <Card className="border-none shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Star className="size-4" /> Designer Ratings
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {ratingsSummary.totalReviews === 0 ? (
+            <p className="text-sm text-muted-foreground">No published reviews yet.</p>
+          ) : (
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <div>
+                <dt className="text-xs text-muted-foreground">Average Rating</dt>
+                <dd className="mt-1 text-lg font-semibold text-foreground">{ratingsSummary.averageRating.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Total Reviews</dt>
+                <dd className="mt-1 text-lg font-semibold text-foreground">{ratingsSummary.totalReviews}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Five-Star %</dt>
+                <dd className="mt-1 text-lg font-semibold text-foreground">{ratingsSummary.fiveStarPct.toFixed(0)}%</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">One-Star %</dt>
+                <dd className="mt-1 text-lg font-semibold text-foreground">{ratingsSummary.oneStarPct.toFixed(0)}%</dd>
+              </div>
+              <div className="col-span-2 sm:col-span-4">
+                <dt className="text-xs text-muted-foreground">Rating Trend (last 30 days vs. prior 30)</dt>
+                <dd className="mt-1 text-sm text-foreground">
+                  {ratingsSummary.trend === "insufficient_data" && "Not enough recent reviews to show a trend"}
+                  {ratingsSummary.trend === "up" && `↑ Improving (${ratingsSummary.recentAverage?.toFixed(2)} vs ${ratingsSummary.priorAverage?.toFixed(2)})`}
+                  {ratingsSummary.trend === "down" && `↓ Declining (${ratingsSummary.recentAverage?.toFixed(2)} vs ${ratingsSummary.priorAverage?.toFixed(2)})`}
+                  {ratingsSummary.trend === "flat" && `→ Steady (${ratingsSummary.recentAverage?.toFixed(2)} vs ${ratingsSummary.priorAverage?.toFixed(2)})`}
+                </dd>
+              </div>
+            </dl>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Business Information */}
       <Card className="border-none shadow-sm">

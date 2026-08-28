@@ -47,7 +47,7 @@ export const reviewReportSchema = z.object({
 });
 
 export const reviewModerationSchema = z.object({
-  action: z.enum(["APPROVE", "REJECT", "HIDE", "RESTORE", "SUSPEND_PRIVILEGES"]),
+  action: z.enum(["APPROVE", "REJECT", "HIDE", "RESTORE", "SUSPEND_PRIVILEGES", "FLAG"]),
   reason: z.string().trim().min(1, "A reason is required for moderation actions").max(1000),
 });
 

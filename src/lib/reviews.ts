@@ -249,12 +249,16 @@ export async function reportReview(
   return report;
 }
 
-const MODERATION_STATUS: Record<ReviewModerationAction, "PUBLISHED" | "REJECTED" | "HIDDEN" | null> = {
+const MODERATION_STATUS: Record<ReviewModerationAction, "PUBLISHED" | "REJECTED" | "HIDDEN" | "FLAGGED" | null> = {
   APPROVE: "PUBLISHED",
   REJECT: "REJECTED",
   HIDE: "HIDDEN",
   RESTORE: "PUBLISHED",
   SUSPEND_PRIVILEGES: null,
+  // Admin Phase 9: "Flag for Investigation" — same FLAGGED status the
+  // automatic moderation check and customer/business reports already use,
+  // just admin-initiated. Doesn't take the review down (HIDE does that).
+  FLAG: "FLAGGED",
 };
 
 // Part 32: every moderation action is logged with a mandatory reason —
@@ -286,18 +290,19 @@ export async function moderateReview(db: Db, params: { reviewId: string; action:
     });
   }
 
-  await notifyCustomer(db, {
-    businessId: review.businessId,
-    customerProfileId: review.customerProfileId,
-    title:
-      params.action === "APPROVE" || params.action === "RESTORE"
-        ? "Your review is published"
-        : params.action === "REJECT"
-          ? "Your review was rejected"
-          : "Your review is under review",
-    body: params.reason,
-    type: params.action === "APPROVE" || params.action === "RESTORE" ? "success" : "warning",
-  });
+  // Admin Phase 9: each action gets its own accurate title (the brief's own
+  // Notifications section lists "Review hidden"/"Review restored" as
+  // distinct events, not both folded into a generic "under review").
+  const CUSTOMER_NOTICE: Record<ReviewModerationAction, { title: string; type: "success" | "warning" | "info" }> = {
+    APPROVE: { title: "Your review is published", type: "success" },
+    RESTORE: { title: "Your review was restored", type: "success" },
+    REJECT: { title: "Your review was rejected", type: "warning" },
+    HIDE: { title: "Your review was hidden", type: "warning" },
+    FLAG: { title: "Your review is being reviewed", type: "info" },
+    SUSPEND_PRIVILEGES: { title: "Your review privileges were suspended", type: "warning" },
+  };
+  const notice = CUSTOMER_NOTICE[params.action];
+  await notifyCustomer(db, { businessId: review.businessId, customerProfileId: review.customerProfileId, title: notice.title, body: params.reason, type: notice.type });
 
   return review;
 }

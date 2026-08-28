@@ -769,11 +769,28 @@ enum QualityControlResult {
   FAILED
 }
 
+// WAITING_FOR_CUSTOMER/WAITING_FOR_DESIGNER/ESCALATED added (Admin Phase 9)
+// — real states the existing dispute flow had no way to represent: an
+// admin who has requested more information from one side, or raised
+// priority on a stuck case, previously had nothing but UNDER_REVIEW to
+// leave it in regardless of who the ball was actually in. Additive only;
+// RESOLVED/CLOSED still the two terminal states.
 enum DisputeStatus {
   OPEN
   UNDER_REVIEW
+  WAITING_FOR_CUSTOMER
+  WAITING_FOR_DESIGNER
+  ESCALATED
   RESOLVED
   CLOSED
+}
+
+// Mirrors OrderPriority's exact 3-value shape (no LOW tier there either) —
+// same convention, applied to disputes for the first time in Admin Phase 9.
+enum DisputePriority {
+  NORMAL
+  HIGH
+  URGENT
 }
 
 enum DisputeIssueType {
@@ -955,6 +972,16 @@ enum AuditLogAction {
   // this phase was paused mid-session) — the two below are genuinely new.
   DELIVERY_ESCALATED_BY_ADMIN
   DELIVERY_ESCALATION_RESOLVED_BY_ADMIN
+  // Admin Phase 9: Reviews, Ratings & Disputes Management. DISPUTE_REVIEWED
+  // and DISPUTE_RESOLVED_BY_ADMIN already existed and are unchanged —
+  // reviews get no new AuditLogAction values at all, since
+  // ReviewModeration (schema.prisma, Part 32) already is that domain's
+  // mandatory-reason audit trail; duplicating it into AuditLog would just
+  // be two logs of the same fact.
+  DISPUTE_ASSIGNED_BY_ADMIN
+  DISPUTE_INFO_REQUESTED_BY_ADMIN
+  DISPUTE_ESCALATED_BY_ADMIN
+  DISPUTE_CLOSED_BY_ADMIN
 }
 
 enum PortfolioItemStatus {
@@ -1225,6 +1252,7 @@ model User {
   connectedLogisticsProviders       LogisticsProviderConnection[] @relation("LogisticsProviderConnectedBy")
   createdDeliveries                 Delivery[]                    @relation("DeliveryCreatedBy")
   resolvedDisputes                  DisputeResolution[]           @relation("DisputeResolutionResolvedBy")
+  assignedDisputes                  Dispute[]                     @relation("DisputeAssignedAdmin")
   processedPayouts                  Payout[]                      @relation("PayoutProcessedBy")
   updatedPlatformSettings           PlatformSettings[]            @relation("PlatformSettingsUpdatedBy")
 
@@ -2753,6 +2781,13 @@ model Dispute {
   description String
   status      DisputeStatus    @default(OPEN)
 
+  // Admin Phase 9 — genuinely new: the existing dispute model had no
+  // priority or ownership concept. Both nullable-safe defaults (priority
+  // defaults NORMAL; unassigned is a real, common state, not an error).
+  priority        DisputePriority @default(NORMAL)
+  assignedAdminId String?
+  assignedAdmin   User?           @relation("DisputeAssignedAdmin", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -2763,6 +2798,7 @@ model Dispute {
   @@index([businessId, status])
   @@index([orderId])
   @@index([customerProfileId])
+  @@index([assignedAdminId])
 }
 
 model DisputeEvidence {
@@ -2983,6 +3019,10 @@ enum ReviewModerationAction {
   HIDE
   RESTORE
   SUSPEND_PRIVILEGES
+  // Admin Phase 9: "Flag for Investigation" — sets FLAGGED without hiding
+  // the review (HIDE already covers "take it down"), so a reviewer stays
+  // visible while an admin looks into it.
+  FLAG
 }
 
 enum ReviewDeletionRequestStatus {
