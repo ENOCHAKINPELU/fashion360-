@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, requireSuperAdmin } from "@/lib/rbac";
+import { dispatchNotification } from "@/lib/notification-center";
 
 const schema = z.object({ message: z.string().trim().min(1, "A message is required") });
 
@@ -16,13 +17,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
     await requireSuperAdmin();
     const { message } = schema.parse(await req.json());
 
-    await prisma.notification.create({
-      data: {
-        businessId,
-        title: "More information needed for verification",
-        body: message,
-        type: "warning",
-      },
+    await dispatchNotification(prisma, {
+      event: "DESIGNER_VERIFIED",
+      channel: "IN_APP",
+      businessId,
+      title: "More information needed for verification",
+      body: message,
+      inAppType: "warning",
     });
 
     return NextResponse.json({ ok: true });

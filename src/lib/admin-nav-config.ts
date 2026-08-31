@@ -38,7 +38,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { label: "Payments", href: "/admin/payments", icon: CreditCard, implemented: true, description: "Every payment, its escrow status, and the payout it funds." },
   { label: "Deliveries", href: "/admin/deliveries", icon: Truck, implemented: true, description: "Every shipment on the platform, from dispatch to delivered." },
   { label: "Reviews", href: "/admin/reviews", icon: Star, implemented: true, description: "Moderate reported and flagged reviews." },
-  { label: "Notifications", href: "/admin/notifications", icon: Bell, implemented: false, description: "Coming in a later Admin phase." },
+  { label: "Notifications", href: "/admin/notifications", icon: Bell, implemented: true, description: "Every notification, broadcast, template, and system alert on the platform." },
   { label: "Activity Log", href: "/admin/activity", icon: History, implemented: true, description: "Every recorded admin and platform action." },
 
   { label: "Verifications", href: "/admin/verifications", icon: BadgeCheck, implemented: true, group: "Platform" },

@@ -39,6 +39,7 @@ export async function startProduction(db: Db, params: { orderId: string; busines
       title: "Production has started",
       body: `Work on your order ${order.orderCode} has begun.`,
       type: "info",
+      event: "PRODUCTION_STARTED",
     });
   }
 

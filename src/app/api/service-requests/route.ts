@@ -54,6 +54,7 @@ export async function POST(req: NextRequest) {
         title: "New service request",
         body: `A customer requested "${data.description.slice(0, 60)}${data.description.length > 60 ? "…" : ""}"`,
         type: "info",
+        event: "REQUEST_SUBMITTED",
       });
 
       return request;

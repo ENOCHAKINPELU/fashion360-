@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, ApiError } from "@/lib/rbac";
 import { customerRegisterSchema } from "@/lib/validations/auth";
-import { sendEmail } from "@/lib/mailer";
+import { dispatchNotification } from "@/lib/notification-center";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { logAuditEvent } from "@/lib/audit-log";
@@ -102,9 +102,12 @@ export async function POST(req: NextRequest) {
       data: { identifier: user.email, token, expires: new Date(Date.now() + 1000 * 60 * 60 * 24) },
     });
 
-    await sendEmail({
-      to: user.email,
-      subject: "Verify your Fashion360 account",
+    await dispatchNotification(prisma, {
+      event: "CUSTOMER_REGISTERED",
+      channel: "EMAIL",
+      recipientUserId: user.id,
+      recipientEmail: user.email,
+      title: "Verify your Fashion360 account",
       body: `Welcome to Fashion360, ${firstName}! Your digital fashion journey starts here. Verify your email: ${process.env.AUTH_URL ?? ""}/verify-email?token=${token}`,
     });
 

@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/lib/rbac";
 import { logAuditEvent } from "@/lib/audit-log";
+import { dispatchNotification } from "@/lib/notification-center";
 
 const PAGE_SIZE = 20;
 // A starting, fixed bar — there isn't yet enough platform spend volume to
@@ -175,7 +176,7 @@ export async function getAdminCustomerList(params: AdminCustomerListParams) {
 }
 
 export async function suspendCustomer(db: typeof prisma, params: { userId: string; reason: string; actorId: string }) {
-  const user = await db.user.findUnique({ where: { id: params.userId }, select: { id: true, role: true, suspendedAt: true } });
+  const user = await db.user.findUnique({ where: { id: params.userId }, select: { id: true, role: true, suspendedAt: true, email: true } });
   if (!user || user.role !== "CUSTOMER") throw new ApiError(404, "Customer not found");
   if (user.suspendedAt) throw new ApiError(400, "This customer is already suspended");
 
@@ -190,6 +191,18 @@ export async function suspendCustomer(db: typeof prisma, params: { userId: strin
     entityType: "User",
     entityId: params.userId,
     metadata: { reason: params.reason },
+  });
+
+  // EMAIL, not IN_APP — a suspended account is blocked from logging in
+  // (see auth.ts's authorize()), so an in-app notification would never be
+  // seen.
+  await dispatchNotification(db, {
+    event: "ACCOUNT_SUSPENDED",
+    channel: "EMAIL",
+    recipientUserId: user.id,
+    recipientEmail: user.email,
+    title: "Your Fashion360 account has been suspended",
+    body: `Your account was suspended: ${params.reason}. Contact support if you believe this is a mistake.`,
   });
 }
 

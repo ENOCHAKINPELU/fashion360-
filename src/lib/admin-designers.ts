@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/lib/rbac";
 import { logAuditEvent } from "@/lib/audit-log";
+import { dispatchNotification } from "@/lib/notification-center";
 
 const PAGE_SIZE = 20;
 // Fixed, documented starting bars — same reasoning as Phase 3's high-value
@@ -197,6 +198,25 @@ export async function suspendDesigner(db: typeof prisma, params: { businessId: s
     entityId: params.businessId,
     metadata: { reason: params.reason },
   });
+
+  // EMAIL, not IN_APP — a suspended business's staff logins are blocked
+  // (see requireBusinessContext in rbac.ts), so an in-app notification
+  // would never be seen. Every OWNER on the team gets one, not just
+  // whoever happens to log in next.
+  const owners = await db.user.findMany({ where: { businessId: params.businessId, role: "OWNER" }, select: { id: true, email: true } });
+  await Promise.all(
+    owners.map((owner) =>
+      dispatchNotification(db, {
+        event: "ACCOUNT_SUSPENDED",
+        channel: "EMAIL",
+        recipientUserId: owner.id,
+        recipientEmail: owner.email,
+        businessId: params.businessId,
+        title: "Your Fashion360 business account has been suspended",
+        body: `Your business account was suspended: ${params.reason}. Contact support if you believe this is a mistake.`,
+      })
+    )
+  );
 }
 
 export async function reactivateDesigner(db: typeof prisma, params: { businessId: string; actorId: string }) {

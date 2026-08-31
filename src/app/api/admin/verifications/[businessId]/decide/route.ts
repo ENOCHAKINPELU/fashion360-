@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, ApiError, requireSuperAdmin } from "@/lib/rbac";
+import { dispatchNotification } from "@/lib/notification-center";
 
 const decideSchema = z.object({
   decision: z.enum(["VERIFIED", "REJECTED"]),
@@ -27,16 +28,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ bus
       },
     });
 
-    await prisma.notification.create({
-      data: {
-        businessId,
-        title: data.decision === "VERIFIED" ? "Your business is now verified" : "Your verification request was declined",
-        body:
-          data.decision === "VERIFIED"
-            ? "Congratulations — the Verified badge now shows on your public profile."
-            : data.notes || "Please review the feedback and submit again when ready.",
-        type: data.decision === "VERIFIED" ? "success" : "warning",
-      },
+    await dispatchNotification(prisma, {
+      event: "DESIGNER_VERIFIED",
+      channel: "IN_APP",
+      businessId,
+      title: data.decision === "VERIFIED" ? "Your business is now verified" : "Your verification request was declined",
+      body:
+        data.decision === "VERIFIED"
+          ? "Congratulations — the Verified badge now shows on your public profile."
+          : data.notes || "Please review the feedback and submit again when ready.",
+      inAppType: data.decision === "VERIFIED" ? "success" : "warning",
     });
 
     return NextResponse.json({ verification });

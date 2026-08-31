@@ -69,6 +69,7 @@ export async function reportDeliveryProblem(
     title: "Customer reported a problem",
     body: `${order.orderCode}: ${params.description}`,
     type: "danger",
+    event: "DISPUTE_OPENED",
   });
 
   await notifyCustomer(db, {
@@ -77,6 +78,7 @@ export async function reportDeliveryProblem(
     title: "Your report has been submitted",
     body: `We've notified the business about the problem with order ${order.orderCode}. This is now under review and blocks payout eligibility for this order.`,
     type: "info",
+    event: "DISPUTE_OPENED",
   });
 
   return dispute;

@@ -61,6 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         title: "A business responded to your request",
         body: `${request.business.name} ${RESPONSE_LABEL[data.type] ?? "responded"}.`,
         type: data.type === "ACCEPTED" ? "success" : data.type === "DECLINED" ? "warning" : "info",
+        event: data.type === "ACCEPTED" ? "REQUEST_ACCEPTED" : undefined,
       });
 
       return result;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveLogisticsProvider } from "@/lib/logistics-providers";
 import { recordDeliveryEvent } from "@/lib/delivery";
+import { raiseSystemAlert } from "@/lib/admin-system-alerts";
 import type { LogisticsProviderType } from "@prisma/client";
 
 // Mirrors /api/payments/webhook/[provider]/[businessId] exactly — one URL
@@ -93,9 +94,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       await prisma.deliveryWebhookEvent.update({ where: { id: webhookEvent.id }, data: { status: "IGNORED", processedAt: new Date() } });
     }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     await prisma.deliveryWebhookEvent.update({
       where: { id: webhookEvent.id },
-      data: { status: "FAILED", processedAt: new Date(), errorMessage: error instanceof Error ? error.message : "Unknown error" },
+      data: { status: "FAILED", processedAt: new Date(), errorMessage },
+    });
+    await raiseSystemAlert(prisma, {
+      category: "COURIER_FAILURE",
+      title: "Courier webhook processing failed",
+      message: `${provider} webhook for business ${businessId} failed to process: ${errorMessage}`,
+      context: { provider, businessId, webhookEventId: webhookEvent.id },
     });
   }
 

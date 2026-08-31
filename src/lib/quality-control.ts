@@ -81,6 +81,7 @@ export async function submitQualityCheck(
       title: "Quality check passed",
       body: `${order.orderCode} passed quality control and can move to Ready for Delivery.`,
       type: "success",
+      event: "PRODUCTION_COMPLETED",
     });
     if (order.customerProfileId) {
       await notifyCustomer(db, {
@@ -89,6 +90,7 @@ export async function submitQualityCheck(
         title: "Your order passed quality control",
         body: `${order.orderCode} has passed quality control and is almost ready.`,
         type: "success",
+        event: "PRODUCTION_COMPLETED",
       });
     }
   } else {

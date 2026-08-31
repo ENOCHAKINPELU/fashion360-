@@ -103,6 +103,7 @@ async function applySuccessfulPayment(
       ? `${payment.amount} ${payment.currency} verified on ${invoice.invoiceNumber}. Payout eligibility is tracked once the order is fulfilled and confirmed.`
       : `${payment.amount} ${payment.currency} received on ${invoice.invoiceNumber}.`,
     type: "success",
+    event: "PAYMENT_RECEIVED",
   });
 
   if (order?.customerProfileId) {
@@ -115,6 +116,7 @@ async function applySuccessfulPayment(
           ? `Your payment for order ${order.orderCode} has been verified. ${PAYMENT_PROTECTION_STATEMENT}`
           : `A payment of ${payment.amount} ${payment.currency} for order ${order.orderCode} has been verified.`,
       type: "success",
+      event: "PAYMENT_RECEIVED",
     });
   }
 }

@@ -982,6 +982,14 @@ enum AuditLogAction {
   DISPUTE_INFO_REQUESTED_BY_ADMIN
   DISPUTE_ESCALATED_BY_ADMIN
   DISPUTE_CLOSED_BY_ADMIN
+  // Admin Phase 10: Notifications & Communication Center.
+  BROADCAST_CREATED
+  BROADCAST_SENT
+  BROADCAST_CANCELLED
+  NOTIFICATION_RETRIED_BY_ADMIN
+  NOTIFICATION_TEMPLATE_CREATED
+  NOTIFICATION_TEMPLATE_UPDATED
+  SYSTEM_ALERT_RESOLVED_BY_ADMIN
 }
 
 enum PortfolioItemStatus {
@@ -1060,6 +1068,7 @@ model Business {
 
   users         User[]
   notifications Notification[]
+  notificationLogs NotificationLog[]
   customers     Customer[]
   customerTags  CustomerTag[]
 
@@ -1262,6 +1271,12 @@ model User {
   resolvedReviewReports          ReviewReport[]          @relation("ReviewReportResolvedBy")
   resolvedReviewDeletionRequests ReviewDeletionRequest[] @relation("ReviewDeletionRequestResolvedBy")
   updatedRankingFactors          RankingFactor[]         @relation("RankingFactorUpdatedBy")
+
+  receivedNotificationLogs   NotificationLog[]       @relation("NotificationLogRecipientUser")
+  createdBroadcasts          Broadcast[]              @relation("BroadcastCreatedBy")
+  cancelledBroadcasts        Broadcast[]              @relation("BroadcastCancelledBy")
+  updatedNotificationTemplates NotificationTemplate[] @relation("NotificationTemplateUpdatedBy")
+  resolvedSystemAlerts        SystemAlert[]           @relation("SystemAlertResolvedBy")
   updatedPersonalizationWeights  PersonalizationWeight[] @relation("PersonalizationWeightUpdatedBy")
 
   @@index([businessId])
@@ -4885,6 +4900,7 @@ model CustomerProfile {
   designHistory         CustomerDesignHistory[]
   wardrobeItems         CustomerWardrobeItem[]
   fashionHistory        CustomerFashionHistory[]
+  receivedNotificationLogs NotificationLog[]
 
   serviceRequests           ServiceRequest[]
   businessFavorites         BusinessFavorite[]
@@ -5754,4 +5770,267 @@ model WaitlistSignup {
   createdAt DateTime @default(now())
 
   @@unique([email, role])
+}
+
+// ===================== NOTIFICATIONS & COMMUNICATION CENTER (Admin Phase 10) =====================
+//
+// AUDIT SUMMARY: the `Notification` model above (top of file, "IN-APP
+// NOTIFICATIONS") is the real, working in-app bell/dashboard feed — but it
+// has no channel concept, no delivery status, no failure tracking, and no
+// link back to the event that produced it. Real outbound email already
+// exists too (lib/mailer.ts — a genuine Resend integration with a
+// console fallback in dev) but is called ad hoc from a handful of routes
+// with zero logging: nothing records that an email was even attempted,
+// let alone whether it succeeded. SMS and push have no provider
+// integrated anywhere in this codebase.
+//
+// This phase adds one unified, channel-agnostic ledger (NotificationLog)
+// that every channel writes to, including in-app — the existing
+// `Notification` model is untouched and still the one the bell icon
+// reads, but it's now written *through* the new dispatcher
+// (lib/notification-center.ts) instead of being created directly, so
+// every existing in-app call site (service-request-notify.ts,
+// financial-notifications.ts, design-notifications.ts, and a handful of
+// inline `prisma.notification.create` calls) gets full Admin visibility
+// for free, with no change to their own call sites' behavior.
+//
+// SMS/PUSH are real, selectable NotificationChannel values so the
+// architecture doesn't need to change shape when a provider is
+// eventually wired in — but with no provider configured today,
+// dispatching to either logs a genuine FAILED status with an honest
+// failureReason ("channel not configured") rather than a fabricated
+// SENT. See lib/notification-center.ts for where that provider slot is.
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  SMS
+  PUSH
+}
+
+enum NotificationStatus {
+  QUEUED
+  PROCESSING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  EXPIRED
+}
+
+// The 19 events named in the Phase 10 spec, plus BROADCAST for
+// admin-initiated announcements and SYSTEM for anything dispatched
+// without a specific business event behind it.
+enum NotificationEvent {
+  CUSTOMER_REGISTERED
+  DESIGNER_REGISTERED
+  DESIGNER_VERIFIED
+  REQUEST_SUBMITTED
+  REQUEST_ACCEPTED
+  ORDER_CREATED
+  PAYMENT_RECEIVED
+  ESCROW_CREATED
+  PRODUCTION_STARTED
+  PRODUCTION_COMPLETED
+  COURIER_ASSIGNED
+  SHIPMENT_PICKED_UP
+  DELIVERY_COMPLETED
+  REVIEW_SUBMITTED
+  DISPUTE_OPENED
+  REFUND_APPROVED
+  ACCOUNT_SUSPENDED
+  PASSWORD_RESET
+  BROADCAST
+  SYSTEM
+}
+
+model NotificationLog {
+  id      String              @id @default(cuid())
+  event   NotificationEvent
+  channel NotificationChannel
+  status  NotificationStatus  @default(QUEUED)
+
+  // Recipient — denormalized email/name/type snapshot so search, filter,
+  // and history views never need a join and survive the recipient later
+  // being deleted or suspended. recipientUserId/recipientCustomerProfileId
+  // are still kept as real (nullable, SetNull-on-delete) FKs for the
+  // "communication history for this Customer/Designer" lookups.
+  recipientUserId            String?
+  recipientUser              User?             @relation("NotificationLogRecipientUser", fields: [recipientUserId], references: [id], onDelete: SetNull)
+  recipientCustomerProfileId String?
+  recipientCustomerProfile   CustomerProfile?  @relation(fields: [recipientCustomerProfileId], references: [id], onDelete: SetNull)
+  recipientEmail             String?
+  recipientName              String?
+  recipientType               UserRole?
+
+  businessId String?
+  business   Business? @relation(fields: [businessId], references: [id], onDelete: SetNull)
+
+  // Optional links to the entity the event is about, so /admin/orders/[id]
+  // etc. can show "communication history for this Order" without a
+  // separate lookup table. IDs only (no relation) — these span models
+  // across several unrelated phases and a NotificationLog outliving the
+  // entity it references (e.g. a cancelled order later purged) should
+  // never cascade-delete a communication record.
+  orderId    String?
+  paymentId  String?
+  deliveryId String?
+  disputeId  String?
+  reviewId   String?
+
+  title String
+  body  String
+
+  // Set only when channel is IN_APP — the id of the row this dispatch wrote
+  // to the pre-existing Notification (bell/dashboard feed) model, purely so
+  // the two existing "mark read" routes (api/notifications,
+  // api/customer/notifications) can flip this log's status to READ too
+  // without changing their own query shape. Plain id, not a relation — same
+  // reasoning as orderId/paymentId/etc. above.
+  inAppNotificationId String?
+
+  templateKey String?
+  broadcastId String?
+  broadcast   Broadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
+
+  deliveryAttempts Int       @default(0)
+  failureReason    String?
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  readAt           DateTime?
+  expiresAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([event])
+  @@index([channel])
+  @@index([status])
+  @@index([recipientUserId])
+  @@index([recipientCustomerProfileId])
+  @@index([businessId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@index([inAppNotificationId])
+}
+
+enum BroadcastTarget {
+  ALL_USERS
+  CUSTOMERS
+  DESIGNERS
+  SEGMENT
+}
+
+enum BroadcastStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+  FAILED
+}
+
+// Deliberately a fixed, named list rather than a free-form query builder —
+// a generic segment engine is a new product concept, not a controlled
+// extension of an existing one. Thresholds reused from the ones already
+// established in lib/admin-customers.ts / lib/admin-designers.ts
+// (HIGH_VALUE_THRESHOLD_NGN, etc.) rather than new ones invented here.
+enum BroadcastSegment {
+  VERIFIED_DESIGNERS
+  UNVERIFIED_DESIGNERS
+  SUSPENDED_ACCOUNTS
+  HIGH_VALUE_CUSTOMERS
+  INACTIVE_CUSTOMERS
+}
+
+model Broadcast {
+  id    String @id @default(cuid())
+  title String
+  body  String
+
+  target  BroadcastTarget
+  segment BroadcastSegment?
+
+  // Single-channel per broadcast for v1 — see the phase report for why a
+  // multi-channel fan-out (esp. bulk EMAIL to every real user) is kept
+  // deliberately conservative rather than defaulted-on.
+  channel NotificationChannel @default(IN_APP)
+
+  status         BroadcastStatus @default(DRAFT)
+  scheduledFor   DateTime?
+  expiresAt      DateTime?
+  sentAt         DateTime?
+  recipientCount Int?
+
+  createdById String
+  createdBy   User   @relation("BroadcastCreatedBy", fields: [createdById], references: [id])
+  cancelledById String?
+  cancelledBy   User?  @relation("BroadcastCancelledBy", fields: [cancelledById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notifications NotificationLog[]
+
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model NotificationTemplate {
+  id          String  @id @default(cuid())
+  key         String  @unique // e.g. "welcome_customer", "payment_success" — stable, referenced from code
+  name        String
+  description String?
+
+  channel NotificationChannel @default(IN_APP)
+  event   NotificationEvent?
+
+  // {{placeholder}} tokens — lib/notification-center.ts documents the
+  // supported placeholder names per event.
+  titleTemplate String
+  bodyTemplate  String
+
+  isActive Boolean @default(true)
+
+  updatedById String?
+  updatedBy   User?   @relation("NotificationTemplateUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SystemAlertCategory {
+  PAYMENT_FAILURE
+  COURIER_FAILURE
+  API_FAILURE
+  ESCROW_ERROR
+  HIGH_DISPUTE_RATE
+  DATABASE_ERROR
+  AUTH_FAILURE
+}
+
+enum SystemAlertSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+model SystemAlert {
+  id       String               @id @default(cuid())
+  category SystemAlertCategory
+  severity SystemAlertSeverity  @default(WARNING)
+  title    String
+  message  String
+  context  Json?
+
+  resolvedAt   DateTime?
+  resolvedById String?
+  resolvedBy   User?     @relation("SystemAlertResolvedBy", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([category])
+  @@index([severity])
+  @@index([resolvedAt])
+  @@index([createdAt])
 }

@@ -232,6 +232,7 @@ export async function recordDeliveryEvent(
         title: customerCopy.title,
         body: customerCopy.body,
         type: params.status === "FAILED" ? "danger" : "info",
+        event: deliveryStatusToNotificationEvent(params.status),
       });
     }
   }
@@ -244,10 +245,28 @@ export async function recordDeliveryEvent(
       title: "Order delivered",
       body: `${order.orderCode} was marked delivered. Awaiting customer confirmation.`,
       type: "success",
+      event: "DELIVERY_COMPLETED",
     });
   }
 
   return updatedDelivery;
+}
+
+// Admin Phase 10: maps the delivery lifecycle onto the spec's named events
+// where one exists; every other status keeps notifying (unchanged
+// behavior) just tagged generically (undefined -> dispatcher's SYSTEM
+// default) since the spec doesn't name an event for it.
+function deliveryStatusToNotificationEvent(status: DeliveryStatus) {
+  switch (status) {
+    case "COURIER_ASSIGNED":
+      return "COURIER_ASSIGNED" as const;
+    case "PICKED_UP":
+      return "SHIPMENT_PICKED_UP" as const;
+    case "DELIVERED":
+      return "DELIVERY_COMPLETED" as const;
+    default:
+      return undefined;
+  }
 }
 
 function customerDeliveryMessage(status: DeliveryStatus): { title: string; body: string } | null {

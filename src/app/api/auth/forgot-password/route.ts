@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { apiErrorResponse, ApiError } from "@/lib/rbac";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
-import { sendEmail } from "@/lib/mailer";
+import { dispatchNotification } from "@/lib/notification-center";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { logAuditEvent } from "@/lib/audit-log";
@@ -26,9 +26,12 @@ export async function POST(req: NextRequest) {
         data: { identifier: `reset:${email}`, token, expires: new Date(Date.now() + 1000 * 60 * 30) },
       });
 
-      await sendEmail({
-        to: email,
-        subject: "Reset your Fashion360 password",
+      await dispatchNotification(prisma, {
+        event: "PASSWORD_RESET",
+        channel: "EMAIL",
+        recipientUserId: user.id,
+        recipientEmail: email,
+        title: "Reset your Fashion360 password",
         body: `Reset your password: ${process.env.AUTH_URL ?? ""}/reset-password?token=${token}`,
       });
 

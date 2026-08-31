@@ -10,6 +10,7 @@ import { getOrCreatePlatformSettings } from "@/lib/platform-settings";
 import { recordGarmentDelivered } from "@/lib/fashion-milestones";
 import { logCustomerBehavior } from "@/lib/customer-behavior";
 import { createTransfer, getTransferStatus } from "@/lib/flutterwave";
+import { raiseSystemAlert } from "@/lib/admin-system-alerts";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -114,6 +115,7 @@ export async function makePayoutEligible(db: Db, params: { orderId: string; busi
     title: "Payout eligible",
     body: `${order.orderCode} is complete, your payout of ${netAmount} is now eligible for processing.`,
     type: "success",
+    event: "ESCROW_CREATED",
   });
 
   return payout;
@@ -263,6 +265,13 @@ export async function attemptAutomaticPayoutRelease(db: typeof prisma, params: {
     // showed up for manual handling before automatic release existed.
     const reason = error instanceof Error ? error.message : "Automatic release failed";
     console.error(`attemptAutomaticPayoutRelease failed for payout ${params.payoutId}:`, error);
+    await raiseSystemAlert(db, {
+      category: "PAYMENT_FAILURE",
+      severity: "CRITICAL",
+      title: "Automatic payout release failed",
+      message: `Payout ${params.payoutId} failed to auto-release: ${reason}`,
+      context: { payoutId: params.payoutId },
+    });
     return { released: false, reason };
   }
 }

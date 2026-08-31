@@ -89,11 +89,13 @@ export async function submitReview(
     title: "You received a new review",
     body: `${order.orderCode} received a ${params.overallRating}-star review.`,
     type: "info",
+    event: "REVIEW_SUBMITTED",
   });
 
   await notifyCustomer(db, {
     businessId: order.businessId,
     customerProfileId: params.customerProfileId,
+    event: "REVIEW_SUBMITTED",
     title: review.status === "PUBLISHED" ? "Your review is published" : "Your review was submitted",
     body:
       review.status === "PUBLISHED"

@@ -159,6 +159,7 @@ export async function processRefund(
     title: "Refund processed",
     body: `${params.amount} ${payment.currency} refunded on ${invoice.invoiceNumber}.`,
     type: "warning",
+    event: "REFUND_APPROVED",
   });
   if (order?.customerProfileId) {
     await notifyCustomer(tx, {
@@ -167,6 +168,7 @@ export async function processRefund(
       title: "Refund completed",
       body: `Your refund of ${params.amount} ${payment.currency} for order ${order.orderCode} has been completed.`,
       type: "success",
+      event: "REFUND_APPROVED",
     });
   }
 

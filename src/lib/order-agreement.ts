@@ -166,6 +166,7 @@ export async function createOrderFromAcceptedQuotation(
       title: "Order agreement generated",
       body: `${quotation.quotationNumber} was accepted, order ${order.orderCode} is ready for payment.`,
       type: "success",
+      event: "ORDER_CREATED",
     }),
     quotation.customerProfileId
       ? notifyCustomer(tx, {
@@ -174,6 +175,7 @@ export async function createOrderFromAcceptedQuotation(
           title: "Your order agreement is ready",
           body: `Order ${order.orderCode} has been created. Complete payment to secure your order.`,
           type: "success",
+          event: "ORDER_CREATED",
         })
       : Promise.resolve(),
     quotation.customerProfileId
