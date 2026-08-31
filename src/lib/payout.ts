@@ -339,6 +339,22 @@ export async function processPayout(db: Db, params: { payoutId: string; business
     type: params.status === "FAILED" ? "danger" : "success",
   });
 
+  // A payout genuinely failing at the provider (discovered here whether an
+  // admin manually processed it or refreshTransferStatus's async poll
+  // found it out) is real money that didn't move as expected — worth a
+  // platform-wide alert distinct from the business-facing notification
+  // above, since nobody is necessarily watching this specific payout when
+  // an async status poll is what surfaces the failure.
+  if (params.status === "FAILED") {
+    await raiseSystemAlert(db, {
+      category: "ESCROW_ERROR",
+      severity: "CRITICAL",
+      title: "Payout transfer failed",
+      message: `Payout ${payout.id} for order ${order?.orderCode ?? payout.orderId} failed: ${params.failureReason ?? "no reason given"}`,
+      context: { payoutId: payout.id, orderId: payout.orderId, businessId: params.businessId },
+    });
+  }
+
   return updated;
 }
 

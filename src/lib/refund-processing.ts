@@ -7,6 +7,7 @@ import { notifyCustomer } from "@/lib/service-request-notify";
 import { syncOrderFinancials } from "@/lib/order-financial-sync";
 import { resolvePaymentProvider } from "@/lib/payment-providers";
 import { PlatformFlutterwaveProvider } from "@/lib/payment-providers/platform-flutterwave-provider";
+import { raiseSystemAlert } from "@/lib/admin-system-alerts";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -34,20 +35,42 @@ export async function initiateRefundForPayment(
   // charges (see lib/payment-link.ts) — refunded straight through the
   // platform account, no PaymentGatewayConnection involved. Anything else
   // is a payment from the legacy per-business-gateway flow.
-  if (payment.provider === "FLUTTERWAVE" && payment.providerReference?.startsWith("chg_")) {
-    const result = await new PlatformFlutterwaveProvider().initiateRefund({
-      providerReference: payment.providerReference,
-      amount: params.amount,
-      currency: payment.currency,
-    });
-    status = result.status;
-    providerRefundReference = result.providerRefundReference;
-  } else if (payment.provider !== "MANUAL" && payment.providerReference) {
-    const connection = await db.paymentGatewayConnection.findUnique({ where: { businessId_provider: { businessId: params.businessId, provider: payment.provider } } });
-    if (!connection) throw new ApiError(400, "The original payment gateway is no longer connected, process this refund manually");
-    const result = await resolvePaymentProvider(connection).initiateRefund({ providerReference: payment.providerReference, amount: params.amount, currency: payment.currency });
-    status = result.status;
-    providerRefundReference = result.providerRefundReference;
+  // Neither branch below is wrapped in a DB transaction — same reasoning
+  // as every other place in this codebase that calls a real payment
+  // provider (see lib/payout.ts's comment on executePayoutTransfer): the
+  // HTTP call must never sit inside an open transaction. A failure here
+  // means processRefund below is never reached, so nothing is recorded as
+  // refunded — the caller's own error response is the immediate signal,
+  // but raiseSystemAlert also surfaces it platform-wide since this
+  // function is shared with dispute resolution, where a refund can fail
+  // with no admin actively watching in real time.
+  try {
+    if (payment.provider === "FLUTTERWAVE" && payment.providerReference?.startsWith("chg_")) {
+      const result = await new PlatformFlutterwaveProvider().initiateRefund({
+        providerReference: payment.providerReference,
+        amount: params.amount,
+        currency: payment.currency,
+      });
+      status = result.status;
+      providerRefundReference = result.providerRefundReference;
+    } else if (payment.provider !== "MANUAL" && payment.providerReference) {
+      const connection = await db.paymentGatewayConnection.findUnique({ where: { businessId_provider: { businessId: params.businessId, provider: payment.provider } } });
+      if (!connection) throw new ApiError(400, "The original payment gateway is no longer connected, process this refund manually");
+      const result = await resolvePaymentProvider(connection).initiateRefund({ providerReference: payment.providerReference, amount: params.amount, currency: payment.currency });
+      status = result.status;
+      providerRefundReference = result.providerRefundReference;
+    }
+  } catch (error) {
+    if (!(error instanceof ApiError)) {
+      await raiseSystemAlert(db, {
+        category: "API_FAILURE",
+        severity: "CRITICAL",
+        title: "Refund request to payment provider failed",
+        message: `Refunding payment ${payment.id} (${params.amount} ${payment.currency}) failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        context: { paymentId: payment.id, businessId: params.businessId, amount: params.amount },
+      });
+    }
+    throw error;
   }
 
   return processRefund(db, {
