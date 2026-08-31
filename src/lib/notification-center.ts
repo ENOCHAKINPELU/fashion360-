@@ -73,7 +73,16 @@ async function resolveRecipient(
   db: Db,
   params: Pick<DispatchNotificationParams, "recipientUserId" | "recipientCustomerProfileId" | "recipientEmail" | "recipientName" | "recipientType">
 ) {
-  if (params.recipientEmail || (!params.recipientUserId && !params.recipientCustomerProfileId)) {
+  // Skip the DB round-trip only when the caller already supplied a full
+  // snapshot (recipientType included, e.g. lib/admin-broadcasts.ts, which
+  // already looked the role up once per recipient while resolving the
+  // broadcast's target/segment — doing it again per dispatch would be a
+  // real N+1 against a potentially large recipient list) or when there's
+  // no id to look anything up from at all. Anywhere an id is present but
+  // recipientType wasn't given (e.g. forgot-password, which passes
+  // recipientEmail as an override but not the role), the real lookup
+  // still runs so the snapshot isn't silently incomplete.
+  if (params.recipientType || (!params.recipientUserId && !params.recipientCustomerProfileId)) {
     return {
       email: params.recipientEmail ?? null,
       name: params.recipientName ?? null,

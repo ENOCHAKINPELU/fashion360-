@@ -1,4 +1,4 @@
-import type { Prisma, BroadcastTarget, BroadcastSegment, BroadcastStatus } from "@prisma/client";
+import type { Prisma, BroadcastTarget, BroadcastSegment, BroadcastStatus, UserRole } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ApiError } from "@/lib/rbac";
 import { logAuditEvent } from "@/lib/audit-log";
@@ -17,14 +17,15 @@ interface BroadcastRecipient {
   name: string | null;
   customerProfileId: string | null;
   businessId: string | null;
+  role: UserRole;
 }
 
 async function queryUsers(where: Prisma.UserWhereInput): Promise<BroadcastRecipient[]> {
   const users = await prisma.user.findMany({
     where,
-    select: { id: true, email: true, name: true, businessId: true, customerProfile: { select: { id: true } } },
+    select: { id: true, email: true, name: true, businessId: true, role: true, customerProfile: { select: { id: true } } },
   });
-  return users.map((u) => ({ userId: u.id, email: u.email, name: u.name, customerProfileId: u.customerProfile?.id ?? null, businessId: u.businessId }));
+  return users.map((u) => ({ userId: u.id, email: u.email, name: u.name, customerProfileId: u.customerProfile?.id ?? null, businessId: u.businessId, role: u.role }));
 }
 
 // Every target/segment resolves to a plain list of Users — see the phase
@@ -163,6 +164,7 @@ export async function sendBroadcastNow(params: { broadcastId: string; actorId?: 
         recipientCustomerProfileId: r.customerProfileId,
         recipientEmail: r.email,
         recipientName: r.name,
+        recipientType: r.role,
         businessId: r.businessId,
         broadcastId: broadcast.id,
         expiresAt: broadcast.expiresAt,
