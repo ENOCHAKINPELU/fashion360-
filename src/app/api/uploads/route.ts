@@ -19,10 +19,11 @@ const ALLOWED_FOLDERS = new Set([
   "dispute-evidence",
   "review-photos",
   "verification-documents",
+  "delivery-evidence",
 ]);
 
 const MODEL_ALLOWED_FOLDERS = new Set(["design-models"]);
-const VIDEO_ALLOWED_FOLDERS = new Set(["dispute-evidence"]);
+const VIDEO_ALLOWED_FOLDERS = new Set(["dispute-evidence", "delivery-evidence"]);
 
 export async function POST(req: NextRequest) {
   try {

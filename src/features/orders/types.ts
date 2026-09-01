@@ -272,6 +272,10 @@ export interface DeliveryData {
   confirmationDeadline: string | null;
   customerConfirmedAt: string | null;
   reportedProblemAt: string | null;
+  waybillUrl: string | null;
+  packagePhotoUrl: string | null;
+  packageVideoUrl: string | null;
+  shipmentVerifiedAt: string | null;
   events: DeliveryEventData[];
 }
 

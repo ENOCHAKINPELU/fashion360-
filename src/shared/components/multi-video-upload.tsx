@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils";
 export function MultiVideoUpload({
   value,
   onChange,
+  folder = "dispute-evidence",
   label = "Add videos",
   max = 3,
 }: {
   value: string[];
   onChange: (urls: string[]) => void;
+  folder?: "dispute-evidence" | "delivery-evidence";
   label?: string;
   max?: number;
 }) {
@@ -31,7 +33,7 @@ export function MultiVideoUpload({
       for (const file of selected) {
         const form = new FormData();
         form.append("file", file);
-        form.append("folder", "dispute-evidence");
+        form.append("folder", folder);
         form.append("kind", "video");
         const res = await fetch("/api/uploads", { method: "POST", body: form });
         const data = await res.json();

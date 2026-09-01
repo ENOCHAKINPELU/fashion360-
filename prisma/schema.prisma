@@ -801,6 +801,15 @@ enum DisputeIssueType {
   SIZE_MISMATCH
   LATE_DELIVERY
   MISSING_ITEMS
+  // Two additions for the manual-verification delivery flow's "Did you
+  // receive your order?" -> No path — PACKAGE_MISSING and NEVER_DELIVERED
+  // read as near-synonyms but are kept as distinct, real values (not
+  // collapsed into one) since a customer choosing between them is choosing
+  // between two different labels shown in the same picker; giving both a
+  // real backing value is more honest than making one silently alias the
+  // other.
+  PACKAGE_MISSING
+  NEVER_DELIVERED
   OTHER
 }
 
@@ -990,6 +999,8 @@ enum AuditLogAction {
   NOTIFICATION_TEMPLATE_CREATED
   NOTIFICATION_TEMPLATE_UPDATED
   SYSTEM_ALERT_RESOLVED_BY_ADMIN
+  // Manual-verification delivery flow follow-up.
+  DELIVERY_SHIPMENT_VERIFIED_BY_ADMIN
 }
 
 enum PortfolioItemStatus {
@@ -1260,6 +1271,7 @@ model User {
   confirmedQualityControlChecklists QualityControlChecklist[]     @relation("QualityControlConfirmedBy")
   connectedLogisticsProviders       LogisticsProviderConnection[] @relation("LogisticsProviderConnectedBy")
   createdDeliveries                 Delivery[]                    @relation("DeliveryCreatedBy")
+  verifiedDeliveryShipments         Delivery[]                    @relation("DeliveryShipmentVerifiedBy")
   resolvedDisputes                  DisputeResolution[]           @relation("DisputeResolutionResolvedBy")
   assignedDisputes                  Dispute[]                     @relation("DisputeAssignedAdmin")
   processedPayouts                  Payout[]                      @relation("PayoutProcessedBy")
@@ -2713,6 +2725,27 @@ model Delivery {
   confirmationDeadline DateTime?
   customerConfirmedAt  DateTime?
   reportedProblemAt    DateTime?
+
+  // Dispatch evidence — captured by the business at "Ready for Dispatch"
+  // time (createDeliveryForOrder), distinct from proofPhotoUrl/
+  // signatureUrl above, which are courier-provided proof of *delivery*,
+  // not proof the business actually packaged and shipped the item. This
+  // is the manual-verification alternative to courier API tracking: real
+  // uploaded evidence an admin can look at, not a fabricated GPS trail.
+  waybillUrl      String?
+  packagePhotoUrl String?
+  packageVideoUrl String?
+
+  // Admin's manual verification gate (see lib/admin-deliveries.ts's
+  // verifyShipment) — confirms tracking number, courier, and at least one
+  // piece of evidence are all present before calling a shipment
+  // trustworthy. Deliberately does NOT change payout timing itself; the
+  // existing eligibility/confirmation/auto-release state machine
+  // (lib/payout.ts) is untouched — this is an evidence-quality signal for
+  // Admin, not a second release trigger.
+  shipmentVerifiedAt   DateTime?
+  shipmentVerifiedById String?
+  shipmentVerifiedBy   User?     @relation("DeliveryShipmentVerifiedBy", fields: [shipmentVerifiedById], references: [id], onDelete: SetNull)
 
   createdById String?
   createdBy   User?   @relation("DeliveryCreatedBy", fields: [createdById], references: [id])

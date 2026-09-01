@@ -23,7 +23,8 @@ export function MultiImageUpload({
     | "design-references"
     | "production-photos"
     | "dispute-evidence"
-    | "review-photos";
+    | "review-photos"
+    | "delivery-evidence";
   label?: string;
   max?: number;
 }) {

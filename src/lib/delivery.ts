@@ -7,6 +7,7 @@ import { notifyFinancialEvent } from "@/lib/financial-notifications";
 import { notifyCustomer } from "@/lib/service-request-notify";
 import { resolveLogisticsProvider } from "@/lib/logistics-providers";
 import { getOrCreatePlatformSettings } from "@/lib/platform-settings";
+import { buildCourierTrackingUrl } from "@/lib/courier-directory";
 
 type Db = typeof prisma | Prisma.TransactionClient;
 
@@ -31,6 +32,10 @@ export async function createDeliveryForOrder(
     manualTrackingNumber?: string | null;
     manualCourierName?: string | null;
     manualCourierPhone?: string | null;
+    manualEstimatedDeliveryDate?: Date | null;
+    waybillUrl?: string | null;
+    packagePhotoUrl?: string | null;
+    packageVideoUrl?: string | null;
     actorId: string;
   }
 ) {
@@ -59,9 +64,12 @@ export async function createDeliveryForOrder(
     providerFields = {
       providerDeliveryId: null,
       trackingNumber: params.manualTrackingNumber ?? null,
-      trackingUrl: null,
+      // Real, known public tracking pages only (DHL/FedEx/GIG Logistics) —
+      // see lib/courier-directory.ts's own comment for why every other
+      // named courier deliberately gets null here instead of a guessed URL.
+      trackingUrl: buildCourierTrackingUrl(params.manualCourierName, params.manualTrackingNumber),
       deliveryCost: null,
-      estimatedDeliveryDate: null,
+      estimatedDeliveryDate: params.manualEstimatedDeliveryDate ?? null,
       courierName: params.manualCourierName ?? null,
       courierPhone: params.manualCourierPhone ?? null,
     };
@@ -106,6 +114,9 @@ export async function createDeliveryForOrder(
       packageDescription: params.packageDescription,
       packageWeightKg: params.packageWeightKg,
       packageDimensions: params.packageDimensions,
+      waybillUrl: params.waybillUrl ?? null,
+      packagePhotoUrl: params.packagePhotoUrl ?? null,
+      packageVideoUrl: params.packageVideoUrl ?? null,
       createdById: params.actorId,
       ...providerFields,
     },
@@ -129,11 +140,24 @@ export async function createDeliveryForOrder(
   });
 
   if (order.customerProfileId) {
+    // Enriched with courier/tracking/expected date whenever they're known
+    // at creation time (the common case for MANUAL) — matches the
+    // manual-verification flow's "customer sees courier, tracking number,
+    // expected arrival" requirement without waiting for a later status
+    // change to say it.
+    const dispatchDetails = [
+      delivery.courierName ? `Courier: ${delivery.courierName}` : null,
+      delivery.trackingNumber ? `Tracking Number: ${delivery.trackingNumber}` : null,
+      delivery.estimatedDeliveryDate ? `Expected Delivery: ${delivery.estimatedDeliveryDate.toLocaleDateString("en-NG", { dateStyle: "medium" })}` : null,
+    ].filter(Boolean);
     await notifyCustomer(db, {
       businessId: params.businessId,
       customerProfileId: order.customerProfileId,
       title: "Your order is ready for delivery",
-      body: "Your outfit is ready and will be dispatched soon.",
+      body:
+        dispatchDetails.length > 0
+          ? `Your outfit is ready and will be dispatched soon. ${dispatchDetails.join(" · ")}`
+          : "Your outfit is ready and will be dispatched soon.",
       type: "success",
     });
   }

@@ -592,4 +592,57 @@ export async function investigateDelivery(db: typeof prisma, params: { deliveryI
   return addAdminOrderNote(db, { orderId: delivery.orderId, body: params.note, actorId: params.actorId });
 }
 
+// Manual-verification delivery flow: the four checks the brief specifies
+// (tracking number entered, waybill uploaded, package image uploaded,
+// courier selected) instead of relying on a courier API. Deliberately does
+// NOT touch payout timing — the existing eligibility/confirmation/
+// auto-release state machine (lib/payout.ts) already gates on customer
+// confirmation or the dispute-window timeout; this is Admin's own record
+// that the evidence behind a shipment looks legitimate, nothing more.
+export interface ShipmentVerificationChecklist {
+  trackingNumberEntered: boolean;
+  courierSelected: boolean;
+  waybillUploaded: boolean;
+  packageImageUploaded: boolean;
+}
+
+export function getShipmentVerificationChecklist(delivery: { trackingNumber: string | null; courierName: string | null; waybillUrl: string | null; packagePhotoUrl: string | null }): ShipmentVerificationChecklist {
+  return {
+    trackingNumberEntered: !!delivery.trackingNumber,
+    courierSelected: !!delivery.courierName,
+    waybillUploaded: !!delivery.waybillUrl,
+    packageImageUploaded: !!delivery.packagePhotoUrl,
+  };
+}
+
+export async function verifyShipment(db: typeof prisma, params: { deliveryId: string; actorId: string }) {
+  const delivery = await db.delivery.findUnique({
+    where: { id: params.deliveryId },
+    select: { id: true, businessId: true, trackingNumber: true, courierName: true, waybillUrl: true, packagePhotoUrl: true, shipmentVerifiedAt: true },
+  });
+  if (!delivery) throw new ApiError(404, "Delivery not found");
+  if (delivery.shipmentVerifiedAt) throw new ApiError(400, "This shipment is already verified");
+
+  const checklist = getShipmentVerificationChecklist(delivery);
+  const failed = Object.entries(checklist).filter(([, passed]) => !passed);
+  if (failed.length > 0) {
+    throw new ApiError(400, `Cannot verify — missing: ${failed.map(([key]) => key).join(", ")}`);
+  }
+
+  const updated = await db.delivery.update({
+    where: { id: params.deliveryId },
+    data: { shipmentVerifiedAt: new Date(), shipmentVerifiedById: params.actorId },
+  });
+
+  await logAuditEvent(db, {
+    action: "DELIVERY_SHIPMENT_VERIFIED_BY_ADMIN",
+    userId: params.actorId,
+    businessId: delivery.businessId,
+    entityType: "Delivery",
+    entityId: params.deliveryId,
+  });
+
+  return updated;
+}
+
 export { getEscalatedDeliveryIds };

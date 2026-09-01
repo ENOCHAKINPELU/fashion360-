@@ -14,8 +14,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MultiImageUpload } from "@/shared/components/multi-image-upload";
+import { ImageUpload } from "@/shared/components/image-upload";
+import { MultiVideoUpload } from "@/shared/components/multi-video-upload";
 import { formatDate, formatRelativeTime } from "@/lib/utils";
 import { DEFAULT_QC_ITEMS } from "@/lib/quality-control-items";
+import { SUPPORTED_COURIERS } from "@/lib/courier-directory";
 import type { QualityControlChecklistData, DeliveryData } from "@/features/orders/types";
 
 const QC_RESULT_STYLES: Record<string, string> = {
@@ -147,6 +150,7 @@ function ResumeProductionButton({ orderId }: { orderId: string }) {
 function DeliveryDetail({ delivery }: { delivery: DeliveryData }) {
   const router = useRouter();
   const [eventOpen, setEventOpen] = useState(false);
+  const evidenceCount = [delivery.waybillUrl, delivery.packagePhotoUrl, delivery.packageVideoUrl].filter(Boolean).length;
 
   return (
     <div className="space-y-3 text-sm">
@@ -154,7 +158,31 @@ function DeliveryDetail({ delivery }: { delivery: DeliveryData }) {
         <Badge variant="outline">{delivery.status.replace(/_/g, " ")}</Badge>
         <span className="text-muted-foreground">{delivery.provider}</span>
         {delivery.trackingNumber && <span className="text-muted-foreground">· {delivery.trackingNumber}</span>}
+        {delivery.shipmentVerifiedAt ? (
+          <Badge className="bg-success-soft text-success">Shipment Verified</Badge>
+        ) : evidenceCount > 0 ? (
+          <Badge className="bg-warning-soft text-warning">Awaiting Admin Verification</Badge>
+        ) : null}
       </div>
+      {evidenceCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {delivery.packagePhotoUrl && (
+            <a href={delivery.packagePhotoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+              Package Photo
+            </a>
+          )}
+          {delivery.waybillUrl && (
+            <a href={delivery.waybillUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+              Waybill / Receipt
+            </a>
+          )}
+          {delivery.packageVideoUrl && (
+            <a href={delivery.packageVideoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+              Package Video
+            </a>
+          )}
+        </div>
+      )}
       <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <div>
           <dt className="text-muted-foreground">Pickup</dt>
@@ -408,8 +436,15 @@ function CreateDeliveryDialog({ open, onOpenChange, orderId }: { open: boolean; 
   const [packageWeightKg, setPackageWeightKg] = useState("");
   const [packageDimensions, setPackageDimensions] = useState("");
   const [manualTrackingNumber, setManualTrackingNumber] = useState("");
-  const [manualCourierName, setManualCourierName] = useState("");
+  const [manualCourierName, setManualCourierName] = useState<string>(SUPPORTED_COURIERS[0]);
+  const [otherCourierName, setOtherCourierName] = useState("");
+  const [manualEstimatedDeliveryDate, setManualEstimatedDeliveryDate] = useState("");
+  const [waybillUrl, setWaybillUrl] = useState<string | null>(null);
+  const [packagePhotoUrl, setPackagePhotoUrl] = useState<string | null>(null);
+  const [packageVideoUrls, setPackageVideoUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const resolvedCourierName = manualCourierName === "Other" ? otherCourierName.trim() : manualCourierName;
 
   async function submit() {
     setSubmitting(true);
@@ -427,7 +462,11 @@ function CreateDeliveryDialog({ open, onOpenChange, orderId }: { open: boolean; 
           packageWeightKg: packageWeightKg || undefined,
           packageDimensions: packageDimensions || undefined,
           manualTrackingNumber: provider === "MANUAL" ? manualTrackingNumber || undefined : undefined,
-          manualCourierName: provider === "MANUAL" ? manualCourierName || undefined : undefined,
+          manualCourierName: provider === "MANUAL" ? resolvedCourierName || undefined : undefined,
+          manualEstimatedDeliveryDate: provider === "MANUAL" && manualEstimatedDeliveryDate ? new Date(manualEstimatedDeliveryDate).toISOString() : undefined,
+          waybillUrl: waybillUrl || undefined,
+          packagePhotoUrl: packagePhotoUrl || undefined,
+          packageVideoUrl: packageVideoUrls[0] || undefined,
         }),
       });
       const data = await res.json();
@@ -495,15 +534,57 @@ function CreateDeliveryDialog({ open, onOpenChange, orderId }: { open: boolean; 
           </div>
 
           {provider === "MANUAL" && (
-            <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Tracking Number (optional)</Label>
-                <Input value={manualTrackingNumber} onChange={(e) => setManualTrackingNumber(e.target.value)} />
+            <div className="space-y-3 border-t border-border pt-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Which courier are you using?</Label>
+                  <Select value={manualCourierName} onValueChange={setManualCourierName}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SUPPORTED_COURIERS.map((c) => (
+                        <SelectItem key={c} value={c}>
+                          {c}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {manualCourierName === "Other" && (
+                  <div className="space-y-1.5">
+                    <Label>Courier Name</Label>
+                    <Input value={otherCourierName} onChange={(e) => setOtherCourierName(e.target.value)} placeholder="e.g. XYZ Dispatch" />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label>Tracking Number (optional)</Label>
+                  <Input value={manualTrackingNumber} onChange={(e) => setManualTrackingNumber(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Expected Delivery Date (optional)</Label>
+                  <Input type="date" value={manualEstimatedDeliveryDate} onChange={(e) => setManualEstimatedDeliveryDate(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Picture of the Packaged Garment (optional)</Label>
+                  <ImageUpload value={packagePhotoUrl} onChange={setPackagePhotoUrl} folder="delivery-evidence" label="Add photo" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Shipping Receipt / Waybill (optional)</Label>
+                  <ImageUpload value={waybillUrl} onChange={setWaybillUrl} folder="delivery-evidence" label="Add receipt" />
+                </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Courier Name (optional)</Label>
-                <Input value={manualCourierName} onChange={(e) => setManualCourierName(e.target.value)} />
+                <Label>Short Video of the Packaged Item (optional)</Label>
+                <MultiVideoUpload value={packageVideoUrls} onChange={setPackageVideoUrls} folder="delivery-evidence" max={1} label="Add video" />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Tracking number, courier, and at least one piece of evidence let Fashion360 verify this shipment without needing a live courier
+                API — see the Delivery tab on this order after dispatch.
+              </p>
             </div>
           )}
         </div>

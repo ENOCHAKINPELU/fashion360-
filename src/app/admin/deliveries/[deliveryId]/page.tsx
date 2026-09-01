@@ -63,6 +63,8 @@ export default async function AdminDeliveryDetailPage({ params }: { params: Prom
   const verification = VERIFICATION_BADGE[delivery.business.verification?.status ?? "UNVERIFIED"] ?? VERIFICATION_BADGE.UNVERIFIED;
   const customerName = `${delivery.order.customer.firstName} ${delivery.order.customer.lastName}`.trim();
   const hasProof = !!(delivery.recipientName || delivery.proofPhotoUrl || delivery.signatureUrl || delivery.deliveryLatitude != null);
+  const canVerifyShipment =
+    !delivery.shipmentVerifiedAt && !!delivery.trackingNumber && !!delivery.courierName && !!delivery.waybillUrl && !!delivery.packagePhotoUrl;
 
   return (
     <div className="space-y-6">
@@ -90,7 +92,13 @@ export default async function AdminDeliveryDetailPage({ params }: { params: Prom
               {customerName} → {delivery.business.name}
             </p>
           </div>
-          <AdminDeliveryActions deliveryId={delivery.id} cancellable={cancellable} escalated={escalation.escalated} hasCourier={!!(delivery.courierName || delivery.courierPhone)} />
+          <AdminDeliveryActions
+            deliveryId={delivery.id}
+            cancellable={cancellable}
+            escalated={escalation.escalated}
+            hasCourier={!!(delivery.courierName || delivery.courierPhone)}
+            canVerifyShipment={canVerifyShipment}
+          />
         </div>
       </div>
 
@@ -333,6 +341,51 @@ export default async function AdminDeliveryDetailPage({ params }: { params: Prom
             </CardContent>
           </Card>
 
+          {/* Shipment Verification — manual-verification flow: instead of a
+              courier API, Admin checks tracking number/courier/waybill/
+              package photo are all present and real before trusting the
+              shipment. Doesn't change payout timing — see
+              lib/admin-deliveries.ts's verifyShipment. */}
+          <Card className="border-none shadow-sm">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="size-4" /> Shipment Verification
+              </CardTitle>
+              {delivery.shipmentVerifiedAt ? (
+                <Badge className="bg-success-soft text-success">Verified {formatDate(delivery.shipmentVerifiedAt)}</Badge>
+              ) : (
+                <Badge className="bg-warning-soft text-warning">Not Verified</Badge>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ul className="grid grid-cols-2 gap-2 text-sm">
+                <ChecklistItem label="Tracking number entered" passed={!!delivery.trackingNumber} />
+                <ChecklistItem label="Courier selected" passed={!!delivery.courierName} />
+                <ChecklistItem label="Waybill uploaded" passed={!!delivery.waybillUrl} />
+                <ChecklistItem label="Package image uploaded" passed={!!delivery.packagePhotoUrl} />
+              </ul>
+              {(delivery.packagePhotoUrl || delivery.waybillUrl || delivery.packageVideoUrl) && (
+                <div className="flex flex-wrap gap-3 border-t border-border pt-3">
+                  {delivery.packagePhotoUrl && (
+                    <a href={delivery.packagePhotoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                      View Package Photo
+                    </a>
+                  )}
+                  {delivery.waybillUrl && (
+                    <a href={delivery.waybillUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                      View Waybill / Receipt
+                    </a>
+                  )}
+                  {delivery.packageVideoUrl && (
+                    <a href={delivery.packageVideoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                      View Package Video
+                    </a>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Delivery Proof */}
           <Card className="border-none shadow-sm">
             <CardHeader>
@@ -482,5 +535,13 @@ export default async function AdminDeliveryDetailPage({ params }: { params: Prom
         </div>
       </div>
     </div>
+  );
+}
+
+function ChecklistItem({ label, passed }: { label: string; passed: boolean }) {
+  return (
+    <li className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 ${passed ? "border-success/20 bg-success-soft text-success" : "border-border text-muted-foreground"}`}>
+      <ShieldCheck className="size-3.5 shrink-0" /> {label}
+    </li>
   );
 }

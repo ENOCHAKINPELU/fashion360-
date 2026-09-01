@@ -16,6 +16,10 @@ const schema = z.object({
   manualTrackingNumber: z.string().optional(),
   manualCourierName: z.string().optional(),
   manualCourierPhone: z.string().optional(),
+  manualEstimatedDeliveryDate: z.string().optional(),
+  waybillUrl: z.string().url().optional(),
+  packagePhotoUrl: z.string().url().optional(),
+  packageVideoUrl: z.string().url().optional(),
 });
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +43,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         manualTrackingNumber: data.manualTrackingNumber,
         manualCourierName: data.manualCourierName,
         manualCourierPhone: data.manualCourierPhone,
+        manualEstimatedDeliveryDate: data.manualEstimatedDeliveryDate ? new Date(data.manualEstimatedDeliveryDate) : undefined,
+        waybillUrl: data.waybillUrl,
+        packagePhotoUrl: data.packagePhotoUrl,
+        packageVideoUrl: data.packageVideoUrl,
         actorId: session.user.id,
       })
     );

@@ -29,13 +29,15 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const ISSUE_TYPES = [
+  { value: "PACKAGE_MISSING", label: "Package Missing" },
   { value: "WRONG_ITEM", label: "Wrong Item" },
   { value: "DAMAGED", label: "Damaged" },
+  { value: "MISSING_ITEMS", label: "Incomplete" },
+  { value: "NEVER_DELIVERED", label: "Never Delivered" },
   { value: "POOR_QUALITY", label: "Poor Quality" },
   { value: "NOT_AS_DESCRIBED", label: "Not As Described" },
   { value: "SIZE_MISMATCH", label: "Size Mismatch" },
   { value: "LATE_DELIVERY", label: "Late Delivery" },
-  { value: "MISSING_ITEMS", label: "Missing Items" },
   { value: "OTHER", label: "Other" },
 ];
 
@@ -108,12 +110,29 @@ export function CustomerDeliveryTracker({
           )}
         </div>
 
-        {delivery.trackingUrl && (
+        {delivery.trackingUrl ? (
           <Button asChild size="sm" variant="outline" className="gap-1.5">
             <a href={delivery.trackingUrl} target="_blank" rel="noreferrer">
-              Track Package <ExternalLink className="size-3.5" />
+              Track on {delivery.courierName ?? "Courier"} Website <ExternalLink className="size-3.5" />
             </a>
           </Button>
+        ) : (
+          delivery.trackingNumber && <p className="text-xs text-muted-foreground">No online tracking page for {delivery.courierName ?? "this courier"} — use the tracking number above directly with them.</p>
+        )}
+
+        {(delivery.packagePhotoUrl || delivery.waybillUrl) && (
+          <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+            {delivery.packagePhotoUrl && (
+              <a href={delivery.packagePhotoUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                View Package Photo
+              </a>
+            )}
+            {delivery.waybillUrl && (
+              <a href={delivery.waybillUrl} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                View Shipping Receipt
+              </a>
+            )}
+          </div>
         )}
 
         {delivery.events.length > 0 && (

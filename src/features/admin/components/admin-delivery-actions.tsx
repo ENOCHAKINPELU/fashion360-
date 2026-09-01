@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Ban, MessageCircle, TriangleAlert, ShieldCheck, Search } from "lucide-react";
+import { Ban, MessageCircle, TriangleAlert, ShieldCheck, Search, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,12 +20,40 @@ type DialogKind = "cancel" | "contact" | "escalate" | "resolveEscalation" | "inv
 // audit/note entry, never a status field. Same required-reason-dialog shape
 // every prior Admin phase established: required text, confirm/cancel
 // footer, disabled while submitting.
-export function AdminDeliveryActions({ deliveryId, cancellable, escalated, hasCourier }: { deliveryId: string; cancellable: boolean; escalated: boolean; hasCourier: boolean }) {
+export function AdminDeliveryActions({
+  deliveryId,
+  cancellable,
+  escalated,
+  hasCourier,
+  canVerifyShipment,
+}: {
+  deliveryId: string;
+  cancellable: boolean;
+  escalated: boolean;
+  hasCourier: boolean;
+  canVerifyShipment: boolean;
+}) {
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [contactTarget, setContactTarget] = useState<ContactTarget>("customer");
   const [text, setText] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+
+  async function verifyShipment() {
+    setVerifying(true);
+    try {
+      const res = await fetch(`/api/admin/deliveries/${deliveryId}/verify-shipment`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not verify shipment");
+      toast.success("Shipment verified");
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not verify shipment");
+    } finally {
+      setVerifying(false);
+    }
+  }
 
   function closeDialog() {
     setDialog(null);
@@ -54,6 +82,11 @@ export function AdminDeliveryActions({ deliveryId, cancellable, escalated, hasCo
 
   return (
     <div className="flex flex-wrap gap-2">
+      {canVerifyShipment && (
+        <Button size="sm" className="gap-1.5" onClick={verifyShipment} disabled={verifying}>
+          <BadgeCheck className="size-3.5" /> {verifying ? "Verifying..." : "Verify Shipment"}
+        </Button>
+      )}
       <Button size="sm" variant="outline" className="gap-1.5" onClick={() => { setContactTarget("customer"); setDialog("contact"); }}>
         <MessageCircle className="size-3.5" /> Contact Customer
       </Button>

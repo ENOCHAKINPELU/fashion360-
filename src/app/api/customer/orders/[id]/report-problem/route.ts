@@ -6,7 +6,7 @@ import { reportDeliveryProblem } from "@/lib/dispute";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
-  issueType: z.enum(["WRONG_ITEM", "DAMAGED", "POOR_QUALITY", "NOT_AS_DESCRIBED", "SIZE_MISMATCH", "LATE_DELIVERY", "MISSING_ITEMS", "OTHER"]),
+  issueType: z.enum(["WRONG_ITEM", "DAMAGED", "POOR_QUALITY", "NOT_AS_DESCRIBED", "SIZE_MISMATCH", "LATE_DELIVERY", "MISSING_ITEMS", "PACKAGE_MISSING", "NEVER_DELIVERED", "OTHER"]),
   description: z.string().trim().min(1, "Describe the problem"),
   photos: z.array(z.string()),
   videos: z.array(z.string()),

@@ -26,7 +26,8 @@ export function ImageUpload({
     | "design-references"
     | "production-photos"
     | "dispute-evidence"
-    | "verification-documents";
+    | "verification-documents"
+    | "delivery-evidence";
   shape?: "square" | "circle";
   label?: string;
 }) {
